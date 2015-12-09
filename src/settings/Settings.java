@@ -15,8 +15,8 @@ public class Settings {
 	public float profit;
 	public float maxOdds;
 
-	public Settings(String league, float basic, float poisson, float weightedPoisson, float threshold,
-			float upperBound, float lowerBound, float minOdds, float maxOdds, float successRate, float profit) {
+	public Settings(String league, float basic, float poisson, float weightedPoisson, float threshold, float upperBound,
+			float lowerBound, float minOdds, float maxOdds, float successRate, float profit) {
 		this.league = league;
 		this.basic = basic;
 		this.poisson = poisson;
@@ -48,7 +48,8 @@ public class Settings {
 	public String toString() {
 		return league + " basic*" + format(basic) + " poisson*" + format(poisson) + " weightedPoisson*"
 				+ format(weightedPoisson) + " minOdds " + format(minOdds) + " maxOdds " + format(maxOdds) + " thold "
-				+ format(threshold) + String.format(" %.2f%% ", successRate * 100) + format(profit);
+				+ format(threshold) + " lower " + format(lowerBound) + " upper " + format(upperBound)
+				+ String.format(" %.2f%% ", successRate * 100) + format(profit);
 
 	}
 

@@ -432,7 +432,7 @@ public class XlSUtils {
 
 		while (rowIterator.hasNext()) {
 			Row row = rowIterator.next();
-			if (row.getRowNum() == 0)
+			if (row.getRowNum() == 0 || row.getCell(getColumnIndex(sheet, "HomeTeam")) == null)
 				continue;
 			String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
 			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
@@ -727,19 +727,29 @@ public class XlSUtils {
 		return finals;
 	}
 
-	public static void makePrediction(HSSFSheet odds, HSSFSheet league, Fixture f, Settings sett)
-			throws ParseException, IOException {
+	public static void makePrediction(HSSFSheet odds, HSSFSheet league, Fixture f, Settings sett) throws IOException {
 		if (sett == null)
 			return;
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league, f.dt);
-		float coeff = score > 0.55d ? XlSUtils.getOverOdds(odds, null, f.homeTeamName, f.awayTeamName)
-				: XlSUtils.getUnderOdds(odds, null, f.homeTeamName, f.awayTeamName);
-		if (coeff < sett.minOdds || coeff > sett.maxOdds)
-			return;
-		String prediction = score > 0.55d ? "over" : "under";
-		System.out.println(
-				league.getSheetName() + " " + f.homeTeamName + " : " + f.awayTeamName + " " + prediction + " " + coeff);
 
+		float coeff = score > sett.threshold ? XlSUtils.getOverOdds(odds, null, f.homeTeamName, f.awayTeamName)
+				: XlSUtils.getUnderOdds(odds, null, f.homeTeamName, f.awayTeamName);
+		if (!(coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >= sett.upperBound) || score <= sett.lowerBound))
+			return;
+		String prediction = score > sett.threshold ? "over" : "under";
+		System.out.println(league.getSheetName() + " " + f.homeTeamName + " : " + f.awayTeamName + " " + score + " "
+				+ prediction + " " + coeff);
+
+	}
+
+	public static Settings predictionSettings(HSSFSheet sheet, int year) throws IOException {
+		ArrayList<Fixture> data = selectAllAll(sheet);
+		Settings temp = runForLeagueWithOdds(sheet, data, 1);
+		ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
+		temp = findThreshold(sheet, finals, temp);
+		temp = trustInterval(sheet, finals, temp);
+		temp = findIntervalReal(finals, sheet, year, temp);
+		return temp;
 	}
 
 	public static float realisticRun(HSSFSheet sheet, int year) throws IOException {
@@ -749,11 +759,11 @@ public class XlSUtils {
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 11; i < maxMatchDay; i++) {
 			ArrayList<Fixture> current = Utils.getByMatchday(all, i);
-			Calendar cal = Calendar.getInstance();
-			cal.set(year + 1, 4, 1);
-			if (!current.isEmpty() && current.get(0).dt.after(cal.getTime())) {
-				return profit;
-			}
+//			Calendar cal = Calendar.getInstance();
+//			cal.set(year + 1, 4, 1);
+//			if (!current.isEmpty() && current.get(0).dt.after(cal.getTime())) {
+//				return profit;
+//			}
 
 			ArrayList<Fixture> data = Utils.getBeforeMatchday(all, i);
 			Settings temp = runForLeagueWithOdds(sheet, data, 1);
@@ -788,10 +798,6 @@ public class XlSUtils {
 			float trprofit = Utils.getProfit(sheet, finals, underOdds, overOdds, temp);
 			// System.out.println(i + " " + trprofit);
 			profit += trprofit;
-			// float currProfit = Utils.getProfit(sheet, finals);
-			// float successRate = Utils.getSuccessRate(finals);
-			// System.out.println(
-			// "Profit for matchday " + i + " is: " + currProfit + " rate: " +
 			// String.format("%.2f", successRate));
 			// profit += currProfit;
 		}

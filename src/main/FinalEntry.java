@@ -22,9 +22,10 @@ public class FinalEntry implements Comparable<FinalEntry> {
 
 	@Override
 	public String toString() {
-
+		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
+		String out = prediction >= upper ? "over" : "under";
 		return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeamName + " : "
-				+ fixture.awayTeamName + " " + success() + " " + alg + "\n";
+				+ fixture.awayTeamName + " " + totalGoals + " " +  out + " " + success()  + "\n";
 	}
 
 	public boolean success() {
