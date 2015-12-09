@@ -34,21 +34,38 @@ public class Test {
 
 		long start = System.currentTimeMillis();
 
-//		simplePredictions();
-		
-//		float total = 0f;
-//		try {
-//			for (int year = 2005; year <= 2005; year++)
-//				total += simulation(year);
-//		} catch (InterruptedException | ExecutionException | IOException e) {
-//			e.printStackTrace();
-//		}
-//		System.out.println("Avg profit is " + (total / 11));
+		// simplePredictions();
 
-		makePredictions();
+		// float total = 0f;
+		// try {
+		// for (int year = 2005; year <= 2005; year++)
+		// total += simulation(year);
+		// } catch (InterruptedException | ExecutionException | IOException e) {
+		// e.printStackTrace();
+		// }
+		// System.out.println("Avg profit is " + (total / 11));
+
+//		makePredictions();
+		
+		stats();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
+	}
+
+	public static void stats() throws IOException {
+		for (int year = 2005; year <= 2015; year++) {
+			String base = new File("").getAbsolutePath();
+
+			FileInputStream file = new FileInputStream(
+					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			HSSFWorkbook workbook = new HSSFWorkbook(file);
+			HSSFSheet sheet = workbook.getSheet("I2");
+			ArrayList<Fixture> all = XlSUtils.selectAllAll(sheet);
+			System.out.println(year + " over: " + Utils.countOverGamesPercent(all) + "% AVG: " + Utils.findAvg(all));
+			workbook.close();
+			file.close();
+		}
 	}
 
 	public static float simulation(int year) throws InterruptedException, ExecutionException, IOException {
