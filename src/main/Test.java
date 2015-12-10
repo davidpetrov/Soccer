@@ -4,6 +4,7 @@ import settings.Settings;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -35,18 +36,20 @@ public class Test {
 
 		// simplePredictions();
 
-		float total = 0f;
-		try {
-			for (int year = 2014; year <= 2014; year++)
-				total += simulation(year);
-		} catch (InterruptedException | ExecutionException | IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Avg profit is " + (total / 11));
+		// float total = 0f;
+		// try {
+		// for (int year = 2015; year <= 2015; year++)
+		// total += simulation(year);
+		// } catch (InterruptedException | ExecutionException | IOException e) {
+		// e.printStackTrace();
+		// }
+		// System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
 		// stats();
+
+		optimals();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -93,6 +96,30 @@ public class Test {
 		file.close();
 		pool.shutdown();
 		return totalProfit;
+	}
+
+	public static void optimals() throws IOException {
+		String basePath = new File("").getAbsolutePath();
+
+		for (int year = 2014; year <= 2014; year++) {
+			float total = 0f;
+
+			FileInputStream filedata = new FileInputStream(
+					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
+
+			Iterator<Sheet> sh = workbookdata.sheetIterator();
+			while (sh.hasNext()) {
+				HSSFSheet i = (HSSFSheet) sh.next();
+				Settings set = XlSUtils.predictionSettings(i, year);
+				total += set.profit;
+				System.out.println(set);
+			}
+
+			System.out.println("Total profit for " + year + " is: " + total);
+			workbookdata.close();
+			filedata.close();
+		}
 	}
 
 	public static void findSettings(int year) throws IOException, ParseException {
