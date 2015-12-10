@@ -869,22 +869,32 @@ public class XlSUtils {
 	}
 
 	public static Settings findThreshold(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
+		// System.out.println("thold: " + initial.threshold + " profit: " +
+		// initial.profit);
 		Settings trset = new Settings(initial);
 
-		float bestProfit = Float.NEGATIVE_INFINITY;
-		float bestThreshold = 0.55f;
+		float bestProfit = initial.profit;
+		float bestThreshold = initial.threshold;
 
-		for (int i = 0; i <= 30; i++) {
-			float current = 0.35f + i * 0.01f;
-			float currentProfit = Utils.getProfit(sheet, finals, initial);
+		for (int i = 0; i <= 40; i++) {
+			float current = 0.30f + i * 0.01f;
+			trset.threshold = current;
+			trset.lowerBound = current;
+			trset.upperBound = current;
+			float currentProfit = Utils.getProfit(sheet, finals, trset);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestThreshold = current;
 			}
 		}
+
 		trset.profit = bestProfit;
 		trset.threshold = bestThreshold;
-		// System.out.println(trset);
+		trset.lowerBound = bestThreshold;
+		trset.upperBound = bestThreshold;
+		// System.out.println("thold: " + trset.threshold + " profit: " +
+		// trset.profit + " lower: " + trset.lowerBound
+		// + " upper: " + trset.upperBound);
 		return trset;
 
 	}
