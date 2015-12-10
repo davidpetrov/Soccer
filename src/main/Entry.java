@@ -1,11 +1,11 @@
 package main;
 
 public class Entry implements Comparable<Entry> {
-	Fixture fixture;
+	ExtendedFixture fixture;
 	Float result;
 	String alg;
 
-	public Entry(Fixture fixture, float result, String alg) {
+	public Entry(ExtendedFixture fixture, float result, String alg) {
 		this.fixture = fixture;
 		this.result = result;
 		this.alg = alg;
@@ -14,8 +14,8 @@ public class Entry implements Comparable<Entry> {
 	@Override
 	public String toString() {
 
-		return String.format("%.2f", result * 100) + " " + fixture.date + " " + fixture.homeTeamName + " : "
-				+ fixture.awayTeamName + " " + alg + "\n";
+		return String.format("%.2f", result * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
+				+ fixture.awayTeam + " " + alg + "\n";
 	}
 
 	@Override

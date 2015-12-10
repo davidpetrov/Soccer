@@ -2,6 +2,9 @@ package main;
 
 import java.io.IOException;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
@@ -11,6 +14,8 @@ import settings.Settings;
 import utils.Utils;
 
 public class SQLiteJDBC {
+
+	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
 	public static void createDB() {
 		Connection c = null;
@@ -49,7 +54,7 @@ public class SQLiteJDBC {
 	}
 
 	// insert Fixture entry into DB
-	public static void insert(Fixture f, String competition, String tableName) {
+	public static void insert(ExtendedFixture f, String competition, String tableName) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
@@ -61,7 +66,7 @@ public class SQLiteJDBC {
 			stmt = c.createStatement();
 			String sql = "INSERT INTO " + tableName
 					+ " (DATE,HOMETEAMNAME,AWAYTEAMNAME,HOMEGOALS,AWAYGOALS,COMPETITION,MATCHDAY)" + "VALUES ("
-					+ addQuotes(f.date) + "," + addQuotes(f.homeTeamName) + "," + addQuotes(f.awayTeamName) + ","
+					+ addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + "," + addQuotes(f.awayTeam) + ","
 					+ f.result.goalsHomeTeam + "," + f.result.goalsAwayTeam + "," + addQuotes(competition) + ", "
 					+ f.matchday + " );";
 			try {
@@ -89,8 +94,8 @@ public class SQLiteJDBC {
 
 	// selects all fixtures for a given season from the database
 	// without cl and wc and from 11 matchday up
-	public static ArrayList<Fixture> select(int season) {
-		ArrayList<Fixture> results = new ArrayList<>();
+	public static ArrayList<ExtendedFixture> select(int season) {
+		ArrayList<ExtendedFixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -111,8 +116,9 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competition = rs.getString("competition");
 				int matchday = rs.getInt("matchday");
-				results.add(new Fixture(date, "FINISHED", matchday, homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), "", "", competition));
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals), competition).withMatchday(matchday);
+				results.add(ef);
 			}
 			rs.close();
 			stmt.close();
@@ -126,9 +132,9 @@ public class SQLiteJDBC {
 		return results;
 	}
 
-	public static ArrayList<Fixture> selectLastAll(String team, int count, int season, int matchday,
+	public static ArrayList<ExtendedFixture> selectLastAll(String team, int count, int season, int matchday,
 			String competition) {
-		ArrayList<Fixture> results = new ArrayList<>();
+		ArrayList<ExtendedFixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -150,8 +156,9 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competit = rs.getString("competition");
 				int matchd = rs.getInt("matchday");
-				results.add(new Fixture(date, "FINISHED", matchd, homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), "", "", competit));
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals), competit).withMatchday(matchd);
+				results.add(ef);
 			}
 			rs.close();
 			stmt.close();
@@ -165,9 +172,9 @@ public class SQLiteJDBC {
 		return results;
 	}
 
-	public static ArrayList<Fixture> selectLastHome(String team, int count, int season, int matchday,
+	public static ArrayList<ExtendedFixture> selectLastHome(String team, int count, int season, int matchday,
 			String competition) {
-		ArrayList<Fixture> results = new ArrayList<>();
+		ArrayList<ExtendedFixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -189,8 +196,9 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competit = rs.getString("competition");
 				int matchd = rs.getInt("matchday");
-				results.add(new Fixture(date, "FINISHED", matchd, homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), "", "", competit));
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals), competit).withMatchday(matchd);
+				results.add(ef);
 			}
 			rs.close();
 			stmt.close();
@@ -257,9 +265,9 @@ public class SQLiteJDBC {
 		return leagues;
 	}
 
-	public static ArrayList<Fixture> selectLastAway(String team, int count, int season, int matchday,
+	public static ArrayList<ExtendedFixture> selectLastAway(String team, int count, int season, int matchday,
 			String competition) {
-		ArrayList<Fixture> results = new ArrayList<>();
+		ArrayList<ExtendedFixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -281,8 +289,9 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competit = rs.getString("competition");
 				int matchd = rs.getInt("matchday");
-				results.add(new Fixture(date, "FINISHED", matchd, homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), "", "", competit));
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals), competit).withMatchday(matchd).withStatus("FINISHED");
+				results.add(ef);
 			}
 			rs.close();
 			stmt.close();
@@ -441,7 +450,7 @@ public class SQLiteJDBC {
 	}
 
 	// update database with all results up to date for a season 30 days back
-	public static void update(int season) {
+	public static void update(int season) throws ParseException {
 		try {
 			JSONArray arr = new JSONArray(
 					Utils.query("http://api.football-data.org/alpha/soccerseasons/?season=" + season));
@@ -453,10 +462,10 @@ public class SQLiteJDBC {
 				obj.getJSONArray("fixtures");
 				JSONArray jsonFixtures = obj.getJSONArray("fixtures");
 
-				ArrayList<Fixture> fixtures = Utils.createFixtureList(jsonFixtures);
-				for (Fixture f : fixtures) {
+				ArrayList<ExtendedFixture> fixtures = Utils.createFixtureList(jsonFixtures);
+				for (ExtendedFixture f : fixtures) {
 					if (f.status.equals("FINISHED")
-							&& !SQLiteJDBC.checkExistense(f.homeTeamName, f.awayTeamName, f.date, season)) {
+							&& !SQLiteJDBC.checkExistense(f.homeTeam, f.awayTeam, format.format(f.date), season)) {
 						SQLiteJDBC.insert(f, league, "RESULTS" + season);
 					}
 				}
@@ -467,7 +476,7 @@ public class SQLiteJDBC {
 	}
 
 	// populate database with all results up to date for a season
-	public static void populateInitial(int season) {
+	public static void populateInitial(int season) throws ParseException {
 		try {
 			JSONArray arr = new JSONArray(
 					Utils.query("http://api.football-data.org/alpha/soccerseasons/?season=" + season));
@@ -479,8 +488,8 @@ public class SQLiteJDBC {
 				obj.getJSONArray("fixtures");
 				JSONArray jsonFixtures = obj.getJSONArray("fixtures");
 
-				ArrayList<Fixture> fixtures = Utils.createFixtureList(jsonFixtures);
-				for (Fixture f : fixtures) {
+				ArrayList<ExtendedFixture> fixtures = Utils.createFixtureList(jsonFixtures);
+				for (ExtendedFixture f : fixtures) {
 					if (f.status.equals("FINISHED")) {
 						SQLiteJDBC.insert(f, league, "RESULTS" + season);
 					}

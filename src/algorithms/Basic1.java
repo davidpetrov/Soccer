@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import org.json.JSONException;
 
-import main.Fixture;
+import main.ExtendedFixture;
 import utils.Utils;
 
 public class Basic1 extends Algorithm {
@@ -15,21 +15,20 @@ public class Basic1 extends Algorithm {
 	 * 20%
 	 */
 
-	public Basic1(Fixture fixture) throws JSONException, IOException {
+	public Basic1(ExtendedFixture fixture) throws JSONException, IOException {
 		super(fixture);
 	}
 
 	@Override
 	public float calculate() {
-		ArrayList<Fixture> lastHomeTeam = Utils.getLastFixtures(homeSideFixtures, 10);
-		ArrayList<Fixture> lastAwayTeam = Utils.getLastFixtures(awaySideFixtures, 10);
-		ArrayList<Fixture> lastHomeHomeTeam = Utils.getLastFixtures(Utils.getHomeFixtures(fixture, homeSideFixtures),
-				5);
-		ArrayList<Fixture> lastAwayAwayTeam = Utils.getLastFixtures(Utils.getAwayFixtures(fixture, awaySideFixtures),
-				5);
+		ArrayList<ExtendedFixture> lastHomeTeam = Utils.getLastFixtures(homeSideFixtures, 10);
+		ArrayList<ExtendedFixture> lastAwayTeam = Utils.getLastFixtures(awaySideFixtures, 10);
+		ArrayList<ExtendedFixture> lastHomeHomeTeam = Utils
+				.getLastFixtures(Utils.getHomeFixtures(fixture, homeSideFixtures), 5);
+		ArrayList<ExtendedFixture> lastAwayAwayTeam = Utils
+				.getLastFixtures(Utils.getAwayFixtures(fixture, awaySideFixtures), 5);
 
-		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam)
-				+ Utils.countOverGamesPercent(lastAwayTeam)) / 2;
+		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
 				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
 		float BTSAVG = (Utils.countBTSPercent(lastHomeTeam) + Utils.countBTSPercent(lastAwayTeam)) / 2;

@@ -4,7 +4,6 @@ import settings.Settings;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -36,18 +35,18 @@ public class Test {
 
 		// simplePredictions();
 
-		// float total = 0f;
-		// try {
-		// for (int year = 2005; year <= 2005; year++)
-		// total += simulation(year);
-		// } catch (InterruptedException | ExecutionException | IOException e) {
-		// e.printStackTrace();
-		// }
-		// System.out.println("Avg profit is " + (total / 11));
+		float total = 0f;
+		try {
+			for (int year = 2014; year <= 2014; year++)
+				total += simulation(year);
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Avg profit is " + (total / 11));
 
-//		makePredictions();
-		
-		stats();
+		// makePredictions();
+
+		// stats();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -61,7 +60,7 @@ public class Test {
 					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbook = new HSSFWorkbook(file);
 			HSSFSheet sheet = workbook.getSheet("I2");
-			ArrayList<Fixture> all = XlSUtils.selectAllAll(sheet);
+			ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
 			System.out.println(year + " over: " + Utils.countOverGamesPercent(all) + "% AVG: " + Utils.findAvg(all));
 			workbook.close();
 			file.close();
@@ -136,7 +135,7 @@ public class Test {
 		FileInputStream file = new FileInputStream(new File(basePath + "\\data\\fixtures.xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sheet = workbook.getSheetAt(0);
-		ArrayList<Fixture> fixtures = XlSUtils.selectForPrediction(sheet);
+		ArrayList<ExtendedFixture> fixtures = XlSUtils.selectForPrediction(sheet);
 
 		FileInputStream filedata = new FileInputStream(new File(basePath + "\\data\\all-euro-data-2015-2016.xls"));
 		HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
@@ -148,8 +147,8 @@ public class Test {
 			optimal.put(i.getSheetName(), XlSUtils.predictionSettings(i, 2015));
 		}
 
-		for (Fixture f : fixtures) {
-			HSSFSheet league = workbookdata.getSheet(f.links_competition);
+		for (ExtendedFixture f : fixtures) {
+			HSSFSheet league = workbookdata.getSheet(f.competition);
 			XlSUtils.makePrediction(sheet, league, f, optimal.get(league.getSheetName()));
 		}
 		workbook.close();
@@ -161,8 +160,8 @@ public class Test {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (int i = 2013; i < 2014; i++) {
 			// result = SQLiteJDBC.select(i);
-			for (Fixture f : SQLiteJDBC.select(i)) {
-				if (f.links_competition.equals("CL")) {
+			for (ExtendedFixture f : SQLiteJDBC.select(i)) {
+				if (f.competition.equals("CL")) {
 					float finalScore = poisson(f, i) * 0.1f + 0.9f * basic2(f, i, 0.6f, 0.3f, 0.1f);
 
 					finals.add(new FinalEntry(f, finalScore, "Basic1",
@@ -269,15 +268,13 @@ public class Test {
 	public static void runForSeasonWithOdds(HSSFSheet sheet, int year) throws IOException {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
 		for (int i = 2014; i < 2015; i++) {
-			for (Fixture f : SQLiteJDBC.select(i)) {
-				if (f.links_competition.equals("PL")) {
+			for (ExtendedFixture f : SQLiteJDBC.select(i)) {
+				if (f.competition.equals("PL")) {
 					float finalScore = poisson(f, i) * 0.25f + 0.75f * basic2(f, i, 0.6f, 0.3f, 0.1f);
 
 					float gain = finalScore > 0.55d
-							? XlSUtils.getOverOdds(sheet, null, EN.getAlias(f.homeTeamName),
-									EN.getAlias(f.awayTeamName))
-							: XlSUtils.getUnderOdds(sheet, null, EN.getAlias(f.homeTeamName),
-									EN.getAlias(f.awayTeamName));
+							? XlSUtils.getOverOdds(sheet, null, EN.getAlias(f.homeTeam), EN.getAlias(f.awayTeam))
+							: XlSUtils.getUnderOdds(sheet, null, EN.getAlias(f.homeTeam), EN.getAlias(f.awayTeam));
 					// if (gain >= 1.7d)
 					finals.add(new FinalEntry(f, finalScore, "Basic1",
 							new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
@@ -302,13 +299,13 @@ public class Test {
 		for (FinalEntry fe : list) {
 			if (fe.success()) {
 				float gain = fe.prediction > 0.55d
-						? XlSUtils.getOverOdds(sheet, null, EN.getAlias(fe.fixture.homeTeamName),
-								EN.getAlias(fe.fixture.awayTeamName))
-						: XlSUtils.getUnderOdds(sheet, null, EN.getAlias(fe.fixture.homeTeamName),
-								EN.getAlias(fe.fixture.awayTeamName));
+						? XlSUtils.getOverOdds(sheet, null, EN.getAlias(fe.fixture.homeTeam),
+								EN.getAlias(fe.fixture.awayTeam))
+						: XlSUtils.getUnderOdds(sheet, null, EN.getAlias(fe.fixture.homeTeam),
+								EN.getAlias(fe.fixture.awayTeam));
 				profit += gain;
-				System.out.println(EN.getAlias(fe.fixture.homeTeamName) + " : " + EN.getAlias(fe.fixture.awayTeamName)
-						+ " " + fe.result.goalsHomeTeam + "-" + fe.result.goalsAwayTeam + " " + gain
+				System.out.println(EN.getAlias(fe.fixture.homeTeam) + " : " + EN.getAlias(fe.fixture.awayTeam) + " "
+						+ fe.result.goalsHomeTeam + "-" + fe.result.goalsAwayTeam + " " + gain
 						+ (fe.prediction > 0.55 ? " over" : " udner"));
 			}
 		}
@@ -324,7 +321,7 @@ public class Test {
 				int z = w - y;
 				ArrayList<FinalEntry> finals = new ArrayList<>();
 				for (int i = 2014; i < 2015; i++) {
-					for (Fixture f : SQLiteJDBC.select(i)) {
+					for (ExtendedFixture f : SQLiteJDBC.select(i)) {
 						float finalScore = basic2(f, i, x * 0.05f, y * 0.05f, z * 0.05f);
 
 						finals.add(new FinalEntry(f, finalScore, "Basic1",
@@ -355,8 +352,8 @@ public class Test {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 2014; i < 2015; i++) {
-				for (Fixture f : SQLiteJDBC.select(i)) {
-					if (f.links_competition.equals("PL")) {
+				for (ExtendedFixture f : SQLiteJDBC.select(i)) {
+					if (f.competition.equals("PL")) {
 						float finalScore = x * 0.05f * basic2(f, i, 0.6f, 0.3f, 0.1f) + y * 0.05f * poisson(f, i);
 
 						finals.add(new FinalEntry(f, finalScore, "Basic1",
@@ -393,8 +390,8 @@ public class Test {
 				int y = 20 - x;
 				ArrayList<FinalEntry> finals = new ArrayList<>();
 				for (int i = 2013; i < 2014; i++) {
-					for (Fixture f : SQLiteJDBC.select(i)) {
-						if (f.links_competition.equals(league)) {
+					for (ExtendedFixture f : SQLiteJDBC.select(i)) {
+						if (f.competition.equals(league)) {
 							float finalScore = x * 0.05f * basic2(f, i, 0.6f, 0.3f, 0.1f)
 									+ y * 0.05f * poissonWeighted(f, i);
 							System.out.println(f + " " + poissonWeighted(f, i));
@@ -433,15 +430,15 @@ public class Test {
 		System.out.println("Profit" + listName + ": " + String.format("%.2f", successOver50 * 0.9 - failureOver50));
 	}
 
-	public static float basic1(Fixture f) {
-		ArrayList<Fixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeamName, 5, 2014, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeamName, 5, 2014, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeamName, 5, 2014, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeamName, 5, 2014, f.matchday,
-				f.links_competition);
+	public static float basic1(ExtendedFixture f) {
+		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 5, 2014, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 5, 2014, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeam, 5, 2014, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeam, 5, 2014, f.matchday,
+				f.competition);
 		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
 				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
@@ -450,46 +447,46 @@ public class Test {
 		return 0.4f * allGamesAVG + 0.4f * homeAwayAVG + 0.2f * BTSAVG;
 	}
 
-	public static float last10only(Fixture f, int n) {
-		ArrayList<Fixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeamName, n, 2014, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeamName, n, 2014, f.matchday,
-				f.links_competition);
+	public static float last10only(ExtendedFixture f, int n) {
+		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, n, 2014, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, n, 2014, f.matchday,
+				f.competition);
 
 		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		return allGamesAVG;
 	}
 
-	public static float last5HAonly(Fixture f) {
-		ArrayList<Fixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeamName, 5, 2014, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeamName, 5, 2014, f.matchday,
-				f.links_competition);
+	public static float last5HAonly(ExtendedFixture f) {
+		ArrayList<ExtendedFixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeam, 5, 2014, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeam, 5, 2014, f.matchday,
+				f.competition);
 
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
 				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
 		return homeAwayAVG;
 	}
 
-	public static float last10BTSonly(Fixture f) {
-		ArrayList<Fixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeamName, 10, 2014, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeamName, 10, 2014, f.matchday,
-				f.links_competition);
+	public static float last10BTSonly(ExtendedFixture f) {
+		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 10, 2014, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 10, 2014, f.matchday,
+				f.competition);
 
 		float BTSAVG = (Utils.countBTSPercent(lastHomeTeam) + Utils.countBTSPercent(lastAwayTeam)) / 2;
 		return BTSAVG;
 	}
 
-	public static float basic2(Fixture f, int year, float d, float e, float z) {
-		ArrayList<Fixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeamName, 10, year, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeamName, 10, year, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeamName, 5, year, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeamName, 5, year, f.matchday,
-				f.links_competition);
+	public static float basic2(ExtendedFixture f, int year, float d, float e, float z) {
+		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 10, year, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 10, year, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeam, 5, year, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeam, 5, year, f.matchday,
+				f.competition);
 		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
 				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
@@ -498,44 +495,42 @@ public class Test {
 		return d * allGamesAVG + e * homeAwayAVG + z * BTSAVG;
 	}
 
-	public static float poisson(Fixture f, int year) {
-		ArrayList<Fixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeamName, 10, year, f.matchday,
-				f.links_competition);
-		ArrayList<Fixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeamName, 10, year, f.matchday,
-				f.links_competition);
-		float lambda = Utils.avgFor(f.homeTeamName, lastHomeTeam);
-		float mu = Utils.avgFor(f.awayTeamName, lastAwayTeam);
+	public static float poisson(ExtendedFixture f, int year) {
+		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 10, year, f.matchday,
+				f.competition);
+		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 10, year, f.matchday,
+				f.competition);
+		float lambda = Utils.avgFor(f.homeTeam, lastHomeTeam);
+		float mu = Utils.avgFor(f.awayTeam, lastAwayTeam);
 		return Utils.poissonOver(lambda, mu);
 	}
 
-	public static float poissonWeighted(Fixture f, int year) {
-		float leagueAvgHome = SQLiteJDBC.selectAvgLeagueHome(f.links_competition, year, f.matchday);
-		float leagueAvgAway = SQLiteJDBC.selectAvgLeagueAway(f.links_competition, year, f.matchday);
-		float homeAvgFor = SQLiteJDBC.selectAvgHomeTeamFor(f.links_competition, f.homeTeamName, year, f.matchday);
-		float homeAvgAgainst = SQLiteJDBC.selectAvgHomeTeamAgainst(f.links_competition, f.homeTeamName, year,
-				f.matchday);
-		float awayAvgFor = SQLiteJDBC.selectAvgAwayTeamFor(f.links_competition, f.awayTeamName, year, f.matchday);
-		float awayAvgAgainst = SQLiteJDBC.selectAvgAwayTeamAgainst(f.links_competition, f.awayTeamName, year,
-				f.matchday);
+	public static float poissonWeighted(ExtendedFixture f, int year) {
+		float leagueAvgHome = SQLiteJDBC.selectAvgLeagueHome(f.competition, year, f.matchday);
+		float leagueAvgAway = SQLiteJDBC.selectAvgLeagueAway(f.competition, year, f.matchday);
+		float homeAvgFor = SQLiteJDBC.selectAvgHomeTeamFor(f.competition, f.homeTeam, year, f.matchday);
+		float homeAvgAgainst = SQLiteJDBC.selectAvgHomeTeamAgainst(f.competition, f.homeTeam, year, f.matchday);
+		float awayAvgFor = SQLiteJDBC.selectAvgAwayTeamFor(f.competition, f.awayTeam, year, f.matchday);
+		float awayAvgAgainst = SQLiteJDBC.selectAvgAwayTeamAgainst(f.competition, f.awayTeam, year, f.matchday);
 
 		float lambda = homeAvgFor * awayAvgAgainst / leagueAvgAway;
 		float mu = awayAvgFor * homeAvgAgainst / leagueAvgHome;
 		return Utils.poissonOver(lambda, mu);
 	}
 
-	public static void simplePredictions() throws JSONException, IOException {
+	public static void simplePredictions() throws JSONException, IOException, ParseException {
 		SQLiteJDBC.update(2015);
-		ArrayList<Fixture> fixtures = Api.findFixtures(1);
+		ArrayList<ExtendedFixture> fixtures = Api.findFixtures(1);
 		//
 		ArrayList<Entry> entries = new ArrayList<>();
-		for (Fixture f : fixtures) {
+		for (ExtendedFixture f : fixtures) {
 			Algorithm alg = new Basic1(f);
 			entries.add(new Entry(f, alg.calculate(), alg.getClass().getSimpleName()));
 		}
 		entries.sort(new Comparator<Entry>() {
 			@Override
 			public int compare(Entry o1, Entry o2) {
-				int fc = o1.fixture.links_competition.compareTo(o2.fixture.links_competition);
+				int fc = o1.fixture.competition.compareTo(o2.fixture.competition);
 				return fc != 0 ? fc : o1.compareTo(o2);
 			}
 		});

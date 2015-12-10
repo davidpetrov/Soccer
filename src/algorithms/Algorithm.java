@@ -5,17 +5,17 @@ import java.util.ArrayList;
 
 import org.json.JSONException;
 
-import main.Fixture;
+import main.ExtendedFixture;
 
 public abstract class Algorithm {
-	public Fixture fixture;
-	public ArrayList<Fixture> homeSideFixtures;
-	public ArrayList<Fixture> awaySideFixtures;
+	public ExtendedFixture fixture;
+	public ArrayList<ExtendedFixture> homeSideFixtures;
+	public ArrayList<ExtendedFixture> awaySideFixtures;
 
-	public Algorithm(Fixture fixture) throws JSONException, IOException {
+	public Algorithm(ExtendedFixture fixture) throws JSONException, IOException {
 		this.fixture = fixture;
-		homeSideFixtures = fixture.getTeamRelevantFixtures("home");
-		awaySideFixtures = fixture.getTeamRelevantFixtures("away");
+		// homeSideFixtures = fixture.getTeamRelevantFixtures("home");
+		// awaySideFixtures = fixture.getTeamRelevantFixtures("away");
 	}
 
 	public abstract float calculate();

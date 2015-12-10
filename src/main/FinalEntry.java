@@ -1,7 +1,7 @@
 package main;
 
 public class FinalEntry implements Comparable<FinalEntry> {
-	public Fixture fixture;
+	public ExtendedFixture fixture;
 	public Float prediction;
 	String alg;
 	public Result result;
@@ -10,7 +10,8 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float upper;
 	public float lower;
 
-	public FinalEntry(Fixture fixture, float prediction, String alg, Result result, float threshold,float lower,float upper) {
+	public FinalEntry(ExtendedFixture fixture, float prediction, String alg, Result result, float threshold,
+			float lower, float upper) {
 		this.fixture = fixture;
 		this.prediction = prediction;
 		this.alg = alg;
@@ -24,8 +25,8 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public String toString() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		String out = prediction >= upper ? "over" : "under";
-		return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeamName + " : "
-				+ fixture.awayTeamName + " " + totalGoals + " " +  out + " " + success()  + "\n";
+		return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
+				+ fixture.awayTeam + " " + totalGoals + " " + out + " " + success() + "\n";
 	}
 
 	public boolean success() {
