@@ -704,8 +704,8 @@ public class XlSUtils {
 					+ settings.weightedPoisson * poissonWeighted(f, sheet, f.date);
 
 			float gain = finalScore > settings.threshold ? f.maxOver : f.maxUnder;
-			if (gain >= settings.minOdds && gain <= settings.maxOdds && (finalScore >= settings.upperBound)
-					|| finalScore <= settings.lowerBound) {
+			if (gain >= settings.minOdds && gain <= settings.maxOdds
+					&& (finalScore >= settings.upperBound || finalScore <= settings.lowerBound)) {
 				FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
 						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), settings.threshold,
 						settings.lowerBound, settings.upperBound);
@@ -790,7 +790,9 @@ public class XlSUtils {
 
 	private static Settings trustInterval(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial)
 			throws IOException {
-		long start = System.currentTimeMillis();
+//		System.out.println("===========================");
+//		System.out.println(
+//				"lower: " + initial.lowerBound + " upper: " + initial.upperBound + " profit: " + initial.profit);
 		Settings trset = new Settings(initial);
 
 		finals.sort(new Comparator<FinalEntry>() {
@@ -804,7 +806,7 @@ public class XlSUtils {
 
 		Settings set = new Settings(initial);
 		float bestProfit = Float.NEGATIVE_INFINITY;
-		float bestUpper = 0.0f;
+		float bestUpper = initial.upperBound;
 
 		ArrayList<FinalEntry> sofar = new ArrayList<>();
 		float current = initial.threshold + 0.3f;
@@ -816,6 +818,7 @@ public class XlSUtils {
 			if (fe.prediction >= current) {
 				sofar.add(fe);
 			} else {
+				set.upperBound = current;
 				float currentProfit = Utils.getProfit(sheet, sofar, set);
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
@@ -825,46 +828,40 @@ public class XlSUtils {
 			}
 		}
 
-		float bestLower = 0.0f;
 		float bestProfitLower = Float.NEGATIVE_INFINITY;
+		float bestLower = initial.lowerBound;
 
-		ArrayList<FinalEntry> sofarLower = new ArrayList<>();
-		current = initial.threshold - 0.3f;
+		ArrayList<FinalEntry> sofarLower = Utils.underPredictions(finals, set);
+		current = initial.threshold;
 		set.lowerBound = current;
 
-		for (int i = finals.size() - 1; i >= 0; i--) {
-			if (current > initial.threshold)
+		for (FinalEntry fe : finals) {
+			if (current < initial.threshold - 0.3f)
 				break;
-			if (finals.get(i).prediction <= current) {
-				sofarLower.add(finals.get(i));
+			if (fe.prediction >= current) {
+				continue;
 			} else {
+				set.lowerBound = current;
+				sofarLower = Utils.underPredictions(sofarLower, set);
 				float currentProfit = Utils.getProfit(sheet, sofarLower, set);
 				if (currentProfit > bestProfitLower) {
 					bestProfitLower = currentProfit;
 					bestLower = current;
 				}
-				current += 0.025d;
+				current -= 0.025d;
 			}
 		}
 
 		trset.upperBound = bestUpper;
 		trset.lowerBound = bestLower;
-		float bestFinalProfit = Utils.getProfit(sheet, runWithSettingsList(sheet, Utils.onlyFixtures(finals), trset),
-				trset);
+		float bestFinalProfit = Utils.getProfit(sheet, Utils.filterTrust(finals, trset), trset);
 		if (bestFinalProfit >= trset.profit) {
-			// System.out.println("Trust profit is better with " +
-			// (bestFinalProfit - trset.profit));
 			trset.profit = bestFinalProfit;
 		} else {
-			// System.out.println("smth is wrong");
-			// System.out.println("Trust profit is better with " +
-			// (bestFinalProfit - trset.profit));
-			trset.lowerBound = initial.lowerBound;
-			trset.upperBound = initial.upperBound;
+			trset = initial;
 		}
-		// System.out.println(trset);
-		// System.out.println((System.currentTimeMillis() - start) / 1000d + "
-		// trust sec");
+
+//		System.out.println("lower: " + trset.lowerBound + " upper: " + trset.upperBound + " profit: " + trset.profit);
 		return trset;
 	}
 

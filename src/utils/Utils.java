@@ -334,4 +334,23 @@ public class Utils {
 		return result;
 	}
 
+	public static ArrayList<FinalEntry> underPredictions(ArrayList<FinalEntry> finals, Settings set) {
+		ArrayList<FinalEntry> unders = new ArrayList<>(finals);
+		for (FinalEntry fe : finals) {
+			if (fe.prediction >= set.lowerBound)
+				unders.remove(fe);
+		}
+		return unders;
+	}
+
+	public static ArrayList<FinalEntry> filterTrust(ArrayList<FinalEntry> finals, Settings trset) {
+		ArrayList<FinalEntry> filtered = new ArrayList<>();
+		for (FinalEntry fe : finals) {
+			if (fe.prediction > trset.lowerBound && fe.prediction < trset.upperBound)
+				continue;
+			filtered.add(fe);
+		}
+		return filtered;
+	}
+
 }
