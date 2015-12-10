@@ -265,55 +265,6 @@ public class Test {
 		// printSuccessRate(under20, "under20");
 	}
 
-	public static void runForSeasonWithOdds(HSSFSheet sheet, int year) throws IOException {
-		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (int i = 2014; i < 2015; i++) {
-			for (ExtendedFixture f : SQLiteJDBC.select(i)) {
-				if (f.competition.equals("PL")) {
-					float finalScore = poisson(f, i) * 0.25f + 0.75f * basic2(f, i, 0.6f, 0.3f, 0.1f);
-
-					float gain = finalScore > 0.55d
-							? XlSUtils.getOverOdds(sheet, null, EN.getAlias(f.homeTeam), EN.getAlias(f.awayTeam))
-							: XlSUtils.getUnderOdds(sheet, null, EN.getAlias(f.homeTeam), EN.getAlias(f.awayTeam));
-					// if (gain >= 1.7d)
-					finals.add(new FinalEntry(f, finalScore, "Basic1",
-							new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
-				}
-			}
-		}
-
-		printSucceRateWithOdds(sheet, finals);
-	}
-
-	public static void printSucceRateWithOdds(HSSFSheet sheet, ArrayList<FinalEntry> list) {
-		int successOver50 = 0, failureOver50 = 0;
-		for (FinalEntry fe : list) {
-			if (fe.success())
-				successOver50++;
-			else
-				failureOver50++;
-		}
-		System.out.println("success" + ": " + successOver50 + "failure" + ": " + failureOver50);
-		System.out.println("Rate" + ": " + String.format("%.2f", ((float) successOver50 / list.size()) * 100));
-		float profit = 0.0f;
-		for (FinalEntry fe : list) {
-			if (fe.success()) {
-				float gain = fe.prediction > 0.55d
-						? XlSUtils.getOverOdds(sheet, null, EN.getAlias(fe.fixture.homeTeam),
-								EN.getAlias(fe.fixture.awayTeam))
-						: XlSUtils.getUnderOdds(sheet, null, EN.getAlias(fe.fixture.homeTeam),
-								EN.getAlias(fe.fixture.awayTeam));
-				profit += gain;
-				System.out.println(EN.getAlias(fe.fixture.homeTeam) + " : " + EN.getAlias(fe.fixture.awayTeam) + " "
-						+ fe.result.goalsHomeTeam + "-" + fe.result.goalsAwayTeam + " " + gain
-						+ (fe.prediction > 0.55 ? " over" : " udner"));
-			}
-		}
-		System.out.println("Profit" + ": " + String.format("%.2f", profit - list.size()));
-		System.out.println("AVG win odds: " + String.format("%.2f", profit / successOver50));
-
-	}
-
 	public static void runForSeasonXYZ(int year) {
 		for (int x = 0; x <= 20; x++) {
 			int w = 20 - x;

@@ -244,9 +244,7 @@ public class Utils {
 		float profit = 0.0f;
 		for (FinalEntry fe : list) {
 			if (fe.success()) {
-				float gain = fe.prediction > 0.55d
-						? XlSUtils.getOverOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam)
-						: XlSUtils.getUnderOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam);
+				float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
 				if (gain != -1.0d)
 					profit += gain;
 
@@ -260,9 +258,7 @@ public class Utils {
 		float profit = 0.0f;
 		for (FinalEntry fe : list) {
 			if (fe.success()) {
-				float gain = fe.prediction > 0.55d
-						? XlSUtils.getOverOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam)
-						: XlSUtils.getUnderOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam);
+				float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
 				if (gain >= minOdds)
 					profit += gain;
 			}
@@ -274,9 +270,7 @@ public class Utils {
 	public static ArrayList<FinalEntry> filterFinals(HSSFSheet sheet, ArrayList<FinalEntry> finals, float minOdds) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
-			float gain = fe.prediction > 0.55d
-					? XlSUtils.getOverOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam)
-					: XlSUtils.getUnderOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam);
+			float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			if (gain >= minOdds)
 				filtered.add(fe);
 		}
@@ -286,9 +280,7 @@ public class Utils {
 	public static ArrayList<FinalEntry> filterMaxFinals(HSSFSheet sheet, ArrayList<FinalEntry> finals, float maxOdds) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
-			float gain = fe.prediction > 0.55d
-					? XlSUtils.getOverOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam)
-					: XlSUtils.getUnderOdds(sheet, null, fe.fixture.homeTeam, fe.fixture.awayTeam);
+			float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			if (gain <= maxOdds)
 				filtered.add(fe);
 		}
@@ -313,15 +305,14 @@ public class Utils {
 		return filtered;
 	}
 
-	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals,
-			HashMap<ExtendedFixture, Float> underOdds, HashMap<ExtendedFixture, Float> overOdds, Settings set) {
+	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings set) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
 			fe.threshold = set.threshold;
 			fe.lower = set.lowerBound;
 			fe.upper = set.upperBound;
-			float gain = fe.prediction > fe.upper ? overOdds.get(fe.fixture) : underOdds.get(fe.fixture);
+			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > 0.9f) {

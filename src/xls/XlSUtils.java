@@ -94,34 +94,6 @@ public class XlSUtils {
 		return columndata;
 	}
 
-	public static float getOverOdds(HSSFSheet sheet, String date, String home, String away) {
-
-		Iterator<Row> rowIterator = sheet.iterator();
-
-		while (rowIterator.hasNext()) {
-			Row row = rowIterator.next();
-			if (row.getCell(HOMETEAM).getStringCellValue().equals(home)
-					&& row.getCell(AWAYTEAM).getStringCellValue().equals(away)
-					&& row.getCell(getColumnIndex(sheet, "BbMx>2.5")) != null)
-				return (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-		}
-		return -1.0f;
-	}
-
-	public static float getUnderOdds(HSSFSheet sheet, Object object, String home, String away) {
-
-		Iterator<Row> rowIterator = sheet.iterator();
-
-		while (rowIterator.hasNext()) {
-			Row row = rowIterator.next();
-			if (row.getCell(HOMETEAM).getStringCellValue().equals(home)
-					&& row.getCell(AWAYTEAM).getStringCellValue().equals(away)
-					&& row.getCell(getColumnIndex(sheet, "BbMx<2.5")) != null)
-				return (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-		}
-		return -1.0f;
-	}
-
 	public static Date getDate(HSSFSheet sheet, String home, String away) {
 		Iterator<Row> rowIterator = sheet.iterator();
 
@@ -213,7 +185,7 @@ public class XlSUtils {
 			String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
 			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
-			if (away.equals(team) && fdate.before(date)&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
+			if (away.equals(team) && fdate.before(date) && row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
 				int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 				int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 
@@ -499,17 +471,12 @@ public class XlSUtils {
 		float[] basics = new float[all.size()];
 		float[] poissons = new float[all.size()];
 		float[] weightedPoissons = new float[all.size()];
-		HashMap<ExtendedFixture, Float> underOdds = new HashMap<>();
-		HashMap<ExtendedFixture, Float> overOdds = new HashMap<>();
 		for (int i = 0; i < all.size(); i++) {
 			ExtendedFixture f = all.get(i);
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet, f.date);
 			weightedPoissons[i] = poissonWeighted(f, sheet, f.date);
-
-			underOdds.put(f, getUnderOdds(sheet, null, f.homeTeam, f.awayTeam));
-			overOdds.put(f, getOverOdds(sheet, null, f.homeTeam, f.awayTeam));
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -532,7 +499,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), bestBasic * 0.05f, 1.0f - bestBasic * 0.05f, 0.0f, 0.55f,
 					0.55f, 0.55f, 1, 10, bestWinPercent, bestProfit);
-			float currentProfit = Utils.getProfit(sheet, finals, underOdds, overOdds, set);
+			float currentProfit = Utils.getProfit(sheet, finals, set);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestBasic = x;
@@ -561,7 +528,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), bestBasic * 0.05f, 0f, 1.0f - bestBasic * 0.05f, 0.55f,
 					0.55f, 0.55f, 1, 10, bestWinPercent, bestProfit);
-			float currentProfit = Utils.getProfit(sheet, finals, underOdds, overOdds, set);
+			float currentProfit = Utils.getProfit(sheet, finals, set);
 			if (currentProfit > bestProfit) {
 				flagw = true;
 				bestProfit = currentProfit;
@@ -590,17 +557,12 @@ public class XlSUtils {
 		float[] basics = new float[all.size()];
 		float[] poissons = new float[all.size()];
 		float[] weightedPoissons = new float[all.size()];
-		HashMap<ExtendedFixture, Float> underOdds = new HashMap<>();
-		HashMap<ExtendedFixture, Float> overOdds = new HashMap<>();
 		for (int i = 0; i < all.size(); i++) {
 			ExtendedFixture f = all.get(i);
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet, f.date);
 			weightedPoissons[i] = poissonWeighted(f, sheet, f.date);
-
-			underOdds.put(f, getUnderOdds(sheet, null, f.homeTeam, f.awayTeam));
-			overOdds.put(f, getOverOdds(sheet, null, f.homeTeam, f.awayTeam));
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -625,7 +587,7 @@ public class XlSUtils {
 
 				Settings set = new Settings(sheet.getSheetName(), x * 0.05f, z * 0.05f, w * 0.05f, 0.55f, 0.55f, 0.55f,
 						1, 10, bestWinPercent, bestProfit);
-				float currentProfit = Utils.getProfit(sheet, finals, underOdds, overOdds, set);
+				float currentProfit = Utils.getProfit(sheet, finals, set);
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
 					bestBasic = x;
@@ -722,8 +684,7 @@ public class XlSUtils {
 			float finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
 					+ settings.poisson * poisson(f, sheet, f.date);
 
-			float gain = finalScore > 0.55d ? XlSUtils.getOverOdds(sheet, null, f.homeTeam, f.awayTeam)
-					: XlSUtils.getUnderOdds(sheet, null, f.homeTeam, f.awayTeam);
+			float gain = finalScore > 0.55d ? f.maxOver : f.maxUnder;
 			if (gain >= settings.minOdds || gain <= settings.maxOdds)
 				finals.add(new FinalEntry(f, finalScore, "Basic1",
 						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
@@ -742,8 +703,7 @@ public class XlSUtils {
 					+ settings.poisson * poisson(f, sheet, f.date)
 					+ settings.weightedPoisson * poissonWeighted(f, sheet, f.date);
 
-			float gain = finalScore > settings.threshold ? XlSUtils.getOverOdds(sheet, null, f.homeTeam, f.awayTeam)
-					: XlSUtils.getUnderOdds(sheet, null, f.homeTeam, f.awayTeam);
+			float gain = finalScore > settings.threshold ? f.maxOver : f.maxUnder;
 			if (gain >= settings.minOdds && gain <= settings.maxOdds && (finalScore >= settings.upperBound)
 					|| finalScore <= settings.lowerBound) {
 				FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
@@ -777,8 +737,7 @@ public class XlSUtils {
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league, f.date)
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
 
-		float coeff = score > sett.threshold ? XlSUtils.getOverOdds(odds, null, f.homeTeam, f.awayTeam)
-				: XlSUtils.getUnderOdds(odds, null, f.homeTeam, f.awayTeam);
+		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
 		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >= sett.upperBound) || score <= sett.lowerBound) {
 			String prediction = score > sett.threshold ? "over" : "under";
 			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
@@ -821,14 +780,7 @@ public class XlSUtils {
 			temp = findIntervalReal(finals, sheet, year, temp);
 			finals = runWithSettingsList(sheet, current, temp);
 			// System.out.println(finals);
-			HashMap<ExtendedFixture, Float> underOdds = new HashMap<>();
-			HashMap<ExtendedFixture, Float> overOdds = new HashMap<>();
-			for (int j = 0; j < finals.size(); j++) {
-				ExtendedFixture f = finals.get(j).fixture;
-				underOdds.put(f, getUnderOdds(sheet, null, f.homeTeam, f.awayTeam));
-				overOdds.put(f, getOverOdds(sheet, null, f.homeTeam, f.awayTeam));
-			}
-			float trprofit = Utils.getProfit(sheet, finals, underOdds, overOdds, temp);
+			float trprofit = Utils.getProfit(sheet, finals, temp);
 			// System.out.println(i + " " + trprofit);
 			// System.out.println("--------------------------");
 			profit += trprofit;
@@ -840,13 +792,6 @@ public class XlSUtils {
 			throws IOException {
 		long start = System.currentTimeMillis();
 		Settings trset = new Settings(initial);
-		HashMap<ExtendedFixture, Float> underOdds = new HashMap<>();
-		HashMap<ExtendedFixture, Float> overOdds = new HashMap<>();
-		for (int i = 0; i < finals.size(); i++) {
-			ExtendedFixture f = finals.get(i).fixture;
-			underOdds.put(f, getUnderOdds(sheet, null, f.homeTeam, f.awayTeam));
-			overOdds.put(f, getOverOdds(sheet, null, f.homeTeam, f.awayTeam));
-		}
 
 		finals.sort(new Comparator<FinalEntry>() {
 
@@ -871,7 +816,7 @@ public class XlSUtils {
 			if (fe.prediction >= current) {
 				sofar.add(fe);
 			} else {
-				float currentProfit = Utils.getProfit(sheet, sofar, underOdds, overOdds, set);
+				float currentProfit = Utils.getProfit(sheet, sofar, set);
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
 					bestUpper = current;
@@ -893,7 +838,7 @@ public class XlSUtils {
 			if (finals.get(i).prediction <= current) {
 				sofarLower.add(finals.get(i));
 			} else {
-				float currentProfit = Utils.getProfit(sheet, sofarLower, underOdds, overOdds, set);
+				float currentProfit = Utils.getProfit(sheet, sofarLower, set);
 				if (currentProfit > bestProfitLower) {
 					bestProfitLower = currentProfit;
 					bestLower = current;
@@ -905,7 +850,7 @@ public class XlSUtils {
 		trset.upperBound = bestUpper;
 		trset.lowerBound = bestLower;
 		float bestFinalProfit = Utils.getProfit(sheet, runWithSettingsList(sheet, Utils.onlyFixtures(finals), trset),
-				underOdds, overOdds, trset);
+				trset);
 		if (bestFinalProfit >= trset.profit) {
 			// System.out.println("Trust profit is better with " +
 			// (bestFinalProfit - trset.profit));
@@ -925,20 +870,13 @@ public class XlSUtils {
 
 	public static Settings findThreshold(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
 		Settings trset = new Settings(initial);
-		HashMap<ExtendedFixture, Float> underOdds = new HashMap<>();
-		HashMap<ExtendedFixture, Float> overOdds = new HashMap<>();
-		for (int i = 0; i < finals.size(); i++) {
-			ExtendedFixture f = finals.get(i).fixture;
-			underOdds.put(f, getUnderOdds(sheet, null, f.homeTeam, f.awayTeam));
-			overOdds.put(f, getOverOdds(sheet, null, f.homeTeam, f.awayTeam));
-		}
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		float bestThreshold = 0.55f;
 
 		for (int i = 0; i <= 30; i++) {
 			float current = 0.35f + i * 0.01f;
-			float currentProfit = Utils.getProfit(sheet, finals, underOdds, overOdds, initial);
+			float currentProfit = Utils.getProfit(sheet, finals, initial);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestThreshold = current;
@@ -965,21 +903,13 @@ public class XlSUtils {
 
 	private static Settings findIntervalReal(ArrayList<FinalEntry> finals, HSSFSheet sheet, int year,
 			Settings initial) {
-
-		HashMap<ExtendedFixture, Float> underOdds = new HashMap<>();
-		HashMap<ExtendedFixture, Float> overOdds = new HashMap<>();
-		for (int i = 0; i < finals.size(); i++) {
-			ExtendedFixture f = finals.get(i).fixture;
-			underOdds.put(f, getUnderOdds(sheet, null, f.homeTeam, f.awayTeam));
-			overOdds.put(f, getOverOdds(sheet, null, f.homeTeam, f.awayTeam));
-		}
 		float profit = initial.profit;
 		Settings newSetts = new Settings(initial);
 		int bestminx = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filtered = Utils.filterFinals(sheet, finals, currentMin);
-			float currentProfit = Utils.getProfit(sheet, filtered, underOdds, overOdds, newSetts);
+			float currentProfit = Utils.getProfit(sheet, filtered, newSetts);
 
 			if (currentProfit > profit) {
 				bestminx = x;
@@ -994,7 +924,7 @@ public class XlSUtils {
 			float currentMax = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filtered = Utils.filterFinals(sheet, finals, newSetts.minOdds);
 			ArrayList<FinalEntry> filtered1 = Utils.filterMaxFinals(sheet, filtered, currentMax);
-			float currentProfit = Utils.getProfit(sheet, filtered1, underOdds, overOdds, newSetts);
+			float currentProfit = Utils.getProfit(sheet, filtered1, newSetts);
 
 			if (currentProfit > profit) {
 				profit = currentProfit;

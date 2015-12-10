@@ -11,10 +11,10 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public String status;
 	public String competition;
 	public int matchday;
-	float overOdds;
-	float underOdds;
-	float maxOver;
-	float maxUnder;
+	public float overOdds;
+	public float underOdds;
+	public float maxOver;
+	public float maxUnder;
 
 	public ExtendedFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		this.date = date;
