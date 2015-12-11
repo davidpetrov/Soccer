@@ -23,7 +23,6 @@ import org.json.JSONException;
 
 import algorithms.Algorithm;
 import algorithms.Basic1;
-import dictionaries.EN;
 import utils.Api;
 import utils.Utils;
 import xls.XlSUtils;
@@ -49,7 +48,9 @@ public class Test {
 
 		// stats();
 
-		optimals();
+		// optimals();
+
+		optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -100,8 +101,9 @@ public class Test {
 
 	public static void optimals() throws IOException {
 		String basePath = new File("").getAbsolutePath();
+		float totalTotal = 0f;
 
-		for (int year = 2014; year <= 2014; year++) {
+		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
 
 			FileInputStream filedata = new FileInputStream(
@@ -113,13 +115,80 @@ public class Test {
 				HSSFSheet i = (HSSFSheet) sh.next();
 				Settings set = XlSUtils.predictionSettings(i, year);
 				total += set.profit;
-				System.out.println(set);
+				// System.out.println(set);
 			}
 
 			System.out.println("Total profit for " + year + " is: " + total);
+			totalTotal += total;
 			workbookdata.close();
 			filedata.close();
 		}
+		System.out.println("Average is:" + totalTotal / 11);
+	}
+
+	public static void optimalsbyCompetition() throws IOException {
+
+		HashMap<String, ArrayList<Settings>> optimals = new HashMap<>();
+
+		String basePath = new File("").getAbsolutePath();
+
+		for (int year = 2005; year <= 2015; year++) {
+
+			FileInputStream filedata = new FileInputStream(
+					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
+
+			Iterator<Sheet> sh = workbookdata.sheetIterator();
+			while (sh.hasNext()) {
+				HSSFSheet i = (HSSFSheet) sh.next();
+				Settings set = XlSUtils.predictionSettings(i, year);
+				if (optimals.get(i.getSheetName()) != null)
+					optimals.get(i.getSheetName()).add(set);
+				else {
+					optimals.put(i.getSheetName(), new ArrayList<>());
+					optimals.get(i.getSheetName()).add(set);
+				}
+				// System.out.println(set);
+			}
+
+			workbookdata.close();
+			filedata.close();
+		}
+
+		// for (java.util.Map.Entry<String, ArrayList<Settings>> league :
+		// optimals.entrySet()) {
+		// for (Settings setts : league.getValue()) {
+		// System.out.println(setts);
+		// }
+		// System.out.println("===============================================================");
+		// }
+		float totalPeriod = 0f;
+
+		for (int year = 2006; year <= 2015; year++) {
+			float total = 0f;
+			FileInputStream filedata = new FileInputStream(
+					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
+
+			Iterator<Sheet> sh = workbookdata.sheetIterator();
+			while (sh.hasNext()) {
+				HSSFSheet i = (HSSFSheet) sh.next();
+				ArrayList<Settings> setts = optimals.get(i.getSheetName());
+				Settings set = Utils.getSettings(setts, year - 1);
+				ArrayList<FinalEntry> fes = XlSUtils.runWithSettingsList(i, XlSUtils.selectAllAll(i), set);
+				float profit = Utils.getProfit(i, fes, set);
+				total += profit;
+				// System.out.println("Profit with best sets for " +
+				// i.getSheetName() + " : " + profit);
+			}
+			totalPeriod += total;
+			System.out.println("Total for " + year + " : " + total);
+			workbookdata.close();
+			filedata.close();
+		}
+
+		System.out.println("Avg profit per year using last year best setts: " + totalPeriod / 10);
+
 	}
 
 	public static void findSettings(int year) throws IOException, ParseException {
@@ -180,116 +249,6 @@ public class Test {
 		}
 		workbook.close();
 		workbookdata.close();
-	}
-
-	public static void runForSeason(int year) {
-		ArrayList<FinalEntry> finals = new ArrayList<>();
-		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (int i = 2013; i < 2014; i++) {
-			// result = SQLiteJDBC.select(i);
-			for (ExtendedFixture f : SQLiteJDBC.select(i)) {
-				if (f.competition.equals("CL")) {
-					float finalScore = poisson(f, i) * 0.1f + 0.9f * basic2(f, i, 0.6f, 0.3f, 0.1f);
-
-					finals.add(new FinalEntry(f, finalScore, "Basic1",
-							new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
-				}
-			}
-		}
-
-		printSuccessRate(finals, "finals50");
-
-		ArrayList<FinalEntry> finals55 = new ArrayList<>();
-		ArrayList<FinalEntry> finals60 = new ArrayList<>();
-		ArrayList<FinalEntry> finals65 = new ArrayList<>();
-		ArrayList<FinalEntry> finals70 = new ArrayList<>();
-		ArrayList<FinalEntry> finals75 = new ArrayList<>();
-		ArrayList<FinalEntry> finals80 = new ArrayList<>();
-		for (FinalEntry fe : finals) {
-			if (fe.prediction >= 0.80d || fe.prediction <= 0.20d)
-				finals80.add(fe);
-			if (fe.prediction >= 0.75d || fe.prediction <= 0.25d)
-				finals75.add(fe);
-			if (fe.prediction >= 0.70d || fe.prediction <= 0.30d)
-				finals70.add(fe);
-			if (fe.prediction >= 0.65d || fe.prediction <= 0.35d)
-				finals65.add(fe);
-			if (fe.prediction >= 0.60d || fe.prediction <= 0.40d)
-				finals60.add(fe);
-			if (fe.prediction >= 0.55d || fe.prediction <= 0.45d)
-				finals55.add(fe);
-		}
-
-		// printSuccessRate(finals55, "finals55");
-		// printSuccessRate(finals60, "finals60");
-		// printSuccessRate(finals65, "finals65");
-		// printSuccessRate(finals70, "finals70");
-		// printSuccessRate(finals75, "finals75");
-		// printSuccessRate(finals80, "finals80");
-
-		ArrayList<FinalEntry> over50 = new ArrayList<>();
-		// ArrayList<FinalEntry> over55 = new ArrayList<>();
-		// ArrayList<FinalEntry> over60 = new ArrayList<>();
-		// ArrayList<FinalEntry> over65 = new ArrayList<>();
-		// ArrayList<FinalEntry> over70 = new ArrayList<>();
-		// ArrayList<FinalEntry> over75 = new ArrayList<>();
-		// ArrayList<FinalEntry> over80 = new ArrayList<>();
-		for (FinalEntry fe : finals) {
-			// if (fe.prediction >= 0.80d)
-			// over80.add(fe);
-			// if (fe.prediction >= 0.75d)
-			// over75.add(fe);
-			// if (fe.prediction >= 0.70d)
-			// over70.add(fe);
-			// if (fe.prediction >= 0.65d)
-			// over65.add(fe);
-			// if (fe.prediction >= 0.60d)
-			// over60.add(fe);
-			// if (fe.prediction >= 0.55d)
-			// over55.add(fe);
-			if (fe.prediction >= 0.55d)
-				over50.add(fe);
-		}
-
-		printSuccessRate(over50, "over50");
-		// printSuccessRate(over55, "over55");
-		// printSuccessRate(over60, "over60");
-		// printSuccessRate(over65, "over65");
-		// printSuccessRate(over70, "over70");
-		// printSuccessRate(over75, "over75");
-		// printSuccessRate(over80, "over80");
-
-		ArrayList<FinalEntry> under50 = new ArrayList<>();
-		// ArrayList<FinalEntry> under45 = new ArrayList<>();
-		// ArrayList<FinalEntry> under40 = new ArrayList<>();
-		// ArrayList<FinalEntry> under35 = new ArrayList<>();
-		// ArrayList<FinalEntry> under30 = new ArrayList<>();
-		// ArrayList<FinalEntry> under25 = new ArrayList<>();
-		// ArrayList<FinalEntry> under20 = new ArrayList<>();
-		for (FinalEntry fe : finals) {
-			// if (fe.prediction <= 0.20d)
-			// under20.add(fe);
-			// if (fe.prediction <= 0.25d)
-			// under25.add(fe);
-			// if (fe.prediction <= 0.30d)
-			// under30.add(fe);
-			// if (fe.prediction <= 0.35d)
-			// under35.add(fe);
-			// if (fe.prediction <= 0.40d)
-			// under40.add(fe);
-			// if (fe.prediction <= 0.45d)
-			// under45.add(fe);
-			if (fe.prediction < 0.45d)
-				under50.add(fe);
-		}
-
-		printSuccessRate(under50, "under50");
-		// printSuccessRate(under45, "under45");
-		// printSuccessRate(under40, "under40");
-		// printSuccessRate(under35, "under35");
-		// printSuccessRate(under30, "under30");
-		// printSuccessRate(under25, "under25");
-		// printSuccessRate(under20, "under20");
 	}
 
 	public static void runForSeasonXYZ(int year) {

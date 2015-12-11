@@ -353,4 +353,12 @@ public class Utils {
 		return filtered;
 	}
 
+	public static Settings getSettings(ArrayList<Settings> setts, int year) {
+		for (Settings i : setts) {
+			if (i.year == year)
+				return i;
+		}
+		return null;
+	}
+
 }

@@ -3,7 +3,7 @@ package settings;
 public class Settings {
 
 	public String league;
-	int year;
+	public int year;
 	public float basic;
 	public float poisson;
 	public float weightedPoisson;
@@ -44,10 +44,15 @@ public class Settings {
 		this.maxOdds = other.maxOdds;
 	}
 
+	public Settings withYear(int year) {
+		this.year = year;
+		return this;
+	}
+
 	@Override
 	public String toString() {
-		return league + " basic*" + format(basic) + " poisson*" + format(poisson) + " weightedPoisson*"
-				+ format(weightedPoisson) + " minOdds " + format(minOdds) + " maxOdds " + format(maxOdds) + " thold "
+		return league + " basic*" + format(basic) + " poisson*" + format(poisson) + " weighted*"
+				+ format(weightedPoisson) + " min " + format(minOdds) + " max " + format(maxOdds) + " thold "
 				+ format(threshold) + " lower " + format(lowerBound) + " upper " + format(upperBound)
 				+ String.format(" %.2f%% ", successRate * 100) + format(profit);
 

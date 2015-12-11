@@ -123,7 +123,9 @@ public class XlSUtils {
 						&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
 					int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 					int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-
+					if (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() != 0
+							|| row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() != 0)
+						continue;
 					float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
 					float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
 					float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
@@ -418,6 +420,9 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
 				int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 				int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
+				if (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() != 0
+						|| row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() != 0)
+					continue;
 				float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
 				float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
 				float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
@@ -461,7 +466,7 @@ public class XlSUtils {
 		return results;
 	}
 
-	public static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, float minOdds)
+	public static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
 			throws IOException {
 		float bestWinPercent = 0;
 		float bestProfit = Float.NEGATIVE_INFINITY;
@@ -539,14 +544,14 @@ public class XlSUtils {
 		// System.out.println("Best profit found by find xy " + bestProfit);
 		if (!flagw)
 			return new Settings(sheet.getSheetName(), bestBasic * 0.05f, 1.0f - bestBasic * 0.05f, 0.0f, 0.55f, 0.55f,
-					0.55f, 1, 10, bestWinPercent, bestProfit);
+					0.55f, 1, 10, bestWinPercent, bestProfit).withYear(year);
 		else
 			return new Settings(sheet.getSheetName(), bestBasic * 0.05f, 0f, 1.0f - bestBasic * 0.05f, 0.55f, 0.55f,
-					0.55f, 1, 10, bestWinPercent, bestProfit);
+					0.55f, 1, 10, bestWinPercent, bestProfit).withYear(year);
 
 	}
 
-	public static Settings runForLeagueWithOddsFull(HSSFSheet sheet, ArrayList<ExtendedFixture> all, float minOdds)
+	public static Settings runForLeagueWithOddsFull(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
 			throws IOException {
 		float bestWinPercent = 0;
 		float bestProfit = Float.NEGATIVE_INFINITY;
@@ -599,7 +604,7 @@ public class XlSUtils {
 
 		// System.out.println("Best profit found by find xy " + bestProfit);
 		return new Settings(sheet.getSheetName(), bestBasic * 0.05f, bestPoisson * 0.05f, bestWeighed * 0.05f, 0.55f,
-				0.55f, 0.55f, 1, 10, bestWinPercent, bestProfit);
+				0.55f, 0.55f, 1, 10, bestWinPercent, bestProfit).withYear(year);
 
 	}
 
@@ -748,11 +753,22 @@ public class XlSUtils {
 
 	public static Settings predictionSettings(HSSFSheet sheet, int year) throws IOException {
 		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
-		Settings temp = runForLeagueWithOdds(sheet, data, 1);
+		Settings temp = runForLeagueWithOdds(sheet, data, year);
+		// System.out.println(temp);
 		ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
+
+		 temp = findIntervalReal(finals, sheet, year, temp);
+		 finals = runWithSettingsList(sheet, data, temp);
+
+		// System.out.println(temp);
 		temp = findThreshold(sheet, finals, temp);
+		// System.out.println(temp);
 		temp = trustInterval(sheet, finals, temp);
-		temp = findIntervalReal(finals, sheet, year, temp);
+		// System.out.println(temp);
+
+//		temp = findIntervalReal(finals, sheet, year, temp);
+
+		// System.out.println("======================================================");
 		return temp;
 	}
 
@@ -771,7 +787,7 @@ public class XlSUtils {
 			// }
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
-			Settings temp = runForLeagueWithOdds(sheet, data, 1);
+			Settings temp = runForLeagueWithOdds(sheet, data, year);
 			// System.out.println("match " + i + temp);
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
 			temp = findThreshold(sheet, finals, temp);
@@ -790,9 +806,10 @@ public class XlSUtils {
 
 	private static Settings trustInterval(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial)
 			throws IOException {
-//		System.out.println("===========================");
-//		System.out.println(
-//				"lower: " + initial.lowerBound + " upper: " + initial.upperBound + " profit: " + initial.profit);
+		// System.out.println("===========================");
+		// System.out.println(
+		// "lower: " + initial.lowerBound + " upper: " + initial.upperBound + "
+		// profit: " + initial.profit);
 		Settings trset = new Settings(initial);
 
 		finals.sort(new Comparator<FinalEntry>() {
@@ -861,14 +878,15 @@ public class XlSUtils {
 			trset = initial;
 		}
 
-//		System.out.println("lower: " + trset.lowerBound + " upper: " + trset.upperBound + " profit: " + trset.profit);
-		return trset;
+		// System.out.println("lower: " + trset.lowerBound + " upper: " +
+		// trset.upperBound + " profit: " + trset.profit);
+		return trset.withYear(initial.year);
 	}
 
 	public static Settings findThreshold(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
 		// System.out.println("thold: " + initial.threshold + " profit: " +
 		// initial.profit);
-		Settings trset = new Settings(initial);
+		Settings trset = new Settings(initial).withYear(initial.year);
 
 		float bestProfit = initial.profit;
 		float bestThreshold = initial.threshold;
@@ -942,7 +960,7 @@ public class XlSUtils {
 		}
 
 		// System.out.println("after finding interval" + initial);
-		return newSetts;
+		return newSetts.withYear(initial.year);
 	}
 
 }
