@@ -51,6 +51,11 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		return result.goalsHomeTeam + result.goalsAwayTeam;
 	}
 
+	public double getHalfTimeGoals() {
+
+		return HTresult.goalsHomeTeam + HTresult.goalsAwayTeam;
+	}
+
 	public boolean bothTeamScore() {
 		return ((result.goalsAwayTeam > 0) && (result.goalsHomeTeam > 0));
 	}

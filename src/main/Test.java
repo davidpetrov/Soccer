@@ -44,13 +44,13 @@ public class Test {
 		// }
 		// System.out.println("Avg profit is " + (total / 11));
 
-		// makePredictions();
+//		 makePredictions();
 
 		// stats();
 
-		// optimals();
+		optimals();
 
-		optimalsbyCompetition();
+		// optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -115,7 +115,7 @@ public class Test {
 				HSSFSheet i = (HSSFSheet) sh.next();
 				Settings set = XlSUtils.predictionSettings(i, year);
 				total += set.profit;
-				// System.out.println(set);
+				System.out.println(set);
 			}
 
 			System.out.println("Total profit for " + year + " is: " + total);

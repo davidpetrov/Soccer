@@ -361,4 +361,33 @@ public class Utils {
 		return null;
 	}
 
+	public static void overUnderStats(ArrayList<FinalEntry> finals) {
+		int overCnt = 0, underCnt = 0;
+		float overProfit = 0f, underProfit = 0f;
+		for (FinalEntry i : finals) {
+			if (i.prediction > i.upper) {
+				overCnt++;
+				overProfit += i.success() ? (i.fixture.maxOver - 1f) : -1f;
+			}
+			if(i.prediction<i.lower){
+				underCnt++;
+				underProfit+= i.success() ? (i.fixture.maxUnder - 1f) : -1f;
+			}
+		}
+		
+		System.out.println(overCnt + " overs with profit: " +overProfit);
+		System.out.println(underCnt + " unders with profit: " +underProfit);
+	}
+
+	public static float countOverHalfTime(ArrayList<ExtendedFixture> fixtures, int i) {
+		
+		int count = 0;
+		for (ExtendedFixture f : fixtures) {
+			if (f.getHalfTimeGoals() >= i)
+				count++;
+		}
+
+		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
+	}
+
 }
