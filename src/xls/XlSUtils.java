@@ -34,24 +34,6 @@ public class XlSUtils {
 	// public static final DateFormat format = new
 	// SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-	public static void test() {
-		try {
-			FileInputStream file = new FileInputStream(
-					new File("C:\\Users\\Admin\\workspace\\Soccer\\all-euro-data-2014-2015.xls"));
-
-			// Get the workbook instance for XLS file
-			HSSFWorkbook workbook = new HSSFWorkbook(file);
-
-			// Get first sheet from the workbook
-			HSSFSheet sheet = workbook.getSheetAt(0);
-
-			// extractExcelContentByColumnIndex(sheet, 2);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public static int getColumnIndex(HSSFSheet sheet, String columnName) {
 		Iterator<Cell> it = sheet.getRow(0).cellIterator();
 		while (it.hasNext()) {
@@ -60,38 +42,6 @@ public class XlSUtils {
 				return cell.getColumnIndex();
 		}
 		return -1;
-	}
-
-	public static ArrayList<String> extractExcelContentByColumnIndex(HSSFSheet sheet, int columnIndex) {
-		ArrayList<String> columndata = null;
-		Iterator<Row> rowIterator = sheet.iterator();
-		columndata = new ArrayList<>();
-
-		while (rowIterator.hasNext()) {
-			Row row = rowIterator.next();
-			Iterator<Cell> cellIterator = row.cellIterator();
-			while (cellIterator.hasNext()) {
-				Cell cell = cellIterator.next();
-
-				if (row.getRowNum() > 0) { // To filter column headings
-					if (cell.getColumnIndex() == columnIndex) {// To match
-																// column index
-						switch (cell.getCellType()) {
-						case Cell.CELL_TYPE_STRING:
-							columndata.add(cell.getStringCellValue());
-							break;
-
-						case Cell.CELL_TYPE_NUMERIC:
-							columndata.add(cell.getNumericCellValue() + "");
-							break;
-						}
-					}
-				}
-			}
-		}
-		System.out.println(columndata);
-
-		return columndata;
 	}
 
 	public static Date getDate(HSSFSheet sheet, String home, String away) {
@@ -232,7 +182,7 @@ public class XlSUtils {
 	public static float halfTimeOnly(ExtendedFixture f, HSSFSheet sheet) {
 		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 40, f.date);
 		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 40, f.date);
-		float overOneAVG = Utils.countOverHalfTime(lastAwayTeam, 1) + Utils.countOverHalfTime(lastAwayTeam, 1);
+		float overOneAVG = Utils.countOverHalfTime(lastHomeTeam, 1) + Utils.countOverHalfTime(lastAwayTeam, 1);
 		return overOneAVG / 2;
 	}
 
@@ -503,7 +453,7 @@ public class XlSUtils {
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet, f.date);
-			weightedPoissons[i] =poissonWeighted(f, sheet, f.date)/*halfTimeOnly(f, sheet)*/;
+			weightedPoissons[i] = (halfTimeOnly(f, sheet) + poissonWeighted(f, sheet, f.date)) / 2;
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -775,7 +725,7 @@ public class XlSUtils {
 
 	public static Settings predictionSettings(HSSFSheet sheet, int year) throws IOException {
 		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
-		Settings temp = runForLeagueWithOddsFull(sheet, data, year);
+		Settings temp = runForLeagueWithOdds(sheet, data, year);
 		// System.out.println(temp);
 		ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
 
@@ -814,10 +764,12 @@ public class XlSUtils {
 			Settings temp = runForLeagueWithOdds(sheet, data, year);
 			// System.out.println("match " + i + temp);
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
+			temp = findIntervalReal(finals, sheet, year, temp);
+			finals = runWithSettingsList(sheet, data, temp);
 			temp = findThreshold(sheet, finals, temp);
 			temp = trustInterval(sheet, finals, temp);
 
-			temp = findIntervalReal(finals, sheet, year, temp);
+			// temp = findIntervalReal(finals, sheet, year, temp);
 			finals = runWithSettingsList(sheet, current, temp);
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(sheet, finals, temp);

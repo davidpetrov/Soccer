@@ -37,18 +37,22 @@ public class Test {
 
 		// float total = 0f;
 		// try {
-		// for (int year = 2015; year <= 2015; year++)
+		// for (int year = 2005; year <= 2015; year++)
 		// total += simulation(year);
 		// } catch (InterruptedException | ExecutionException | IOException e) {
 		// e.printStackTrace();
 		// }
 		// System.out.println("Avg profit is " + (total / 11));
 
-//		 makePredictions();
+		// makePredictions();
 
 		// stats();
 
-		optimals();
+		try {
+			optimals();
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
 
 		// optimalsbyCompetition();
 
@@ -80,7 +84,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(6);
+		ExecutorService pool = Executors.newFixedThreadPool(8);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
@@ -99,13 +103,14 @@ public class Test {
 		return totalProfit;
 	}
 
-	public static void optimals() throws IOException {
+	public static void optimals() throws IOException, InterruptedException, ExecutionException {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
 		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
-
+			ExecutorService pool = Executors.newFixedThreadPool(6);
+			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
@@ -113,14 +118,18 @@ public class Test {
 			Iterator<Sheet> sh = workbookdata.sheetIterator();
 			while (sh.hasNext()) {
 				HSSFSheet i = (HSSFSheet) sh.next();
-				Settings set = XlSUtils.predictionSettings(i, year);
-				total += set.profit;
-				System.out.println(set);
+				threadArray.add(pool.submit(new RunnerOptimals(i, year)));
+			}
+
+			for (Future<Float> fd : threadArray) {
+				total += fd.get();
 			}
 
 			System.out.println("Total profit for " + year + " is: " + total);
+			
 			totalTotal += total;
 			workbookdata.close();
+			pool.shutdown();
 			filedata.close();
 		}
 		System.out.println("Average is:" + totalTotal / 11);
