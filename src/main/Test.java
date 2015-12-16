@@ -35,26 +35,26 @@ public class Test {
 
 		// simplePredictions();
 
-		// float total = 0f;
-		// try {
-		// for (int year = 2005; year <= 2015; year++)
-		// total += simulation(year);
-		// } catch (InterruptedException | ExecutionException | IOException e) {
-		// e.printStackTrace();
-		// }
-		// System.out.println("Avg profit is " + (total / 11));
+//		float total = 0f;
+//		try {
+//			for (int year = 2005; year <= 2015; year++)
+//				total += simulation(year);
+//		} catch (InterruptedException | ExecutionException | IOException e) {
+//			e.printStackTrace();
+//		}
+//		System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
 		// stats();
 
-		try {
-			optimals();
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
+		 try {
+		 optimals();
+		 } catch (InterruptedException | ExecutionException e) {
+		 e.printStackTrace();
+		 }
 
-		// optimalsbyCompetition();
+//		 optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -84,7 +84,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(8);
+		ExecutorService pool = Executors.newFixedThreadPool(7);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
@@ -109,7 +109,7 @@ public class Test {
 
 		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
-			ExecutorService pool = Executors.newFixedThreadPool(6);
+			ExecutorService pool = Executors.newFixedThreadPool(8);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -126,7 +126,7 @@ public class Test {
 			}
 
 			System.out.println("Total profit for " + year + " is: " + total);
-			
+
 			totalTotal += total;
 			workbookdata.close();
 			pool.shutdown();
@@ -260,107 +260,8 @@ public class Test {
 		workbookdata.close();
 	}
 
-	public static void runForSeasonXYZ(int year) {
-		for (int x = 0; x <= 20; x++) {
-			int w = 20 - x;
-			for (int y = 0; y <= w; y++) {
-				int z = w - y;
-				ArrayList<FinalEntry> finals = new ArrayList<>();
-				for (int i = 2014; i < 2015; i++) {
-					for (ExtendedFixture f : SQLiteJDBC.select(i)) {
-						float finalScore = basic2(f, i, x * 0.05f, y * 0.05f, z * 0.05f);
 
-						finals.add(new FinalEntry(f, finalScore, "Basic1",
-								new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
-					}
-				}
 
-				System.out.println("-----------------------");
-				System.out.println("For " + x + " " + y + " " + z);
-				printSuccessRate(finals, "finals50");
-
-				ArrayList<FinalEntry> over50 = new ArrayList<>();
-				for (FinalEntry fe : finals)
-					if (fe.prediction >= 0.50d)
-						over50.add(fe);
-				printSuccessRate(over50, "over50");
-				ArrayList<FinalEntry> under50 = new ArrayList<>();
-				for (FinalEntry fe : finals)
-					if (fe.prediction <= 0.50d)
-						under50.add(fe);
-				printSuccessRate(under50, "under50");
-			}
-		}
-	}
-
-	public static void runForSeasonXY(int year) {
-		for (int x = 0; x <= 20; x++) {
-			int y = 20 - x;
-			ArrayList<FinalEntry> finals = new ArrayList<>();
-			for (int i = 2014; i < 2015; i++) {
-				for (ExtendedFixture f : SQLiteJDBC.select(i)) {
-					if (f.competition.equals("PL")) {
-						float finalScore = x * 0.05f * basic2(f, i, 0.6f, 0.3f, 0.1f) + y * 0.05f * poisson(f, i);
-
-						finals.add(new FinalEntry(f, finalScore, "Basic1",
-								new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
-					}
-				}
-			}
-
-			System.out.println("-----------------------");
-			System.out.println("For " + x + " " + y);
-			printSuccessRate(finals, "finals50");
-
-			ArrayList<FinalEntry> over50 = new ArrayList<>();
-			for (FinalEntry fe : finals)
-				if (fe.prediction >= 0.55d)
-					over50.add(fe);
-			printSuccessRate(over50, "over50");
-			ArrayList<FinalEntry> under50 = new ArrayList<>();
-			for (FinalEntry fe : finals)
-				if (fe.prediction <= 0.55d)
-					under50.add(fe);
-			printSuccessRate(under50, "under50");
-		}
-	}
-
-	public static void runByCompetitionXY(int year) {
-		// map float is basic %
-		HashMap<String, Float> best = new HashMap<>();
-
-		for (String league : SQLiteJDBC.getLeagues(2013)) {
-			float bestPercent = 0;
-			float bestValue = 0;
-			for (int x = 0; x <= 20; x++) {
-				int y = 20 - x;
-				ArrayList<FinalEntry> finals = new ArrayList<>();
-				for (int i = 2013; i < 2014; i++) {
-					for (ExtendedFixture f : SQLiteJDBC.select(i)) {
-						if (f.competition.equals(league)) {
-							float finalScore = x * 0.05f * basic2(f, i, 0.6f, 0.3f, 0.1f)
-									+ y * 0.05f * poissonWeighted(f, i);
-							System.out.println(f + " " + poissonWeighted(f, i));
-
-							finals.add(new FinalEntry(f, finalScore, "Basic1",
-									new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f));
-						}
-					}
-				}
-
-				float current = Utils.getSuccessRate(finals);
-				if (current > bestPercent) {
-					bestPercent = current;
-					bestValue = x;
-				}
-
-			}
-
-			System.out.println(league + " basic*" + bestValue * 0.05d + " poisson*" + (20 - bestValue) * 0.05d + " = "
-					+ bestPercent);
-			best.put(league, bestValue);
-		}
-	}
 
 	public static void printSuccessRate(ArrayList<FinalEntry> list, String listName) {
 		int successOver50 = 0, failureOver50 = 0;

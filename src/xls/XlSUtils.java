@@ -179,11 +179,14 @@ public class XlSUtils {
 		return d * allGamesAVG + e * homeAwayAVG + z * BTSAVG;
 	}
 
-	public static float halfTimeOnly(ExtendedFixture f, HSSFSheet sheet) {
+	public static float halfTimeOnly(ExtendedFixture f, HSSFSheet sheet, int over) {
 		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 40, f.date);
 		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 40, f.date);
-		float overOneAVG = Utils.countOverHalfTime(lastHomeTeam, 1) + Utils.countOverHalfTime(lastAwayTeam, 1);
-		return overOneAVG / 2;
+
+		float overAVG = over == 1
+				? (Utils.countOverHalfTime(lastHomeTeam, 1) + Utils.countOverHalfTime(lastAwayTeam, 1)) / 2
+				: (Utils.countOverHalfTime(lastHomeTeam, 2) + Utils.countOverHalfTime(lastAwayTeam, 2)) / 2;
+		return overAVG;
 	}
 
 	public static float poisson(ExtendedFixture f, HSSFSheet sheet, Date date) {
@@ -445,6 +448,8 @@ public class XlSUtils {
 		float bestBasic = 0;
 		float bestPoisson = 0;
 
+		float overOneHT = checkHalfTimeOptimal(sheet, all, year);
+
 		float[] basics = new float[all.size()];
 		float[] poissons = new float[all.size()];
 		float[] weightedPoissons = new float[all.size()];
@@ -453,7 +458,9 @@ public class XlSUtils {
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet, f.date);
-			weightedPoissons[i] = (halfTimeOnly(f, sheet) + poissonWeighted(f, sheet, f.date)) / 2;
+			weightedPoissons[i] = 0.5f
+					* (overOneHT * halfTimeOnly(f, sheet, 1) + (1f - overOneHT) * halfTimeOnly(f, sheet, 2))
+					+ 0.5f * poissonWeighted(f, sheet, f.date);
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -539,7 +546,7 @@ public class XlSUtils {
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet, f.date);
-			weightedPoissons[i] = poissonWeighted(f, sheet, f.date);
+			weightedPoissons[i] = 0.5f * halfTimeOnly(f, sheet, 1) + 0.5f * poissonWeighted(f, sheet, f.date);
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -580,47 +587,42 @@ public class XlSUtils {
 
 	}
 
-	public static Settings runForLeagueWithRestrictedOdds(HSSFSheet sheet) throws IOException, ParseException {
-		long start = System.currentTimeMillis();
-		ArrayList<ExtendedFixture> all = selectAll(sheet);
-		Settings initial = runForLeagueWithOdds(sheet, all, 1);
-		ArrayList<FinalEntry> finals = runWithoutMinOddsSettings(sheet, all, initial);
-		float profit = initial.profit;
-		for (int x = 0; x < 50; x++) {
-			float currentMin = 1.3f + x * 0.02f;
-			Settings newSetts = new Settings(initial);
-			newSetts.minOdds = currentMin;
-			ArrayList<FinalEntry> filtered = Utils.filterFinals(sheet, finals, currentMin);
-			float currentProfit = Utils.getProfit(sheet, Utils.filterFinals(sheet, finals, currentMin));
+	public static float checkHalfTimeOptimal(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) {
+		float bestProfit = Float.NEGATIVE_INFINITY;
+		float overOneValue = 0f;
 
-			if (currentProfit > profit) {
-				profit = currentProfit;
-				initial.minOdds = currentMin;
-				initial.profit = profit;
-				initial.successRate = Utils.getSuccessRate(filtered);
+		float[] overOnes = new float[all.size()];
+		float[] overTwos = new float[all.size()];
 
+		for (int i = 0; i < all.size(); i++) {
+			ExtendedFixture f = all.get(i);
+
+			overOnes[i] = halfTimeOnly(f, sheet, 1);
+			overTwos[i] = halfTimeOnly(f, sheet, 2);
+		}
+
+		for (int x = 0; x <= 2; x++) {
+			int y = 2 - x;
+			ArrayList<FinalEntry> finals = new ArrayList<>();
+			for (int j = 0; j < all.size(); j++) {
+				ExtendedFixture f = all.get(j);
+				float finalScore = x * 0.5f * overOnes[j] + y * 0.5f * overTwos[j];
+
+				FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
+						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+				if (!fe.prediction.equals(Float.NaN))
+					finals.add(fe);
+			}
+			Settings set = new Settings(sheet.getSheetName(), 0, 0, 0, 0.55f, 0.55f, 0.55f, 1, 10, 0, bestProfit);
+			float currentProfit = Utils.getProfit(sheet, finals, set);
+			if (currentProfit > bestProfit) {
+				bestProfit = currentProfit;
+				overOneValue = x * 0.5f;
 			}
 
 		}
 
-		for (int x = 0; x < 50; x++) {
-			float currentMax = initial.minOdds + (x + 1) * 0.02f;
-			Settings newSetts = new Settings(initial);
-			newSetts.maxOdds = currentMax;
-			ArrayList<FinalEntry> filtered = Utils.filterMaxFinals(sheet, finals, currentMax);
-			float currentProfit = Utils.getProfit(sheet, filtered);
-
-			if (currentProfit > profit) {
-				profit = currentProfit;
-				initial.maxOdds = currentMax;
-				initial.profit = profit;
-				initial.successRate = Utils.getSuccessRate(filtered);
-
-			}
-
-		}
-		System.out.println((System.currentTimeMillis() - start) / 1000d + "trust  sec ");
-		return initial;
+		return overOneValue;
 	}
 
 	public static Settings findInterval(ArrayList<ExtendedFixture> all, HSSFSheet sheet, int year)
@@ -747,7 +749,6 @@ public class XlSUtils {
 	}
 
 	public static float realisticRun(HSSFSheet sheet, int year) throws IOException {
-		ArrayList<FinalEntry> totals = new ArrayList<>();
 		float profit = 0.0f;
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
 		int maxMatchDay = addMatchDay(sheet, all);
