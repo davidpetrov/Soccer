@@ -762,15 +762,19 @@ public class XlSUtils {
 			// }
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			data = Utils.filterByOdds(data, 1.7f, 2.1f);
 			Settings temp = runForLeagueWithOdds(sheet, data, year);
 			// System.out.println("match " + i + temp);
+			temp.maxOdds = 2.1f;
+			temp.minOdds = 1.7f;
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
-			temp = findIntervalReal(finals, sheet, year, temp);
-			finals = runWithSettingsList(sheet, data, temp);
+			// temp = findIntervalReal(finals, sheet, year, temp);
+			// finals = runWithSettingsList(sheet, data, temp);
 			temp = findThreshold(sheet, finals, temp);
 			temp = trustInterval(sheet, finals, temp);
 
 			// temp = findIntervalReal(finals, sheet, year, temp);
+			current=Utils.filterByOdds(current, 1.7f, 2.1f);
 			finals = runWithSettingsList(sheet, current, temp);
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(sheet, finals, temp);

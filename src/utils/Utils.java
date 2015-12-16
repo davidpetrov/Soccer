@@ -369,18 +369,18 @@ public class Utils {
 				overCnt++;
 				overProfit += i.success() ? (i.fixture.maxOver - 1f) : -1f;
 			}
-			if(i.prediction<i.lower){
+			if (i.prediction < i.lower) {
 				underCnt++;
-				underProfit+= i.success() ? (i.fixture.maxUnder - 1f) : -1f;
+				underProfit += i.success() ? (i.fixture.maxUnder - 1f) : -1f;
 			}
 		}
-		
-		System.out.println(overCnt + " overs with profit: " +overProfit);
-		System.out.println(underCnt + " unders with profit: " +underProfit);
+
+		System.out.println(overCnt + " overs with profit: " + overProfit);
+		System.out.println(underCnt + " unders with profit: " + underProfit);
 	}
 
 	public static float countOverHalfTime(ArrayList<ExtendedFixture> fixtures, int i) {
-		
+
 		int count = 0;
 		for (ExtendedFixture f : fixtures) {
 			if (f.getHalfTimeGoals() >= i)
@@ -388,6 +388,15 @@ public class Utils {
 		}
 
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
+	}
+
+	public static ArrayList<ExtendedFixture> filterByOdds(ArrayList<ExtendedFixture> data, float min, float max) {
+		ArrayList<ExtendedFixture> filtered = new ArrayList<>();
+		for (ExtendedFixture i : data) {
+			if (i.maxOver <= max && i.maxOver >= min)
+				filtered.add(i);
+		}
+		return filtered;
 	}
 
 }

@@ -35,24 +35,24 @@ public class Test {
 
 		// simplePredictions();
 
-//		float total = 0f;
-//		try {
-//			for (int year = 2005; year <= 2015; year++)
-//				total += simulation(year);
-//		} catch (InterruptedException | ExecutionException | IOException e) {
-//			e.printStackTrace();
-//		}
-//		System.out.println("Avg profit is " + (total / 11));
+		float total = 0f;
+		try {
+			for (int year = 2005; year <= 2015; year++)
+				total += simulation(year);
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
 		// stats();
 
-		 try {
-		 optimals();
-		 } catch (InterruptedException | ExecutionException e) {
-		 e.printStackTrace();
-		 }
+//		 try {
+//		 optimals();
+//		 } catch (InterruptedException | ExecutionException e) {
+//		 e.printStackTrace();
+//		 }
 
 //		 optimalsbyCompetition();
 
@@ -84,7 +84,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(7);
+		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
