@@ -17,7 +17,7 @@ public class MinMaxOdds {
 	public static float getMinOdds(String league) {
 		switch (league) {
 		case "E0":
-			return 1.76f;
+			return 1.66f;
 		case "E1":
 			return 1.8f;
 		case "E2":
@@ -69,7 +69,7 @@ public class MinMaxOdds {
 	public static float getMaxOdds(String league) {
 		switch (league) {
 		case "E0":
-			return 2.26f;
+			return 10f;
 		case "E1":
 			return 2.2f;
 		case "E2":

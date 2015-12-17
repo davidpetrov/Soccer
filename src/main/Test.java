@@ -46,18 +46,33 @@ public class Test {
 
 		// makePredictions();
 
+//		System.out.println(XlSUtils.aggregateInterval(2005, 2015, "E0"));
+
 		// stats();
 
-//		try {
-//			optimals();
-//		} catch (InterruptedException | ExecutionException e) {
-//			e.printStackTrace();
-//		}
+//		 try {
+//		 optimals();
+//		 } catch (InterruptedException | ExecutionException e) {
+//		 e.printStackTrace();
+//		 }
 
-//		 optimalsbyCompetition();
+		// optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
+	}
+	
+	public static final void aggregateInterval() throws IOException{
+		String base = new File("").getAbsolutePath();
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+			System.out.println(XlSUtils.aggregateInterval(2005, 2015, sh.getSheetName()));
+		}
+		workbook.close();
 	}
 
 	public static void stats() throws IOException {
@@ -107,7 +122,7 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2005; year <= 2015; year++) {
+		for (int year = 2010; year <= 2015; year++) {
 			float total = 0f;
 			ExecutorService pool = Executors.newFixedThreadPool(8);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
@@ -259,9 +274,6 @@ public class Test {
 		workbook.close();
 		workbookdata.close();
 	}
-
-
-
 
 	public static void printSuccessRate(ArrayList<FinalEntry> list, String listName) {
 		int successOver50 = 0, failureOver50 = 0;

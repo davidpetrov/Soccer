@@ -2,6 +2,7 @@ package xls;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -946,6 +947,89 @@ public class XlSUtils {
 
 		// System.out.println("after finding interval" + initial);
 		return newSetts.withYear(initial.year);
+	}
+
+	public static Settings aggregateInterval(int start, int end, String league) throws IOException {
+		float bestProfit = Float.NEGATIVE_INFINITY;
+		float bestMinOdds = 1.0f;
+		int bestminx = 0;
+		float bestMaxOdds = 10f;
+		Settings set = new Settings(league, 0.6f, 0.2f, 0.2f, 0.55f, 0.55f, 0.55f, 1, 10, 0.5f, bestProfit);
+
+		ArrayList<ArrayList<ExtendedFixture>> byYear = new ArrayList<>();
+		ArrayList<HSSFSheet> sheets = new ArrayList<>();
+		for (int year = start; year <= end; year++) {
+			String base = new File("").getAbsolutePath();
+			FileInputStream file = new FileInputStream(
+					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			HSSFWorkbook workbook = new HSSFWorkbook(file);
+			HSSFSheet sheet = workbook.getSheet(league);
+
+			byYear.add(selectAllAll(sheet));
+			sheets.add(sheet);
+
+			workbook.close();
+			file.close();
+		}
+
+		for (int x = 0; x < 50; x++) {
+			float currentMin = 1.3f + x * 0.02f;
+			float currentProfit = 0f;
+			for (int i = 0; i < sheets.size(); i++) {
+				HSSFSheet sheet = sheets.get(i);
+				ArrayList<ExtendedFixture> data = byYear.get(i);
+				ArrayList<ExtendedFixture> filtered = Utils.filterByOdds(byYear.get(i), currentMin, 10f);
+
+				Settings temp = runForLeagueWithOdds(sheets.get(i), filtered, start + i);
+
+				temp.minOdds = currentMin;
+				temp.maxOdds = 10f;
+
+				ArrayList<FinalEntry> finals = runWithSettingsList(sheet, filtered, temp);
+
+				temp = findThreshold(sheet, finals, temp);
+				temp = trustInterval(sheet, finals, temp);
+				currentProfit += Utils.getProfit(sheet, finals, temp);
+			}
+
+			if (currentProfit > bestProfit) {
+				bestProfit = currentProfit;
+				bestMinOdds = currentMin;
+			}
+
+		}
+
+		for (int x = bestminx; 1.3f + x * 0.02 < 2.5f; x++) {
+			float currentMax = 1.3f + x * 0.02f;
+			float currentProfit = 0f;
+			for (int i = 0; i < sheets.size(); i++) {
+				HSSFSheet sheet = sheets.get(i);
+				ArrayList<ExtendedFixture> data = byYear.get(i);
+				ArrayList<ExtendedFixture> filtered = Utils.filterByOdds(byYear.get(i), bestMinOdds, currentMax);
+
+				Settings temp = runForLeagueWithOdds(sheets.get(i), filtered, start + i);
+
+				temp.minOdds = bestMinOdds;
+				temp.maxOdds = currentMax;
+
+				ArrayList<FinalEntry> finals = runWithSettingsList(sheet, filtered, temp);
+
+				temp = findThreshold(sheet, finals, temp);
+				temp = trustInterval(sheet, finals, temp);
+				currentProfit += Utils.getProfit(sheet, finals, temp);
+			}
+
+			if (currentProfit > bestProfit) {
+				bestProfit = currentProfit;
+				bestMaxOdds = currentMax;
+			}
+
+		}
+		set.minOdds = bestMinOdds;
+		set.maxOdds = bestMaxOdds;
+		set.profit = bestProfit;
+
+		return set;
 	}
 
 }
