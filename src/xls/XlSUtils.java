@@ -19,6 +19,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
+import constants.MinMaxOdds;
 import main.ExtendedFixture;
 import main.FinalEntry;
 import main.Result;
@@ -761,12 +762,15 @@ public class XlSUtils {
 			// return profit;
 			// }
 
+			float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
+			float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
+
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
-			data = Utils.filterByOdds(data, 1.7f, 2.1f);
+			data = Utils.filterByOdds(data, minOdds, maxOdds);
 			Settings temp = runForLeagueWithOdds(sheet, data, year);
 			// System.out.println("match " + i + temp);
-			temp.maxOdds = 2.1f;
-			temp.minOdds = 1.7f;
+			temp.maxOdds = maxOdds;
+			temp.minOdds = minOdds;
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
 			// temp = findIntervalReal(finals, sheet, year, temp);
 			// finals = runWithSettingsList(sheet, data, temp);
@@ -774,7 +778,7 @@ public class XlSUtils {
 			temp = trustInterval(sheet, finals, temp);
 
 			// temp = findIntervalReal(finals, sheet, year, temp);
-			current=Utils.filterByOdds(current, 1.7f, 2.1f);
+			current = Utils.filterByOdds(current, minOdds, maxOdds);
 			finals = runWithSettingsList(sheet, current, temp);
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(sheet, finals, temp);

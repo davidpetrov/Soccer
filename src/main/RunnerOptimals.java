@@ -20,7 +20,9 @@ public class RunnerOptimals implements Callable<Float> {
 	@Override
 	public Float call() throws Exception {
 		Settings set = XlSUtils.predictionSettings(sh, year);
-//		System.out.println("Total profit for " + year + " is: " + set.profit);
+		System.out.println(year + " " + set);
+		// System.out.println("Total profit for " + year + " is: " +
+		// set.profit);
 		return set.profit;
 	}
 }
