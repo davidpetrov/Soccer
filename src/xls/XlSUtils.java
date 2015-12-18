@@ -977,7 +977,6 @@ public class XlSUtils {
 			float currentProfit = 0f;
 			for (int i = 0; i < sheets.size(); i++) {
 				HSSFSheet sheet = sheets.get(i);
-				ArrayList<ExtendedFixture> data = byYear.get(i);
 				ArrayList<ExtendedFixture> filtered = Utils.filterByOdds(byYear.get(i), currentMin, 10f);
 
 				Settings temp = runForLeagueWithOdds(sheets.get(i), filtered, start + i);
@@ -1004,7 +1003,6 @@ public class XlSUtils {
 			float currentProfit = 0f;
 			for (int i = 0; i < sheets.size(); i++) {
 				HSSFSheet sheet = sheets.get(i);
-				ArrayList<ExtendedFixture> data = byYear.get(i);
 				ArrayList<ExtendedFixture> filtered = Utils.filterByOdds(byYear.get(i), bestMinOdds, currentMax);
 
 				Settings temp = runForLeagueWithOdds(sheets.get(i), filtered, start + i);

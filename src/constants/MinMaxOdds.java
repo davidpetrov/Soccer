@@ -19,47 +19,47 @@ public class MinMaxOdds {
 		case "E0":
 			return 1.66f;
 		case "E1":
-			return 1.8f;
+			return 1.96f;
 		case "E2":
 			return 1.9f;
 		case "E3":
-			return 1.96f;
+			return 2.22f;
 		case "EC":
-			return 1.86f;
+			return 1.78f;
 		case "SC0":
-			return 1.68f;
+			return 1.82f;
 		case "SC1":
-			return 1.84f;
+			return 1.88f;
 		case "SC2":
-			return 1f;
+			return 1.74f;
 		case "SC3":
 			return 1.68f;
 		case "D1":
-			return 1.70f;
+			return 1.86f;
 		case "D2":
-			return 1.62f;
+			return 1.88f;
 		case "SP1":
-			return 1.94f;
+			return 1.36f;
 		case "SP2":
-			return 1.65f;
+			return 1.76f;
 		case "I1":
-			return 1.95f;
+			return 2.04f;
 		case "I2":
-			return 1.66f;
+			return 2.1f;
 		case "F1":
-			return 1.6f;
+			return 2.02f;
 		case "F2":
-			return 1.58f;
+			return 2.22f;
 		case "N1":
-			return 1.5f;
+			return 1.62f;
 		case "B1":
-			return 1.75f;
+			return 1.74f;
 		case "P1":
-			return 1.6f;
+			return 1.66f;
 		case "G1":
 			return 1.6f;
 		case "T1":
-			return 1.78f;
+			return 1.94f;
 			
 		default:
 			return 1.7f;
@@ -71,47 +71,47 @@ public class MinMaxOdds {
 		case "E0":
 			return 10f;
 		case "E1":
-			return 2.2f;
+			return 10f;
 		case "E2":
-			return 2.14f;
+			return 10f;
 		case "E3":
-			return 2.1f;
+			return 2.36f;
 		case "EC":
-			return 2.08f;
+			return 2.3f;
 		case "SC0":
-			return 2.2f;
+			return 2.36f;
 		case "SC1":
 			return 10f;
 		case "SC2":
-			return 10f;
+			return 2.26f;
 		case "SC3":
-			return 2.2f;
+			return 2.4f;
 		case "D1":
-			return 2.2f;
+			return 2.3f;
 		case "D2":
-			return 2.2f;
-		case "SP1":
 			return 2.22f;
+		case "SP1":
+			return 2.1f;
 		case "SP2":
-			return 2.25f;
+			return 10f;
 		case "I1":
-			return 2.3f;
+			return 2.22f;
 		case "I2":
-			return 2.3f;
+			return 2.48f;
 		case "F1":
-			return 2.3f;
+			return 10f;
 		case "F2":
-			return 2.2f;
+			return 2.4f;
 		case "N1":
 			return 2.5f;
 		case "B1":
-			return 2.1f;
+			return 2.3f;
 		case "P1":
-			return 2.5f;
-		case "G1":
-			return 2.2f;
-		case "T1":
 			return 10f;
+		case "G1":
+			return 2.48f;
+		case "T1":
+			return 2.32f;
 		default:
 			return 2.1f;
 		}

@@ -46,8 +46,8 @@ public class Test {
 
 		// makePredictions();
 
-//		System.out.println(XlSUtils.aggregateInterval(2005, 2015, "E0"));
-
+//		aggregateInterval();
+		
 		// stats();
 
 //		 try {
@@ -73,6 +73,7 @@ public class Test {
 			System.out.println(XlSUtils.aggregateInterval(2005, 2015, sh.getSheetName()));
 		}
 		workbook.close();
+		file.close();
 	}
 
 	public static void stats() throws IOException {
