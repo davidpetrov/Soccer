@@ -1,4 +1,4 @@
-package main;
+package runner;
 
 import java.util.concurrent.Callable;
 
@@ -12,7 +12,7 @@ public class RunnerOptimals implements Callable<Float> {
 	public HSSFSheet sh;
 	public int year;
 
-	RunnerOptimals(HSSFSheet sh, int year) {
+	public RunnerOptimals(HSSFSheet sh, int year) {
 		this.sh = sh;
 		this.year = year;
 	}

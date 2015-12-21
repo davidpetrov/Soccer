@@ -25,30 +25,33 @@ import org.json.JSONException;
 import algorithms.Algorithm;
 import algorithms.Basic1;
 import constants.MinMaxOdds;
+import runner.Runner;
+import runner.RunnerAggregateInterval;
+import runner.RunnerOptimals;
 import utils.Api;
 import utils.Utils;
 import xls.XlSUtils;
 
 public class Test {
 
-	public static void main(String[] args) throws JSONException, IOException {
+	public static void main(String[] args) throws JSONException, IOException, InterruptedException, ExecutionException {
 
 		long start = System.currentTimeMillis();
 
 		// simplePredictions();
 
-		float total = 0f;
-		try {
-			for (int year = 2005; year <= 2015; year++)
-				total += simulation(year);
-		} catch (InterruptedException | ExecutionException | IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Avg profit is " + (total / 11));
+//		float total = 0f;
+//		try {
+//			for (int year = 2005; year <= 2015; year++)
+//				total += simulation(year);
+//		} catch (InterruptedException | ExecutionException | IOException e) {
+//			e.printStackTrace();
+//		}
+//		System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
-		// aggregateInterval();
+		 aggregateInterval();
 
 		// stats();
 
@@ -64,18 +67,28 @@ public class Test {
 
 	}
 
-	public static final void aggregateInterval() throws IOException {
+	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
+
+		ExecutorService pool = Executors.newFixedThreadPool(8);
+		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			System.out.println(XlSUtils.aggregateInterval(2012, 2014, sh.getSheetName()));
+			threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2014, sh)));
+			// System.out.println(XlSUtils.aggregateInterval(2005, 2014,
+			// sh.getSheetName()));
 		}
+
+		for (Future<Float> fd : threadArray)
+			fd.get();
+
 		workbook.close();
 		file.close();
+		pool.shutdown();
 	}
 
 	public static void stats() throws IOException {
