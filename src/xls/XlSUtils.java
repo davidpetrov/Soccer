@@ -70,32 +70,11 @@ public class XlSUtils {
 			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if ((home.equals(team) || away.equals(team)) && fdate.before(date)) {
-				if (row.getCell(getColumnIndex(sheet, "FTHG")) != null
-						&& row.getCell(getColumnIndex(sheet, "FTAG")) != null
-						&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
-					int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-					int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-					if (row.getCell(getColumnIndex(sheet, "HTHG")) == null) {
-						continue;
-					}
-					int halfTimeHome = (int) row.getCell(getColumnIndex(sheet, "HTHG")).getNumericCellValue();
-					int halfTimeAway = (int) row.getCell(getColumnIndex(sheet, "HTAG")).getNumericCellValue();
-					if (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() != 0
-							|| row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() != 0)
-						continue;
-					float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-					float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-					float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-					float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-
-					ExtendedFixture f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals),
-							sheet.getSheetName());
-					f.withStatus("FINISHED");
-					f.withOdds(overOdds, underOdds, maxOver, maxUnder)
-							.withHTResult(new Result(halfTimeHome, halfTimeAway));
-
+				ExtendedFixture f = getFixture(sheet, row);
+				if (f != null)
 					results.add(f);
-				}
+				else
+					continue;
 			}
 		}
 
@@ -111,23 +90,13 @@ public class XlSUtils {
 			if (row.getRowNum() == 0)
 				continue;
 			String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
-			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if (home.equals(team) && fdate.before(date) && row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
-				int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-				int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-
-				float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-				float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-				float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-				float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-
-				ExtendedFixture f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals),
-						sheet.getSheetName());
-				f.withStatus("FINISHED");
-				f.withOdds(overOdds, underOdds, maxOver, maxUnder);
-
-				results.add(f);
+				ExtendedFixture f = getFixture(sheet, row);
+				if (f != null)
+					results.add(f);
+				else
+					continue;
 			}
 		}
 
@@ -142,26 +111,16 @@ public class XlSUtils {
 			Row row = rowIterator.next();
 			if (row.getRowNum() == 0)
 				continue;
-			String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
 			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if (away.equals(team) && fdate.before(date) && row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
-				int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-				int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-
-				float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-				float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-				float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-				float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-
-				ExtendedFixture f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals),
-						sheet.getSheetName());
-				f.withStatus("FINISHED");
-				f.withOdds(overOdds, underOdds, maxOver, maxUnder);
-
-				results.add(f);
-
+				ExtendedFixture f = getFixture(sheet, row);
+				if (f != null)
+					results.add(f);
+				else
+					continue;
 			}
+
 		}
 
 		return Utils.getLastFixtures(results, count);
@@ -347,25 +306,11 @@ public class XlSUtils {
 			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if (selectLastAll(sheet, home, 10, fdate).size() >= 10
 					&& selectLastAll(sheet, home, 10, fdate).size() >= 10) {
-				if (row.getCell(getColumnIndex(sheet, "FTHG")) != null
-						&& row.getCell(getColumnIndex(sheet, "FTAG")) != null) {
-					int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-					int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-					int halfTimeHome = (int) row.getCell(getColumnIndex(sheet, "HTHG")).getNumericCellValue();
-					int halfTimeAway = (int) row.getCell(getColumnIndex(sheet, "HTAG")).getNumericCellValue();
-					float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-					float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-					float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-					float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-
-					ExtendedFixture f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals),
-							sheet.getSheetName());
-					f.withStatus("FINISHED");
-					f.withOdds(overOdds, underOdds, maxOver, maxUnder)
-							.withHTResult(new Result(halfTimeHome, halfTimeAway));
-
+				ExtendedFixture f = getFixture(sheet, row);
+				if (f != null)
 					results.add(f);
-				}
+				else
+					continue;
 			}
 		}
 		return results;
@@ -379,40 +324,43 @@ public class XlSUtils {
 
 		while (rowIterator.hasNext()) {
 			Row row = rowIterator.next();
-			if (row.getRowNum() == 0)
+			if (row.getRowNum() == 0 || row.getCell(getColumnIndex(sheet, "HomeTeam")) == null)
 				continue;
-			if (row.getCell(getColumnIndex(sheet, "HomeTeam")) == null)
-				continue;
-			String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
-			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
-			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
-			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && row.getCell(getColumnIndex(sheet, "FTAG")) != null
-					&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
-				int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-				int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-
-				if (row.getCell(getColumnIndex(sheet, "HTHG")) == null) {
-					continue;
-				}
-				int halfTimeHome = (int) row.getCell(getColumnIndex(sheet, "HTHG")).getNumericCellValue();
-				int halfTimeAway = (int) row.getCell(getColumnIndex(sheet, "HTAG")).getNumericCellValue();
-				if (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() != 0
-						|| row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() != 0)
-					continue;
-				float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-				float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-				float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-				float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-
-				ExtendedFixture f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals),
-						sheet.getSheetName()).withStatus("FINISHED").withOdds(overOdds, underOdds, maxOver, maxUnder)
-								.withHTResult(new Result(halfTimeHome, halfTimeAway));
-
+			ExtendedFixture f = getFixture(sheet, row);
+			if (f != null)
 				results.add(f);
-			}
+			else
+				continue;
 		}
-		return results;
 
+		return results;
+	}
+
+	public static ExtendedFixture getFixture(HSSFSheet sheet, Row row) {
+		ExtendedFixture f = null;
+		String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
+		String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
+		Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
+		if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && row.getCell(getColumnIndex(sheet, "FTAG")) != null
+				&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null
+				&& row.getCell(getColumnIndex(sheet, "HTHG")) != null
+				&& (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() == 0
+						|| row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() == 0)) {
+			int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
+			int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
+
+			int halfTimeHome = (int) row.getCell(getColumnIndex(sheet, "HTHG")).getNumericCellValue();
+			int halfTimeAway = (int) row.getCell(getColumnIndex(sheet, "HTAG")).getNumericCellValue();
+			float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
+			float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
+			float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
+			float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
+
+			f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals), sheet.getSheetName())
+					.withStatus("FINISHED").withOdds(overOdds, underOdds, maxOver, maxUnder)
+					.withHTResult(new Result(halfTimeHome, halfTimeAway));
+		}
+		return f;
 	}
 
 	public static ArrayList<ExtendedFixture> selectForPrediction(HSSFSheet sheet) {

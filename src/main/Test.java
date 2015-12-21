@@ -37,7 +37,7 @@ public class Test {
 
 		float total = 0f;
 		try {
-			for (int year = 2005; year <= 2015; year++)
+			for (int year = 2014; year <= 2015; year++)
 				total += simulation(year);
 		} catch (InterruptedException | ExecutionException | IOException e) {
 			e.printStackTrace();
@@ -46,7 +46,7 @@ public class Test {
 
 		// makePredictions();
 
-//		aggregateInterval();
+//		aggregateInterval();	
 		
 		// stats();
 
@@ -70,7 +70,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			System.out.println(XlSUtils.aggregateInterval(2005, 2015, sh.getSheetName()));
+			System.out.println(XlSUtils.aggregateInterval(2012, 2014, sh.getSheetName()));
 		}
 		workbook.close();
 		file.close();
