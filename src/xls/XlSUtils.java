@@ -345,7 +345,7 @@ public class XlSUtils {
 				&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null
 				&& row.getCell(getColumnIndex(sheet, "HTHG")) != null
 				&& (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() == 0
-						|| row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() == 0)) {
+						&& row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() == 0)) {
 			int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 			int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 

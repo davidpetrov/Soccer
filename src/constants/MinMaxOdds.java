@@ -1,8 +1,5 @@
 package constants;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-
 public class MinMaxOdds {
 	public static final Float[] E0 = { 1.76f, 2.26f };
 	public static final Float[] E1 = { 1.8f, 2.2f };
@@ -13,6 +10,8 @@ public class MinMaxOdds {
 	public static final Float[] SC1 = { 1.84f, 10f };
 	public static final Float[] SC2 = { 1f, 10f };
 	public static final Float[] SC3 = { 1.68f, 2.2f };
+
+	public static final String[] DONT = { "E2", "E3", "SC0", "D1", "D2", "I1", "I2", "F1", "F2", "N1" };
 
 	public static float getMinOdds(String league) {
 		switch (league) {
@@ -60,7 +59,7 @@ public class MinMaxOdds {
 			return 1.6f;
 		case "T1":
 			return 1.94f;
-			
+
 		default:
 			return 1.7f;
 		}

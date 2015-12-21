@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import org.json.JSONException;
 
 import algorithms.Algorithm;
 import algorithms.Basic1;
+import constants.MinMaxOdds;
 import utils.Api;
 import utils.Utils;
 import xls.XlSUtils;
@@ -37,7 +39,7 @@ public class Test {
 
 		float total = 0f;
 		try {
-			for (int year = 2014; year <= 2015; year++)
+			for (int year = 2005; year <= 2015; year++)
 				total += simulation(year);
 		} catch (InterruptedException | ExecutionException | IOException e) {
 			e.printStackTrace();
@@ -46,23 +48,23 @@ public class Test {
 
 		// makePredictions();
 
-//		aggregateInterval();	
-		
+		// aggregateInterval();
+
 		// stats();
 
-//		 try {
-//		 optimals();
-//		 } catch (InterruptedException | ExecutionException e) {
-//		 e.printStackTrace();
-//		 }
+		// try {
+		// optimals();
+		// } catch (InterruptedException | ExecutionException e) {
+		// e.printStackTrace();
+		// }
 
 		// optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
 	}
-	
-	public static final void aggregateInterval() throws IOException{
+
+	public static final void aggregateInterval() throws IOException {
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
@@ -93,6 +95,7 @@ public class Test {
 
 	public static float simulation(int year) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -104,6 +107,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
+			if (dont.contains(sh.getSheetName()))
+				continue;
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
 
@@ -189,6 +194,8 @@ public class Test {
 		// }
 		float totalPeriod = 0f;
 
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+
 		for (int year = 2006; year <= 2015; year++) {
 			float total = 0f;
 			FileInputStream filedata = new FileInputStream(
@@ -198,6 +205,8 @@ public class Test {
 			Iterator<Sheet> sh = workbookdata.sheetIterator();
 			while (sh.hasNext()) {
 				HSSFSheet i = (HSSFSheet) sh.next();
+				if (dont.contains(i.getSheetName()))
+					continue;
 				ArrayList<Settings> setts = optimals.get(i.getSheetName());
 				Settings set = Utils.getSettings(setts, year - 1);
 				ArrayList<FinalEntry> fes = XlSUtils.runWithSettingsList(i, XlSUtils.selectAllAll(i), set);
