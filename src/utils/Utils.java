@@ -399,4 +399,22 @@ public class Utils {
 		return filtered;
 	}
 
+	public static float countOversWhenDraw(ArrayList<ExtendedFixture> all) {
+		int count = 0;
+		for (ExtendedFixture i : all) {
+			if (i.result.goalsHomeTeam == i.result.goalsAwayTeam && i.getTotalGoals() > 2.5f)
+				count++;
+		}
+		return all.size() == 0 ? 0 : ((float) count / all.size());
+	}
+
+	public static float countOversWhenNotDraw(ArrayList<ExtendedFixture> all) {
+		int count = 0;
+		for (ExtendedFixture i : all) {
+			if (i.result.goalsHomeTeam != i.result.goalsAwayTeam && i.getTotalGoals() > 2.5f)
+				count++;
+		}
+		return all.size() == 0 ? 0 : ((float) count / all.size());
+	}
+
 }

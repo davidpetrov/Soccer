@@ -40,20 +40,20 @@ public class Test {
 
 		// simplePredictions();
 
-		 float total = 0f;
-		 try {
-		 for (int year = 2005; year <= 2015; year++)
-		 total += simulation(year);
-		 } catch (InterruptedException | ExecutionException | IOException e) {
-		 e.printStackTrace();
-		 }
-		 System.out.println("Avg profit is " + (total / 11));
+//		float total = 0f;
+//		try {
+//			for (int year = 2015; year <= 2015; year++)
+//				total += simulation(year);
+//		} catch (InterruptedException | ExecutionException | IOException e) {
+//			e.printStackTrace();
+//		}
+//		System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
-//		aggregateInterval();
+//		 aggregateInterval();
 
-		// stats();
+		 stats();
 
 		// try {
 		// optimals();
@@ -68,7 +68,6 @@ public class Test {
 	}
 
 	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
-		String[] dont = { "E0", "E2", "G1", "P1", "I2", "SP2" };
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
@@ -79,8 +78,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!Arrays.asList(dont).contains(sh.getSheetName()))
-				threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2014, sh)));
+			threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2014, sh)));
 			// System.out.println(XlSUtils.aggregateInterval(2005, 2014,
 			// sh.getSheetName()));
 		}
@@ -94,15 +92,17 @@ public class Test {
 	}
 
 	public static void stats() throws IOException {
-		for (int year = 2015; year <= 2015; year++) {
+		for (int year = 2005; year <= 2015; year++) {
 			String base = new File("").getAbsolutePath();
 
 			FileInputStream file = new FileInputStream(
 					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbook = new HSSFWorkbook(file);
-			HSSFSheet sheet = workbook.getSheet("I2");
+			HSSFSheet sheet = workbook.getSheet("B1");
 			ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
 			System.out.println(year + " over: " + Utils.countOverGamesPercent(all) + "% AVG: " + Utils.findAvg(all));
+			System.out.println("Overs when draw: "+Utils.countOversWhenDraw(all));
+			System.out.println("Overs when win/loss: " + Utils.countOversWhenNotDraw(all));
 			workbook.close();
 			file.close();
 		}
@@ -118,7 +118,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(8);
+		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
@@ -143,7 +143,7 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2010; year <= 2015; year++) {
+		for (int year = 2015; year <= 2015; year++) {
 			float total = 0f;
 			ExecutorService pool = Executors.newFixedThreadPool(8);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
