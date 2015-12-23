@@ -476,7 +476,8 @@ public class XlSUtils {
 					0.55f, 1, 10, bestWinPercent, bestProfit).withYear(year);
 		else
 			return new Settings(sheet.getSheetName(), bestBasic * 0.05f, 0f, 1.0f - bestBasic * 0.05f, 0.55f, 0.55f,
-					0.55f, 1, 10, bestWinPercent, bestProfit).withYear(year);
+					0.55f, 1, 10, bestWinPercent, bestProfit)
+							.withYear(year)/* .withHT(overOneHT) */;
 
 	}
 
@@ -629,8 +630,13 @@ public class XlSUtils {
 			float finalScore = 0.5f;
 
 			finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
-					+ settings.poisson * poisson(f, sheet, f.date)
-					+ settings.weightedPoisson * poissonWeighted(f, sheet, f.date);
+					+ settings.poisson * poisson(f, sheet, f.date) + settings.weightedPoisson
+							* /*
+								 * (0.3f (settings.halfTimeOverOne *
+								 * halfTimeOnly(f, sheet, 1) + (1f -
+								 * settings.halfTimeOverOne) * halfTimeOnly(f,
+								 * sheet, 2)) + 0.7f
+								 **/ poissonWeighted(f, sheet, f.date);
 
 			float gain = finalScore > settings.threshold ? f.maxOver : f.maxUnder;
 			if (gain >= settings.minOdds && gain <= settings.maxOdds
@@ -702,12 +708,12 @@ public class XlSUtils {
 		float profit = 0.0f;
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
 		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 11; i < maxMatchDay; i++) {
+		for (int i = 15; i < maxMatchDay ; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
-			// cal.set(year + 1, 4, 1);
-			// if (!current.isEmpty() && current.get(0).dt.after(cal.getTime()))
-			// {
+			// cal.set(year + 1, 1, 1);
+			// if (!current.isEmpty() &&
+			// current.get(0).date.after(cal.getTime())) {
 			// return profit;
 			// }
 
@@ -814,7 +820,7 @@ public class XlSUtils {
 
 		// System.out.println("lower: " + trset.lowerBound + " upper: " +
 		// trset.upperBound + " profit: " + trset.profit);
-		return trset.withYear(initial.year);
+		return trset.withYear(initial.year).withHT(initial.halfTimeOverOne);
 	}
 
 	public static Settings findThreshold(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
@@ -894,7 +900,7 @@ public class XlSUtils {
 		}
 
 		// System.out.println("after finding interval" + initial);
-		return newSetts.withYear(initial.year);
+		return newSetts.withYear(initial.year).withHT(initial.halfTimeOverOne);
 	}
 
 	public static Settings aggregateInterval(int start, int end, String league) throws IOException {

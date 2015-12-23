@@ -7,6 +7,7 @@ public class Settings {
 	public float basic;
 	public float poisson;
 	public float weightedPoisson;
+	public float halfTimeOverOne;
 	public float threshold;
 	public float upperBound;
 	public float lowerBound;
@@ -46,6 +47,11 @@ public class Settings {
 
 	public Settings withYear(int year) {
 		this.year = year;
+		return this;
+	}
+
+	public Settings withHT(float ht) {
+		this.halfTimeOverOne = ht;
 		return this;
 	}
 

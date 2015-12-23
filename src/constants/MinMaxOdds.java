@@ -44,9 +44,9 @@ public class MinMaxOdds {
 		case "I1":
 			return 2.04f;
 		case "I2":
-			return 2.1f;
+			return 2.24f;
 		case "F1":
-			return 2.02f;
+			return 1.6f;
 		case "F2":
 			return 2.22f;
 		case "N1":
@@ -56,7 +56,7 @@ public class MinMaxOdds {
 		case "P1":
 			return 1.66f;
 		case "G1":
-			return 1.6f;
+			return 1.76f;
 		case "T1":
 			return 1.94f;
 
@@ -96,7 +96,7 @@ public class MinMaxOdds {
 		case "I1":
 			return 2.22f;
 		case "I2":
-			return 2.48f;
+			return 10f;
 		case "F1":
 			return 10f;
 		case "F2":
@@ -108,9 +108,9 @@ public class MinMaxOdds {
 		case "P1":
 			return 10f;
 		case "G1":
-			return 2.48f;
+			return 2.22f;
 		case "T1":
-			return 2.32f;
+			return 2.34f;
 		default:
 			return 2.1f;
 		}

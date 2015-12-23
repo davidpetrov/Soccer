@@ -40,18 +40,18 @@ public class Test {
 
 		// simplePredictions();
 
-//		float total = 0f;
-//		try {
-//			for (int year = 2005; year <= 2015; year++)
-//				total += simulation(year);
-//		} catch (InterruptedException | ExecutionException | IOException e) {
-//			e.printStackTrace();
-//		}
-//		System.out.println("Avg profit is " + (total / 11));
+		 float total = 0f;
+		 try {
+		 for (int year = 2005; year <= 2015; year++)
+		 total += simulation(year);
+		 } catch (InterruptedException | ExecutionException | IOException e) {
+		 e.printStackTrace();
+		 }
+		 System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
-		 aggregateInterval();
+//		aggregateInterval();
 
 		// stats();
 
@@ -68,6 +68,7 @@ public class Test {
 	}
 
 	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
+		String[] dont = { "E0", "E2", "G1", "P1", "I2", "SP2" };
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
@@ -78,7 +79,8 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2014, sh)));
+			if (!Arrays.asList(dont).contains(sh.getSheetName()))
+				threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2014, sh)));
 			// System.out.println(XlSUtils.aggregateInterval(2005, 2014,
 			// sh.getSheetName()));
 		}
