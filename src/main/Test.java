@@ -40,22 +40,22 @@ public class Test {
 
 		// simplePredictions();
 
-		float total = 0f;
-		try {
-			for (int year = 2005; year <= 2015; year++)
-				total += simulation(year);
-		} catch (InterruptedException | ExecutionException | IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println("Avg profit is " + (total / 11));
+		// float total = 0f;
+		// try {
+		// for (int year = 2005; year <= 2015; year++)
+		// total += simulation(year);
+		// } catch (InterruptedException | ExecutionException | IOException e) {
+		// e.printStackTrace();
+		// }
+		// System.out.println("Avg profit is " + (total / 11));
 
-		// makePredictions();
+		 makePredictions();
 
-		// singleMethod();
+//		singleMethod();
 
 		// aggregateInterval();
 
-		// stats();
+//		 stats();
 
 		// try {
 		// optimals();
@@ -125,11 +125,13 @@ public class Test {
 			FileInputStream file = new FileInputStream(
 					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbook = new HSSFWorkbook(file);
-			HSSFSheet sheet = workbook.getSheet("SP1");
+			HSSFSheet sheet = workbook.getSheet("E0");
 			ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
 			System.out.println(year + " over: " + Utils.countOverGamesPercent(all) + "% AVG: " + Utils.findAvg(all));
 			System.out.println("Overs when draw: " + Utils.countOversWhenDraw(all));
 			System.out.println("Overs when win/loss: " + Utils.countOversWhenNotDraw(all));
+			Utils.byWeekDay(all);
+			System.out.println();
 			workbook.close();
 			file.close();
 		}

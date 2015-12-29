@@ -9,6 +9,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -415,6 +416,28 @@ public class Utils {
 				count++;
 		}
 		return all.size() == 0 ? 0 : ((float) count / all.size());
+	}
+
+	public static void byWeekDay(ArrayList<ExtendedFixture> all) {
+		int[] days = new int[8];
+		int[] overs = new int[8];
+		String[] literals = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
+
+		for (ExtendedFixture i : all) {
+			Calendar c = Calendar.getInstance();
+			c.setTime(i.date);
+			int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
+			days[dayOfWeek]++;
+			if (i.getTotalGoals() > 2.5f)
+				overs[dayOfWeek]++;
+		}
+
+		float[] raitios = new float[8];
+		for (int i = 1; i < 8; i++) {
+			raitios[i] = ((float) overs[i]) / days[i];
+			System.out.println(literals[i - 1] + " " + raitios[i] + " from " + days[i]);
+		}
+
 	}
 
 }

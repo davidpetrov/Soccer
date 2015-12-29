@@ -437,8 +437,7 @@ public class XlSUtils {
 			poissons[i] = poisson(f, sheet, f.date);
 			weightedPoissons[i] = 0.5f
 					* (overOneHT * halfTimeOnly(f, sheet, 1) + (1f - overOneHT) * halfTimeOnly(f, sheet, 2))
-					+ 0.5f * poissonWeighted(f, sheet,
-							f.date)/* drawBased(f, sheet) */;
+					+ 0.5f * poissonWeighted(f, sheet, f.date);
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -513,7 +512,7 @@ public class XlSUtils {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
 		for (int i = 0; i < all.size(); i++) {
 			ExtendedFixture f = all.get(i);
-			float finalScore = drawBased(f, sheet);
+			float finalScore = halfTimeOnly(f, sheet, 2);
 
 			FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
 					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
@@ -524,6 +523,7 @@ public class XlSUtils {
 		// float current = Utils.getSuccessRate(finals);
 		// System.out.println(current);
 		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 1f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
+		set = findThreshold(sheet, finals, set);
 		float currentProfit = Utils.getProfit(sheet, finals, set);
 		return currentProfit;
 	}
@@ -677,13 +677,8 @@ public class XlSUtils {
 			float finalScore = 0.5f;
 
 			finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
-					+ settings.poisson * poisson(f, sheet, f.date) + settings.weightedPoisson
-							* /*
-								 * (0.3f (settings.halfTimeOverOne *
-								 * halfTimeOnly(f, sheet, 1) + (1f -
-								 * settings.halfTimeOverOne) * halfTimeOnly(f,
-								 * sheet, 2)) + 0.7f
-								 **/ poissonWeighted(f, sheet, f.date);
+					+ settings.poisson * poisson(f, sheet, f.date)
+					+ settings.weightedPoisson * poissonWeighted(f, sheet, f.date);
 
 			float gain = finalScore > settings.threshold ? f.maxOver : f.maxUnder;
 			if (gain >= settings.minOdds && gain <= settings.maxOdds
@@ -720,12 +715,11 @@ public class XlSUtils {
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
 
 		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
-		// if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >=
-		// sett.upperBound || score <= sett.lowerBound)) {
-		String prediction = score > sett.threshold ? "over" : "under";
-		System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
-				+ prediction + " " + coeff);
-		// }
+		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >= sett.upperBound || score <= sett.lowerBound)) {
+			String prediction = score > sett.threshold ? "over" : "under";
+			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
+					+ prediction + " " + coeff);
+		}
 
 	}
 
