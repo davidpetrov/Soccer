@@ -140,13 +140,26 @@ public class XlSUtils {
 		return d * allGamesAVG + e * homeAwayAVG + z * BTSAVG;
 	}
 
+	public static float drawBased(ExtendedFixture f, HSSFSheet sheet) {
+		float drawChance = f.drawOdds / (f.awayOdds + f.drawOdds + f.homeOdds);
+		ArrayList<ExtendedFixture> all = selectToDate(sheet, f.date);
+		return drawChance * Utils.countOversWhenDraw(all) + (1 - drawChance) * Utils.countOversWhenNotDraw(all);
+	}
+
+	private static ArrayList<ExtendedFixture> selectToDate(HSSFSheet sheet, Date date) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (ExtendedFixture ef : selectAllAll(sheet)) {
+			if (ef.date.before(date))
+				result.add(ef);
+		}
+		return result;
+	}
+
 	public static float halfTimeOnly(ExtendedFixture f, HSSFSheet sheet, int over) {
 		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 40, f.date);
 		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 40, f.date);
 
-		float overAVG = over == 1
-				? (Utils.countOverHalfTime(lastHomeTeam, 1) + Utils.countOverHalfTime(lastAwayTeam, 1)) / 2
-				: (Utils.countOverHalfTime(lastHomeTeam, 2) + Utils.countOverHalfTime(lastAwayTeam, 2)) / 2;
+		float overAVG = (Utils.countOverHalfTime(lastHomeTeam, over) + Utils.countOverHalfTime(lastAwayTeam, over)) / 2;
 		return overAVG;
 	}
 
@@ -356,9 +369,23 @@ public class XlSUtils {
 			float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
 			float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
 
+			// with 1X2 odds from Pinnacle
+
+			float homeOdds, drawOdds, awayOdds;
+			if (row.getCell(getColumnIndex(sheet, "PSH")) != null
+					&& row.getCell(getColumnIndex(sheet, "PSH")).getCellType() == 0) {
+				homeOdds = (float) row.getCell(getColumnIndex(sheet, "PSH")).getNumericCellValue();
+				drawOdds = (float) row.getCell(getColumnIndex(sheet, "PSD")).getNumericCellValue();
+				awayOdds = (float) row.getCell(getColumnIndex(sheet, "PSA")).getNumericCellValue();
+			} else {
+				homeOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxH")).getNumericCellValue();
+				drawOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxD")).getNumericCellValue();
+				awayOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxA")).getNumericCellValue();
+			}
+
 			f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals), sheet.getSheetName())
 					.withStatus("FINISHED").withOdds(overOdds, underOdds, maxOver, maxUnder)
-					.withHTResult(new Result(halfTimeHome, halfTimeAway));
+					.withHTResult(new Result(halfTimeHome, halfTimeAway)).with1X2Odds(homeOdds, drawOdds, awayOdds);
 		}
 		return f;
 	}
@@ -410,7 +437,8 @@ public class XlSUtils {
 			poissons[i] = poisson(f, sheet, f.date);
 			weightedPoissons[i] = 0.5f
 					* (overOneHT * halfTimeOnly(f, sheet, 1) + (1f - overOneHT) * halfTimeOnly(f, sheet, 2))
-					+ 0.5f * poissonWeighted(f, sheet, f.date);
+					+ 0.5f * poissonWeighted(f, sheet,
+							f.date)/* drawBased(f, sheet) */;
 		}
 
 		for (int x = 0; x <= 20; x++) {
@@ -479,6 +507,25 @@ public class XlSUtils {
 					0.55f, 1, 10, bestWinPercent, bestProfit)
 							.withYear(year)/* .withHT(overOneHT) */;
 
+	}
+
+	public static float singleMethod(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) {
+		ArrayList<FinalEntry> finals = new ArrayList<>();
+		for (int i = 0; i < all.size(); i++) {
+			ExtendedFixture f = all.get(i);
+			float finalScore = drawBased(f, sheet);
+
+			FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+			if (!fe.prediction.equals(Float.NaN))
+				finals.add(fe);
+		}
+
+		// float current = Utils.getSuccessRate(finals);
+		// System.out.println(current);
+		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 1f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
+		float currentProfit = Utils.getProfit(sheet, finals, set);
+		return currentProfit;
 	}
 
 	public static Settings runForLeagueWithOddsFull(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
@@ -673,11 +720,12 @@ public class XlSUtils {
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
 
 		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
-		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >= sett.upperBound || score <= sett.lowerBound)) {
-			String prediction = score > sett.threshold ? "over" : "under";
-			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
-					+ prediction + " " + coeff);
-		}
+		// if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >=
+		// sett.upperBound || score <= sett.lowerBound)) {
+		String prediction = score > sett.threshold ? "over" : "under";
+		System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
+				+ prediction + " " + coeff);
+		// }
 
 	}
 
@@ -708,7 +756,7 @@ public class XlSUtils {
 		float profit = 0.0f;
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
 		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay ; i++) {
+		for (int i = 15; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
 			// cal.set(year + 1, 1, 1);

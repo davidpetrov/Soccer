@@ -40,20 +40,22 @@ public class Test {
 
 		// simplePredictions();
 
-//		float total = 0f;
-//		try {
-//			for (int year = 2015; year <= 2015; year++)
-//				total += simulation(year);
-//		} catch (InterruptedException | ExecutionException | IOException e) {
-//			e.printStackTrace();
-//		}
-//		System.out.println("Avg profit is " + (total / 11));
+		float total = 0f;
+		try {
+			for (int year = 2005; year <= 2015; year++)
+				total += simulation(year);
+		} catch (InterruptedException | ExecutionException | IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Avg profit is " + (total / 11));
 
 		// makePredictions();
 
-//		 aggregateInterval();
+		// singleMethod();
 
-		 stats();
+		// aggregateInterval();
+
+		// stats();
 
 		// try {
 		// optimals();
@@ -65,6 +67,31 @@ public class Test {
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
+	}
+
+	public static final void singleMethod() throws IOException {
+
+		float totalTotal = 0f;
+		for (int year = 2005; year <= 2015; year++) {
+			float total = 0f;
+			String base = new File("").getAbsolutePath();
+			FileInputStream file = new FileInputStream(
+					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			HSSFWorkbook workbook = new HSSFWorkbook(file);
+			Iterator<Sheet> sheet = workbook.sheetIterator();
+			while (sheet.hasNext()) {
+				HSSFSheet sh = (HSSFSheet) sheet.next();
+				float profit = XlSUtils.singleMethod(sh, XlSUtils.selectAll(sh), year);
+				// System.out.println(sh.getSheetName() + " " + year + " " +
+				// profit);
+				total += profit;
+			}
+			System.out.println("Total for " + year + ": " + total);
+			workbook.close();
+			file.close();
+			totalTotal += total;
+		}
+		System.out.println("Avg is: " + totalTotal / 11);
 	}
 
 	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
@@ -98,10 +125,10 @@ public class Test {
 			FileInputStream file = new FileInputStream(
 					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbook = new HSSFWorkbook(file);
-			HSSFSheet sheet = workbook.getSheet("B1");
+			HSSFSheet sheet = workbook.getSheet("SP1");
 			ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
 			System.out.println(year + " over: " + Utils.countOverGamesPercent(all) + "% AVG: " + Utils.findAvg(all));
-			System.out.println("Overs when draw: "+Utils.countOversWhenDraw(all));
+			System.out.println("Overs when draw: " + Utils.countOversWhenDraw(all));
 			System.out.println("Overs when win/loss: " + Utils.countOversWhenNotDraw(all));
 			workbook.close();
 			file.close();

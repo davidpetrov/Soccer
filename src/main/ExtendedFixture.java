@@ -15,6 +15,9 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public float underOdds;
 	public float maxOver;
 	public float maxUnder;
+	public float homeOdds;
+	public float drawOdds;
+	public float awayOdds;
 
 	public ExtendedFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		this.date = date;
@@ -29,6 +32,13 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		this.underOdds = underOdds;
 		this.maxOver = maxOver;
 		this.maxUnder = maxUnder;
+		return this;
+	}
+
+	public ExtendedFixture with1X2Odds(float homeOdds, float drawOdds, float awayOdds) {
+		this.homeOdds = homeOdds;
+		this.drawOdds = drawOdds;
+		this.awayOdds = awayOdds;
 		return this;
 	}
 
