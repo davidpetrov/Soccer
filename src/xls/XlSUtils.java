@@ -510,22 +510,62 @@ public class XlSUtils {
 
 	public static float singleMethod(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
-			float finalScore = halfTimeOnly(f, sheet, 2);
+		// for (int i = 0; i < all.size(); i++) {
+		// ExtendedFixture f = all.get(i);
+		// float finalScore = halfTimeOnly(f, sheet, 2);
+		//
+		// FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
+		// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f,
+		// 0.55f, 0.55f);
+		// if (!fe.prediction.equals(Float.NaN))
+		// finals.add(fe);
+		// }
 
-			FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
-					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
-			if (!fe.prediction.equals(Float.NaN))
-				finals.add(fe);
-		}
+		finals = intersectAllClassifier(sheet, all, year);
 
 		// float current = Utils.getSuccessRate(finals);
 		// System.out.println(current);
-		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 1f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
+		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
 		set = findThreshold(sheet, finals, set);
 		float currentProfit = Utils.getProfit(sheet, finals, set);
 		return currentProfit;
+	}
+
+	public static ArrayList<FinalEntry> intersectAllClassifier(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+			int year) {
+		ArrayList<FinalEntry> finalsBasic = new ArrayList<>();
+		ArrayList<FinalEntry> finalsPoisson = new ArrayList<>();
+		ArrayList<FinalEntry> finalsWeighted = new ArrayList<>();
+		ArrayList<FinalEntry> finalsHT2 = new ArrayList<>();
+
+		for (int i = 0; i < all.size(); i++) {
+			ExtendedFixture f = all.get(i);
+			float basic = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
+			float poisson = poisson(f, sheet, f.date);
+			float weighted = poissonWeighted(f, sheet, f.date);
+			float ht2 = halfTimeOnly(f, sheet, 2);
+
+			FinalEntry feBasic = new FinalEntry(f, basic, "Basic1",
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+			FinalEntry fePoisson = new FinalEntry(f, poisson, "Basic1",
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+			FinalEntry feWeighted = new FinalEntry(f, weighted, "Basic1",
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+			FinalEntry feht2 = new FinalEntry(f, ht2, "Basic1",
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+
+			if (!feBasic.prediction.equals(Float.NaN) && !fePoisson.prediction.equals(Float.NaN)
+					&& !feWeighted.prediction.equals(Float.NaN) && !feht2.prediction.equals(Float.NaN)) {
+				finalsBasic.add(feBasic);
+				finalsPoisson.add(fePoisson);
+				finalsWeighted.add(feWeighted);
+				finalsHT2.add(feht2);
+			}
+
+		}
+
+		return Utils.intersectMany(finalsBasic, finalsWeighted, finalsPoisson, finalsHT2);
+
 	}
 
 	public static Settings runForLeagueWithOddsFull(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
@@ -777,10 +817,32 @@ public class XlSUtils {
 			// temp = findIntervalReal(finals, sheet, year, temp);
 			current = Utils.filterByOdds(current, minOdds, maxOdds);
 			finals = runWithSettingsList(sheet, current, temp);
+
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(sheet, finals, temp);
 			// System.out.println(i + " " + trprofit);
 			// System.out.println("--------------------------");
+			profit += trprofit;
+		}
+		return profit;
+	}
+
+	public static float realisticIntersect(HSSFSheet sheet, int year) throws IOException {
+		float profit = 0.0f;
+		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		int maxMatchDay = addMatchDay(sheet, all);
+		for (int i = 11; i < maxMatchDay; i++) {
+			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+
+			// float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
+			// float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
+			//
+			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
+			// i);
+
+			ArrayList<FinalEntry> finals = intersectAllClassifier(sheet, current, year);
+			Settings temp = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
+			float trprofit = Utils.getProfit(sheet, finals, temp);
 			profit += trprofit;
 		}
 		return profit;

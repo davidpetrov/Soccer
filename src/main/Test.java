@@ -27,6 +27,7 @@ import algorithms.Basic1;
 import constants.MinMaxOdds;
 import runner.Runner;
 import runner.RunnerAggregateInterval;
+import runner.RunnerIntersect;
 import runner.RunnerOptimals;
 import utils.Api;
 import utils.Utils;
@@ -40,22 +41,18 @@ public class Test {
 
 		// simplePredictions();
 
-		// float total = 0f;
-		// try {
-		// for (int year = 2005; year <= 2015; year++)
-		// total += simulation(year);
-		// } catch (InterruptedException | ExecutionException | IOException e) {
-		// e.printStackTrace();
-		// }
-		// System.out.println("Avg profit is " + (total / 11));
+		float total = 0f;
+		for (int year = 2005; year <= 2015; year++)
+			total += simulationIntersect(year);
+		System.out.println("Avg profit is " + (total / 11));
 
-		 makePredictions();
+//		 makePredictions();
 
-//		singleMethod();
+		// singleMethod();
 
 		// aggregateInterval();
 
-//		 stats();
+		// stats();
 
 		// try {
 		// optimals();
@@ -154,6 +151,37 @@ public class Test {
 			if (dont.contains(sh.getSheetName()))
 				continue;
 			threadArray.add(pool.submit(new Runner(sh, year)));
+		}
+
+		for (Future<Float> fd : threadArray) {
+			totalProfit += fd.get();
+			// System.out.println("Total profit: " + String.format("%.2f",
+			// totalProfit));
+		}
+		System.out.println("Total profit for season " + year + " is " + String.format("%.2f", totalProfit));
+		workbook.close();
+		file.close();
+		pool.shutdown();
+		return totalProfit;
+	}
+	
+	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {
+		String base = new File("").getAbsolutePath();
+//		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		float totalProfit = 0.0f;
+
+		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+//			if (dont.contains(sh.getSheetName()))
+//				continue;
+			threadArray.add(pool.submit(new RunnerIntersect(sh, year)));
 		}
 
 		for (Future<Float> fd : threadArray) {

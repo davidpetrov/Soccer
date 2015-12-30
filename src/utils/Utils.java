@@ -440,4 +440,40 @@ public class Utils {
 
 	}
 
+	public static ArrayList<FinalEntry> intersect(ArrayList<FinalEntry> finalsBasic,
+			ArrayList<FinalEntry> finalsPoisson) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (int i = 0; i < finalsBasic.size(); i++) {
+			if (samePrediction(finalsBasic.get(i), finalsPoisson.get(i)))
+				result.add(finalsBasic.get(i));
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> intersectMany(ArrayList<FinalEntry>... lists) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (int i = 0; i < lists[0].size(); i++) {
+			if (samePrediction(lists, i))
+				result.add(lists[0].get(i));
+		}
+		return result;
+	}
+
+	private static boolean samePrediction(ArrayList<FinalEntry>[] lists, int index) {
+
+		boolean flag = true;
+		for (ArrayList<FinalEntry> i : lists) {
+			for (ArrayList<FinalEntry> j : lists) {
+				if (!samePrediction(i.get(index), j.get(index)))
+					flag = false;
+			}
+		}
+		return flag;
+	}
+
+	public static boolean samePrediction(FinalEntry f1, FinalEntry f2) {
+		return (f1.prediction >= f1.upper && f2.prediction >= f2.upper)
+				|| (f1.prediction <= f1.lower && f2.prediction <= f2.lower);
+	}
+
 }
