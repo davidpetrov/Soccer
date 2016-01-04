@@ -476,4 +476,24 @@ public class Utils {
 				|| (f1.prediction <= f1.lower && f2.prediction <= f2.lower);
 	}
 
+	public static ArrayList<FinalEntry> intersectDiff(ArrayList<FinalEntry> finals1, ArrayList<FinalEntry> finals2) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry fe : finals1) {
+			FinalEntry other = Utils.getFE(finals2, fe);
+			if (other != null) {
+				if (samePrediction(fe, other))
+					result.add(fe);
+			}
+		}
+		return result;
+	}
+
+	private static FinalEntry getFE(ArrayList<FinalEntry> finals2, FinalEntry fe) {
+		for (FinalEntry i : finals2) {
+			if (i.fixture.equals(fe.fixture))
+				return i;
+		}
+		return null;
+	}
+
 }

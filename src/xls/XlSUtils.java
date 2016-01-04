@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -561,10 +562,17 @@ public class XlSUtils {
 				finalsWeighted.add(feWeighted);
 				finalsHT2.add(feht2);
 			}
-
+			
+			Settings set = new Settings(sheet.getSheetName(), 1f, 1f, 1f, 0.55f, 0.55f, 0.55f,
+					1, 10, 0f, -1000f);
+			Settings basicThreshold = findThreshold(sheet, finalsBasic, set);
+			Settings basicPoisson = findThreshold(sheet, finalsPoisson, set);
+			Settings basicWeighted = findThreshold(sheet, finalsWeighted, set);
+			
+			
 		}
 
-		return Utils.intersectMany(finalsBasic, finalsWeighted, finalsPoisson, finalsHT2);
+		return Utils.intersectMany(finalsBasic, finalsWeighted,finalsPoisson);
 
 	}
 
@@ -754,8 +762,11 @@ public class XlSUtils {
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league, f.date)
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
 
+		float certainty = score > sett.threshold ? score : (1f - score);
 		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
-		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (score >= sett.upperBound || score <= sett.lowerBound)) {
+		float value = certainty * coeff;
+		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (value > 0.9f)
+				&& (score >= sett.upperBound || score <= sett.lowerBound)) {
 			String prediction = score > sett.threshold ? "over" : "under";
 			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
 					+ prediction + " " + coeff);
@@ -818,6 +829,9 @@ public class XlSUtils {
 			current = Utils.filterByOdds(current, minOdds, maxOdds);
 			finals = runWithSettingsList(sheet, current, temp);
 
+			// finals = Utils.intersectDiff(finals,
+			// intersectAllClassifier(sheet, current, year));
+
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(sheet, finals, temp);
 			// System.out.println(i + " " + trprofit);
@@ -834,14 +848,19 @@ public class XlSUtils {
 		for (int i = 11; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
-			// float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
-			// float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
-			//
-			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
-			// i);
+			float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
+			float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
 
-			ArrayList<FinalEntry> finals = intersectAllClassifier(sheet, current, year);
-			Settings temp = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
+			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			data = Utils.filterByOdds(data, minOdds, maxOdds);
+			ArrayList<FinalEntry> finals = intersectAllClassifier(sheet, data, year);
+			Settings temp = findThreshold(sheet, finals,
+					new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 1, 10, 0, -100f));
+
+			current = Utils.filterByOdds(current, minOdds, maxOdds);
+			finals = intersectAllClassifier(sheet, current, year);
+			// temp = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f,
+			// 0.55f, 0.55f, 1, 10, 0, 0);
 			float trprofit = Utils.getProfit(sheet, finals, temp);
 			profit += trprofit;
 		}
@@ -930,6 +949,8 @@ public class XlSUtils {
 	public static Settings findThreshold(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
 		// System.out.println("thold: " + initial.threshold + " profit: " +
 		// initial.profit);
+		if(finals.isEmpty())
+			return new Settings(initial).withYear(initial.year);
 		Settings trset = new Settings(initial).withYear(initial.year);
 
 		float bestProfit = initial.profit;
@@ -951,6 +972,12 @@ public class XlSUtils {
 		trset.threshold = bestThreshold;
 		trset.lowerBound = bestThreshold;
 		trset.upperBound = bestThreshold;
+		
+		for (FinalEntry fe : finals) {
+			fe.threshold = bestThreshold;;
+			fe.lower = bestThreshold;;
+			fe.upper = bestThreshold;;
+		}
 		// System.out.println("thold: " + trset.threshold + " profit: " +
 		// trset.profit + " lower: " + trset.lowerBound
 		// + " upper: " + trset.upperBound);
