@@ -522,7 +522,7 @@ public class XlSUtils {
 		// finals.add(fe);
 		// }
 
-		finals = intersectAllClassifier(sheet, all, year);
+		// finals = intersectAllClassifier(sheet, all, year);
 
 		// float current = Utils.getSuccessRate(finals);
 		// System.out.println(current);
@@ -533,7 +533,7 @@ public class XlSUtils {
 	}
 
 	public static ArrayList<FinalEntry> intersectAllClassifier(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			int year) {
+			int year, float basicThreshold, float poissonThreshold, float weightedThreshold, float htThreshold) {
 		ArrayList<FinalEntry> finalsBasic = new ArrayList<>();
 		ArrayList<FinalEntry> finalsPoisson = new ArrayList<>();
 		ArrayList<FinalEntry> finalsWeighted = new ArrayList<>();
@@ -562,17 +562,38 @@ public class XlSUtils {
 				finalsWeighted.add(feWeighted);
 				finalsHT2.add(feht2);
 			}
-			
-			Settings set = new Settings(sheet.getSheetName(), 1f, 1f, 1f, 0.55f, 0.55f, 0.55f,
-					1, 10, 0f, -1000f);
-			Settings basicThreshold = findThreshold(sheet, finalsBasic, set);
-			Settings basicPoisson = findThreshold(sheet, finalsPoisson, set);
-			Settings basicWeighted = findThreshold(sheet, finalsWeighted, set);
-			
-			
+
+		}
+		// Settings set = new Settings(sheet.getSheetName(), 1f, 1f, 1f, 0.55f,
+		// 0.55f, 0.55f, 1, 10, 0f, -1000f);
+		// Settings basicThreshol = findThreshold(sheet, finalsBasic, set);
+		// Settings basicPoisson = findThreshold(sheet, finalsPoisson, set);
+		// Settings basicWeighted = findThreshold(sheet, finalsWeighted, set);
+		for (FinalEntry fe : finalsBasic) {
+			fe.threshold = basicThreshold;
+			fe.lower = basicThreshold;
+			fe.upper = basicThreshold;
 		}
 
-		return Utils.intersectMany(finalsBasic, finalsWeighted,finalsPoisson);
+		for (FinalEntry fe : finalsPoisson) {
+			fe.threshold = poissonThreshold;
+			fe.lower = poissonThreshold;
+			fe.upper = poissonThreshold;
+		}
+
+		for (FinalEntry fe : finalsWeighted) {
+			fe.threshold = weightedThreshold;
+			fe.lower = weightedThreshold;
+			fe.upper = weightedThreshold;
+		}
+
+		for (FinalEntry fe : finalsHT2) {
+			fe.threshold = htThreshold;
+			fe.lower = htThreshold;
+			fe.upper = htThreshold;
+		}
+
+		return Utils.intersectMany(finalsBasic, finalsPoisson, finalsWeighted, finalsHT2);
 
 	}
 
@@ -853,12 +874,54 @@ public class XlSUtils {
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 			data = Utils.filterByOdds(data, minOdds, maxOdds);
-			ArrayList<FinalEntry> finals = intersectAllClassifier(sheet, data, year);
+			// ------------------------------------------------------------
+			// ArrayList<FinalEntry> finals = intersectAllClassifier(sheet,
+			// data, year);
+			ArrayList<FinalEntry> finalsBasic = new ArrayList<>();
+			ArrayList<FinalEntry> finalsPoisson = new ArrayList<>();
+			ArrayList<FinalEntry> finalsWeighted = new ArrayList<>();
+			ArrayList<FinalEntry> finalsHT2 = new ArrayList<>();
+
+			for (int j = 0; j < data.size(); j++) {
+				ExtendedFixture f = data.get(j);
+				float basic = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
+				float poisson = poisson(f, sheet, f.date);
+				float weighted = poissonWeighted(f, sheet, f.date);
+				float ht2 = halfTimeOnly(f, sheet, 2);
+
+				FinalEntry feBasic = new FinalEntry(f, basic, "Basic1",
+						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+				FinalEntry fePoisson = new FinalEntry(f, poisson, "Basic1",
+						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+				FinalEntry feWeighted = new FinalEntry(f, weighted, "Basic1",
+						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+				FinalEntry feht2 = new FinalEntry(f, ht2, "Basic1",
+						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+
+				if (!feBasic.prediction.equals(Float.NaN) && !fePoisson.prediction.equals(Float.NaN)
+						&& !feWeighted.prediction.equals(Float.NaN) && !feht2.prediction.equals(Float.NaN)) {
+					finalsBasic.add(feBasic);
+					finalsPoisson.add(fePoisson);
+					finalsWeighted.add(feWeighted);
+					finalsHT2.add(feht2);
+				}
+
+			}
+			Settings set = new Settings(sheet.getSheetName(), 1f, 1f, 1f, 0.55f, 0.55f, 0.55f, 1, 10, 0f, -1000f);
+			Settings basicThreshold = findThreshold(sheet, finalsBasic, set);
+			Settings basicPoisson = findThreshold(sheet, finalsPoisson, set);
+			Settings basicWeighted = findThreshold(sheet, finalsWeighted, set);
+			Settings basicHT2 = findThreshold(sheet, finalsHT2, set);
+
+			ArrayList<FinalEntry> finals = Utils.intersectMany(finalsBasic, finalsPoisson, finalsWeighted, finalsHT2);
+
+			// ------------------------------------------------------------
 			Settings temp = findThreshold(sheet, finals,
 					new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 1, 10, 0, -100f));
 
 			current = Utils.filterByOdds(current, minOdds, maxOdds);
-			finals = intersectAllClassifier(sheet, current, year);
+			finals = intersectAllClassifier(sheet, current, year, basicThreshold.threshold, basicPoisson.threshold,
+					basicWeighted.threshold, basicHT2.threshold);
 			// temp = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f,
 			// 0.55f, 0.55f, 1, 10, 0, 0);
 			float trprofit = Utils.getProfit(sheet, finals, temp);
@@ -949,7 +1012,7 @@ public class XlSUtils {
 	public static Settings findThreshold(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
 		// System.out.println("thold: " + initial.threshold + " profit: " +
 		// initial.profit);
-		if(finals.isEmpty())
+		if (finals.isEmpty())
 			return new Settings(initial).withYear(initial.year);
 		Settings trset = new Settings(initial).withYear(initial.year);
 
@@ -972,11 +1035,11 @@ public class XlSUtils {
 		trset.threshold = bestThreshold;
 		trset.lowerBound = bestThreshold;
 		trset.upperBound = bestThreshold;
-		
+
 		for (FinalEntry fe : finals) {
-			fe.threshold = bestThreshold;;
-			fe.lower = bestThreshold;;
-			fe.upper = bestThreshold;;
+			fe.threshold = bestThreshold;
+			fe.lower = bestThreshold;
+			fe.upper = bestThreshold;
 		}
 		// System.out.println("thold: " + trset.threshold + " profit: " +
 		// trset.profit + " lower: " + trset.lowerBound

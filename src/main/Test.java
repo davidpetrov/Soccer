@@ -42,7 +42,7 @@ public class Test {
 		// simplePredictions();
 
 		float total = 0f;
-		for (int year = 2014; year <= 2015; year++)
+		for (int year = 2005; year <= 2015; year++)
 			total += simulationIntersect(year);
 		System.out.println("Avg profit is " + (total / 11));
 
@@ -175,7 +175,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(1);
+		ExecutorService pool = Executors.newFixedThreadPool(7);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
