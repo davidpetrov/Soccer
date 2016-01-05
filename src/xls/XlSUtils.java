@@ -522,12 +522,17 @@ public class XlSUtils {
 		// finals.add(fe);
 		// }
 
-		// finals = intersectAllClassifier(sheet, all, year);
+		finals = intersectAllClassifier(sheet, all, year, 0f, 0f, 0f, 0f);
 
 		// float current = Utils.getSuccessRate(finals);
 		// System.out.println(current);
-		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 1, 10, 0, 0);
+		float bestthold = finals.get(0).threshold;
+		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 0f, bestthold, bestthold, bestthold, 1, 10, 0, 0);
+		set = findIntervalReal(finals, sheet, year, set);
+		finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), set);
 		set = findThreshold(sheet, finals, set);
+
+//		set = trustInterval(sheet, finals, set);
 		float currentProfit = Utils.getProfit(sheet, finals, set);
 		return currentProfit;
 	}
@@ -564,36 +569,35 @@ public class XlSUtils {
 			}
 
 		}
-		// Settings set = new Settings(sheet.getSheetName(), 1f, 1f, 1f, 0.55f,
-		// 0.55f, 0.55f, 1, 10, 0f, -1000f);
-		// Settings basicThreshol = findThreshold(sheet, finalsBasic, set);
-		// Settings basicPoisson = findThreshold(sheet, finalsPoisson, set);
-		// Settings basicWeighted = findThreshold(sheet, finalsWeighted, set);
-		for (FinalEntry fe : finalsBasic) {
-			fe.threshold = basicThreshold;
-			fe.lower = basicThreshold;
-			fe.upper = basicThreshold;
-		}
+		Settings set = new Settings(sheet.getSheetName(), 1f, 1f, 1f, 0.55f, 0.55f, 0.55f, 1, 10, 0f, -1000f);
+		Settings basicThresh = findThreshold(sheet, finalsBasic, set);
+		Settings basicPoisson = findThreshold(sheet, finalsPoisson, set);
+		Settings basicWeighted = findThreshold(sheet, finalsWeighted, set);
+		// for (FinalEntry fe : finalsBasic) {
+		// fe.threshold = basicThreshold;
+		// fe.lower = basicThreshold;
+		// fe.upper = basicThreshold;
+		// }
+		//
+		// for (FinalEntry fe : finalsPoisson) {
+		// fe.threshold = poissonThreshold;
+		// fe.lower = poissonThreshold;
+		// fe.upper = poissonThreshold;
+		// }
+		//
+		// for (FinalEntry fe : finalsWeighted) {
+		// fe.threshold = weightedThreshold;
+		// fe.lower = weightedThreshold;
+		// fe.upper = weightedThreshold;
+		// }
+		//
+		// for (FinalEntry fe : finalsHT2) {
+		// fe.threshold = htThreshold;
+		// fe.lower = htThreshold;
+		// fe.upper = htThreshold;
+		// }
 
-		for (FinalEntry fe : finalsPoisson) {
-			fe.threshold = poissonThreshold;
-			fe.lower = poissonThreshold;
-			fe.upper = poissonThreshold;
-		}
-
-		for (FinalEntry fe : finalsWeighted) {
-			fe.threshold = weightedThreshold;
-			fe.lower = weightedThreshold;
-			fe.upper = weightedThreshold;
-		}
-
-		for (FinalEntry fe : finalsHT2) {
-			fe.threshold = htThreshold;
-			fe.lower = htThreshold;
-			fe.upper = htThreshold;
-		}
-
-		return Utils.intersectMany(finalsBasic, finalsPoisson, finalsWeighted, finalsHT2);
+		return Utils.intersectMany(finalsBasic, finalsPoisson, finalsWeighted);
 
 	}
 
@@ -740,7 +744,7 @@ public class XlSUtils {
 	}
 
 	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			Settings settings) throws IOException {
+			Settings settings) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
 		for (ExtendedFixture f : all) {
 			float finalScore = 0.5f;
@@ -861,6 +865,51 @@ public class XlSUtils {
 		}
 		return profit;
 	}
+	
+	public static ArrayList<FinalEntry> triples(HSSFSheet sheet, int year) throws IOException {
+		ArrayList<FinalEntry> toBet = new ArrayList<>();
+		float profit = 0.0f;
+		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		int maxMatchDay = addMatchDay(sheet, all);
+		for (int i = 15; i < maxMatchDay; i++) {
+			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			// Calendar cal = Calendar.getInstance();
+			// cal.set(year + 1, 1, 1);
+			// if (!current.isEmpty() &&
+			// current.get(0).date.after(cal.getTime())) {
+			// return profit;
+			// }
+
+			float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
+			float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
+
+			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			data = Utils.filterByOdds(data, minOdds, maxOdds);
+			Settings temp = runForLeagueWithOdds(sheet, data, year);
+			// System.out.println("match " + i + temp);
+			temp.maxOdds = maxOdds;
+			temp.minOdds = minOdds;
+			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
+			// temp = findIntervalReal(finals, sheet, year, temp);
+			// finals = runWithSettingsList(sheet, data, temp);
+			temp = findThreshold(sheet, finals, temp);
+			temp = trustInterval(sheet, finals, temp);
+
+			// temp = findIntervalReal(finals, sheet, year, temp);
+			current = Utils.filterByOdds(current, minOdds, maxOdds);
+			finals = runWithSettingsList(sheet, current, temp);
+			toBet.addAll(finals);
+			// finals = Utils.intersectDiff(finals,
+			// intersectAllClassifier(sheet, current, year));
+			
+			// System.out.println(finals);
+//			float trprofit = Utils.getProfit(sheet, finals, temp);
+//			// System.out.println(i + " " + trprofit);
+//			// System.out.println("--------------------------");
+//			profit += trprofit;
+		}
+		return toBet;
+	}
 
 	public static float realisticIntersect(HSSFSheet sheet, int year) throws IOException {
 		float profit = 0.0f;
@@ -930,8 +979,7 @@ public class XlSUtils {
 		return profit;
 	}
 
-	private static Settings trustInterval(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial)
-			throws IOException {
+	private static Settings trustInterval(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings initial) {
 		// System.out.println("===========================");
 		// System.out.println(
 		// "lower: " + initial.lowerBound + " upper: " + initial.upperBound + "
@@ -1002,6 +1050,12 @@ public class XlSUtils {
 			trset.profit = bestFinalProfit;
 		} else {
 			trset = initial;
+		}
+		
+		for (FinalEntry fe : finals) {
+			fe.threshold = trset.threshold;
+			fe.lower = trset.lowerBound;
+			fe.upper = trset.upperBound;
 		}
 
 		// System.out.println("lower: " + trset.lowerBound + " upper: " +
@@ -1120,8 +1174,8 @@ public class XlSUtils {
 			file.close();
 		}
 
-		for (int x = 0; x < 50; x++) {
-			float currentMin = 1.3f + x * 0.02f;
+		for (int x = 0; x < 40; x++) {
+			float currentMin = 1.3f + x * 0.025f;
 			float currentProfit = 0f;
 			for (int i = 0; i < sheets.size(); i++) {
 				HSSFSheet sheet = sheets.get(i);
@@ -1146,8 +1200,8 @@ public class XlSUtils {
 
 		}
 
-		for (int x = bestminx; 1.3f + x * 0.02 < 2.5f; x++) {
-			float currentMax = 1.3f + x * 0.02f;
+		for (int x = bestminx; 1.3f + x * 0.025f < 2.5f; x++) {
+			float currentMax = 1.3f + x * 0.025f;
 			float currentProfit = 0f;
 			for (int i = 0; i < sheets.size(); i++) {
 				HSSFSheet sheet = sheets.get(i);

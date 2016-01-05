@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,6 +30,7 @@ import runner.Runner;
 import runner.RunnerAggregateInterval;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
+import runner.RunnerTriples;
 import utils.Api;
 import utils.Utils;
 import xls.XlSUtils;
@@ -41,12 +43,15 @@ public class Test {
 
 		// simplePredictions();
 
-		float total = 0f;
-		for (int year = 2005; year <= 2015; year++)
-			total += simulationIntersect(year);
-		System.out.println("Avg profit is " + (total / 11));
+		// float total = 0f;
+		// for (int year = 2014; year <= 2014; year++)
+		// total += simulation(year);
+		// System.out.println("Avg profit is " + (total / 11));
 
-//		 makePredictions();
+		for (int year = 2014; year <= 2015; year++)
+			triples(year);
+
+		// makePredictions();
 
 		// singleMethod();
 
@@ -54,11 +59,7 @@ public class Test {
 
 		// stats();
 
-		// try {
 		// optimals();
-		// } catch (InterruptedException | ExecutionException e) {
-		// e.printStackTrace();
-		// }
 
 		// optimalsbyCompetition();
 
@@ -92,17 +93,20 @@ public class Test {
 	}
 
 	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
 
-		ExecutorService pool = Executors.newFixedThreadPool(8);
+		ExecutorService pool = Executors.newFixedThreadPool(7);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2014, sh)));
+			if (dont.contains(sh.getSheetName()))
+				continue;
+			threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2007, sh)));
 			// System.out.println(XlSUtils.aggregateInterval(2005, 2014,
 			// sh.getSheetName()));
 		}
@@ -144,7 +148,7 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ExecutorService pool = Executors.newFixedThreadPool(7);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
@@ -164,7 +168,84 @@ public class Test {
 		pool.shutdown();
 		return totalProfit;
 	}
-	
+
+	public static void triples(int year) throws InterruptedException, ExecutionException, IOException {
+		String base = new File("").getAbsolutePath();
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		ArrayList<FinalEntry> all = new ArrayList<>();
+
+		ExecutorService pool = Executors.newFixedThreadPool(7);
+		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+			if (dont.contains(sh.getSheetName()))
+				continue;
+			threadArray.add(pool.submit(new RunnerTriples(sh, year)));
+		}
+
+		for (Future<ArrayList<FinalEntry>> fd : threadArray) {
+			all.addAll(fd.get());
+		}
+
+		workbook.close();
+		file.close();
+		pool.shutdown();
+
+//		System.out.println(all.size());
+//		System.out.println(Utils.getSuccessRate(all));
+
+		int failtimes = 0;
+		int losses = 0;
+		int testCount = 1_000_000;
+		double total = 0D;
+
+		for (int trials = 0; trials < testCount; trials++) {
+			Collections.shuffle(all);
+
+			float bankroll = 1000f;
+			float unit = 10f;
+			int yes = 0;
+			boolean flag = false;
+			for (int i = 0; i < all.size() - all.size() % 3; i += 3) {
+				if (bankroll < 0) {
+					flag = true;
+					break;
+				}
+				if (all.get(i).success() && all.get(i + 1).success() && all.get(i + 2).success()) {
+					float c1 = all.get(i).prediction > all.get(i).upper ? all.get(i).fixture.maxOver
+							: all.get(i).fixture.maxUnder;
+					float c2 = all.get(i + 1).prediction > all.get(i + 1).upper ? all.get(i + 1).fixture.maxOver
+							: all.get(i + 1).fixture.maxUnder;
+					float c3 = all.get(i + 2).prediction > all.get(i + 2).upper ? all.get(i + 2).fixture.maxOver
+							: all.get(i + 2).fixture.maxUnder;
+					bankroll += unit * (c1 * c2 * c3 - 1f);
+					yes++;
+				} else {
+					bankroll -= unit;
+				}
+			}
+
+			// System.out.println(
+			// flag ? "bankrupt" : "bankroll: " + bankroll + " successrate: " +
+			// (float) yes / (all.size() / 3));
+			if (flag) {
+				failtimes++;
+			} else {
+				total += bankroll;
+				if (bankroll < 1000f)
+					losses++;
+			}
+		}
+
+		System.out.println(year + " Out of " + testCount + " fails: " + failtimes + " losses " + losses + " successes: "
+				+ (testCount - failtimes - losses) + " with AVG: " + total / (testCount - failtimes));
+	}
+
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
@@ -200,7 +281,7 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2015; year <= 2015; year++) {
+		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
 			ExecutorService pool = Executors.newFixedThreadPool(8);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
@@ -211,6 +292,7 @@ public class Test {
 			Iterator<Sheet> sh = workbookdata.sheetIterator();
 			while (sh.hasNext()) {
 				HSSFSheet i = (HSSFSheet) sh.next();
+				// if(i.getSheetName().equals("E0"))
 				threadArray.add(pool.submit(new RunnerOptimals(i, year)));
 			}
 
