@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -532,7 +533,7 @@ public class XlSUtils {
 		finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), set);
 		set = findThreshold(sheet, finals, set);
 
-//		set = trustInterval(sheet, finals, set);
+		// set = trustInterval(sheet, finals, set);
 		float currentProfit = Utils.getProfit(sheet, finals, set);
 		return currentProfit;
 	}
@@ -782,7 +783,8 @@ public class XlSUtils {
 
 	public static void makePrediction(HSSFSheet odds, HSSFSheet league, ExtendedFixture f, Settings sett)
 			throws IOException {
-		if (sett == null)
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		if (/*dont.contains(league.getSheetName()) ||*/ sett == null)
 			return;
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league, f.date)
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
@@ -865,7 +867,7 @@ public class XlSUtils {
 		}
 		return profit;
 	}
-	
+
 	public static ArrayList<FinalEntry> triples(HSSFSheet sheet, int year) throws IOException {
 		ArrayList<FinalEntry> toBet = new ArrayList<>();
 		float profit = 0.0f;
@@ -901,12 +903,12 @@ public class XlSUtils {
 			toBet.addAll(finals);
 			// finals = Utils.intersectDiff(finals,
 			// intersectAllClassifier(sheet, current, year));
-			
+
 			// System.out.println(finals);
-//			float trprofit = Utils.getProfit(sheet, finals, temp);
-//			// System.out.println(i + " " + trprofit);
-//			// System.out.println("--------------------------");
-//			profit += trprofit;
+			// float trprofit = Utils.getProfit(sheet, finals, temp);
+			// // System.out.println(i + " " + trprofit);
+			// // System.out.println("--------------------------");
+			// profit += trprofit;
 		}
 		return toBet;
 	}
@@ -1051,7 +1053,7 @@ public class XlSUtils {
 		} else {
 			trset = initial;
 		}
-		
+
 		for (FinalEntry fe : finals) {
 			fe.threshold = trset.threshold;
 			fe.lower = trset.lowerBound;

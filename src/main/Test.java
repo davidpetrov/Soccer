@@ -43,15 +43,15 @@ public class Test {
 
 		// simplePredictions();
 
-		// float total = 0f;
-		// for (int year = 2014; year <= 2014; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+//		 float total = 0f;
+//		 for (int year = 2015; year <= 2015; year++)
+//		 total += simulation(year);
+//		 System.out.println("Avg profit is " + (total / 11));
 
-		for (int year = 2014; year <= 2015; year++)
-			triples(year);
+//		for (int year = 2013; year <= 2013; year++)
+//			triples(year);
 
-		// makePredictions();
+		 makePredictions();
 
 		// singleMethod();
 
@@ -196,54 +196,146 @@ public class Test {
 		file.close();
 		pool.shutdown();
 
-//		System.out.println(all.size());
-//		System.out.println(Utils.getSuccessRate(all));
+		// System.out.println(all.size());
+		// System.out.println(Utils.getSuccessRate(all));
 
-		int failtimes = 0;
-		int losses = 0;
-		int testCount = 1_000_000;
-		double total = 0D;
+		ArrayList<FinalEntry> overs = new ArrayList<>();
+		ArrayList<FinalEntry> unders = new ArrayList<>();
 
-		for (int trials = 0; trials < testCount; trials++) {
-			Collections.shuffle(all);
+		// System.out.println(all);
+		for (FinalEntry fe : all) {
+			if (fe.prediction >= fe.upper)
+				overs.add(fe);
+			else
+				unders.add(fe);
+		}
+		System.err.println(year);
+		System.out.println(overs.size() + " overs with rate: " + Utils.getSuccessRate(overs) + " profit: "
+				+ Utils.getProfit(overs));
+		System.out.println(unders.size() + " unders with rate: " + Utils.getSuccessRate(unders) + " profit: "
+				+ Utils.getProfit(unders));
 
-			float bankroll = 1000f;
-			float unit = 10f;
-			int yes = 0;
-			boolean flag = false;
-			for (int i = 0; i < all.size() - all.size() % 3; i += 3) {
-				if (bankroll < 0) {
-					flag = true;
-					break;
-				}
-				if (all.get(i).success() && all.get(i + 1).success() && all.get(i + 2).success()) {
-					float c1 = all.get(i).prediction > all.get(i).upper ? all.get(i).fixture.maxOver
-							: all.get(i).fixture.maxUnder;
-					float c2 = all.get(i + 1).prediction > all.get(i + 1).upper ? all.get(i + 1).fixture.maxOver
-							: all.get(i + 1).fixture.maxUnder;
-					float c3 = all.get(i + 2).prediction > all.get(i + 2).upper ? all.get(i + 2).fixture.maxOver
-							: all.get(i + 2).fixture.maxUnder;
-					bankroll += unit * (c1 * c2 * c3 - 1f);
-					yes++;
-				} else {
-					bankroll -= unit;
-				}
+		ArrayList<FinalEntry> cer80 = new ArrayList<>();
+		ArrayList<FinalEntry> cer70 = new ArrayList<>();
+		ArrayList<FinalEntry> cer60 = new ArrayList<>();
+		ArrayList<FinalEntry> cer50 = new ArrayList<>();
+		ArrayList<FinalEntry> cer40 = new ArrayList<>();
+		for (FinalEntry fe : all) {
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			if (certainty >= 0.8f)
+				cer80.add(fe);
+			else if (certainty >= 0.7f) {
+				cer70.add(fe);
+			} else if (certainty >= 0.6f) {
+				cer60.add(fe);
+			} else if (certainty >= 0.5f) {
+				cer50.add(fe);
+			} else {
+				cer40.add(fe);
 			}
 
-			// System.out.println(
-			// flag ? "bankrupt" : "bankroll: " + bankroll + " successrate: " +
-			// (float) yes / (all.size() / 3));
-			if (flag) {
-				failtimes++;
-			} else {
-				total += bankroll;
-				if (bankroll < 1000f)
-					losses++;
+		}
+
+		System.out.println(
+				cer80.size() + " 80s with rate: " + Utils.getSuccessRate(cer80) + " profit: " + Utils.getProfit(cer80));
+		System.out.println(
+				cer70.size() + " 70s with rate: " + Utils.getSuccessRate(cer70) + " profit: " + Utils.getProfit(cer70));
+		System.out.println(
+				cer60.size() + " 60s with rate: " + Utils.getSuccessRate(cer60) + " profit: " + Utils.getProfit(cer60));
+		System.out.println(
+				cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + " profit: " + Utils.getProfit(cer50));
+		System.out.println(cer40.size() + " under50s with rate: " + Utils.getSuccessRate(cer40) + " profit: "
+				+ Utils.getProfit(cer40));
+
+		int onlyOvers = 0;
+		float onlyOversProfit = 0f;
+		for (FinalEntry fe : all) {
+			if (fe.fixture.getTotalGoals() > 2.5) {
+				onlyOvers++;
+				onlyOversProfit += fe.fixture.maxOver;
 			}
 		}
 
-		System.out.println(year + " Out of " + testCount + " fails: " + failtimes + " losses " + losses + " successes: "
-				+ (testCount - failtimes - losses) + " with AVG: " + total / (testCount - failtimes));
+		System.out.println(
+				"Only overs: " + (float) onlyOvers / all.size() + " profit: " + (onlyOversProfit - all.size()));
+
+		int onlyUnders = 0;
+		float onlyUndersProfit = 0f;
+		for (FinalEntry fe : all) {
+			if (fe.fixture.getTotalGoals() < 2.5) {
+				onlyUnders++;
+				onlyUndersProfit += fe.fixture.maxUnder;
+			}
+		}
+
+		System.out.println(
+				"Only unders: " + (float) onlyUnders / all.size() + " profit: " + (onlyUndersProfit - all.size()));
+
+		int betterOdds = 0;
+		float betterOddsProfit = 0f;
+		for (FinalEntry fe : all) {
+			float biggerOdds = fe.fixture.maxOver >= fe.fixture.maxUnder ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			boolean pred = fe.fixture.maxOver >= fe.fixture.maxUnder;
+			if ((pred && fe.fixture.getTotalGoals() > 2.5) || (!pred && fe.fixture.getTotalGoals() < 2.5)) {
+				betterOdds++;
+				betterOddsProfit += biggerOdds;
+			}
+		}
+
+		System.out.println(
+				"Better odds choice: " + (float) betterOdds / all.size() + " profit: " + (betterOddsProfit - all.size()));
+
+		// int failtimes = 0;
+		// int losses = 0;
+		// int testCount = 1_000_000;
+		// double total = 0D;
+		//
+		// for (int trials = 0; trials < testCount; trials++) {
+		// Collections.shuffle(all);
+		//
+		// float bankroll = 1000f;
+		// float unit = 6f;
+		// int yes = 0;
+		// boolean flag = false;
+		// for (int i = 0; i < all.size() - all.size() % 3; i += 3) {
+		// if (bankroll < 0) {
+		// flag = true;
+		// break;
+		// }
+		// if (all.get(i).success() && all.get(i + 1).success() && all.get(i +
+		// 2).success()) {
+		// float c1 = all.get(i).prediction > all.get(i).upper ?
+		// all.get(i).fixture.maxOver
+		// : all.get(i).fixture.maxUnder;
+		// float c2 = all.get(i + 1).prediction > all.get(i + 1).upper ?
+		// all.get(i + 1).fixture.maxOver
+		// : all.get(i + 1).fixture.maxUnder;
+		// float c3 = all.get(i + 2).prediction > all.get(i + 2).upper ?
+		// all.get(i + 2).fixture.maxOver
+		// : all.get(i + 2).fixture.maxUnder;
+		// bankroll += unit * (c1 * c2 * c3 - 1f);
+		// yes++;
+		// } else {
+		// bankroll -= unit;
+		// }
+		// }
+		//
+		// // System.out.println(
+		// // flag ? "bankrupt" : "bankroll: " + bankroll + " successrate: " +
+		// // (float) yes / (all.size() / 3));
+		// if (flag) {
+		// failtimes++;
+		// } else {
+		// total += bankroll;
+		// if (bankroll < 1000f)
+		// losses++;
+		// }
+		// }
+		//
+		// System.out.println(year + " Out of " + testCount + " fails: " +
+		// failtimes + " losses " + losses + " successes: "
+		// + (testCount - failtimes - losses) + " with AVG: " + total /
+		// (testCount - failtimes));
 	}
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {

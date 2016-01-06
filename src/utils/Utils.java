@@ -327,6 +327,26 @@ public class Utils {
 		}
 		return profit - size;
 	}
+	
+	public static float getProfit( ArrayList<FinalEntry> finals) {
+		float profit = 0.0f;
+		int size = 0;
+		for (FinalEntry fe : finals) {
+			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			float value = certainty * gain;
+			if (value > 0.9f) {
+				size++;
+				if (fe.success()) {
+					if (gain != -1.0d) {
+						profit += gain;
+					}
+				}
+			}
+		}
+		return profit - size;
+	}
+	
 
 	public static ArrayList<ExtendedFixture> onlyFixtures(ArrayList<FinalEntry> finals) {
 		ArrayList<ExtendedFixture> result = new ArrayList<>();
