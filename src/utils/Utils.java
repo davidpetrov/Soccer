@@ -11,7 +11,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.json.JSONArray;
@@ -22,7 +21,6 @@ import main.ExtendedFixture;
 import main.FinalEntry;
 import main.Result;
 import settings.Settings;
-import xls.XlSUtils;
 
 public class Utils {
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -57,6 +55,7 @@ public class Utils {
 		return sb.toString();
 	}
 
+	@SuppressWarnings("unused")
 	public static ArrayList<ExtendedFixture> createFixtureList(JSONArray arr) throws JSONException, ParseException {
 		ArrayList<ExtendedFixture> fixtures = new ArrayList<>();
 		for (int i = 0; i < arr.length(); i++) {
@@ -84,6 +83,7 @@ public class Utils {
 		return fixtures;
 	}
 
+	@SuppressWarnings("unused")
 	public static ArrayList<ExtendedFixture> createFixtureList(JSONObject obj) throws JSONException, ParseException {
 		ArrayList<ExtendedFixture> fixtures = new ArrayList<>();
 		String date = obj.getString("date");
@@ -327,8 +327,8 @@ public class Utils {
 		}
 		return profit - size;
 	}
-	
-	public static float getProfit( ArrayList<FinalEntry> finals) {
+
+	public static float getProfit(ArrayList<FinalEntry> finals) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
@@ -346,7 +346,6 @@ public class Utils {
 		}
 		return profit - size;
 	}
-	
 
 	public static ArrayList<ExtendedFixture> onlyFixtures(ArrayList<FinalEntry> finals) {
 		ArrayList<ExtendedFixture> result = new ArrayList<>();
@@ -470,11 +469,32 @@ public class Utils {
 		return result;
 	}
 
+	@SafeVarargs
 	public static ArrayList<FinalEntry> intersectMany(ArrayList<FinalEntry>... lists) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (int i = 0; i < lists[0].size(); i++) {
 			if (samePrediction(lists, i))
 				result.add(lists[0].get(i));
+		}
+		return result;
+	}
+
+	@SafeVarargs
+	public static ArrayList<FinalEntry> intersectVotes(ArrayList<FinalEntry>... lists) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (int i = 0; i < lists[0].size(); i++) {
+			int overs = 0;
+			int unders = 0;
+			for (ArrayList<FinalEntry> list : lists) {
+				if (list.get(i).prediction >= list.get(i).upper)
+					overs++;
+				else
+					unders++;
+			}
+			
+			FinalEntry curr = lists[0].get(i);
+			curr.prediction = overs > unders ? 1f : 0f;
+			result.add(curr);
 		}
 		return result;
 	}

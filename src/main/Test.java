@@ -43,15 +43,15 @@ public class Test {
 
 		// simplePredictions();
 
-//		 float total = 0f;
-//		 for (int year = 2015; year <= 2015; year++)
-//		 total += simulation(year);
-//		 System.out.println("Avg profit is " + (total / 11));
+		 float total = 0f;
+		 for (int year = 2015; year <= 2015; year++)
+		 total += simulation(year);
+		 System.out.println("Avg profit is " + (total / 11));
 
 //		for (int year = 2013; year <= 2013; year++)
 //			triples(year);
 
-		 makePredictions();
+//		 makePredictions();
 
 		// singleMethod();
 
@@ -282,8 +282,27 @@ public class Test {
 			}
 		}
 
-		System.out.println(
-				"Better odds choice: " + (float) betterOdds / all.size() + " profit: " + (betterOddsProfit - all.size()));
+		System.out.println("Better odds choice: " + (float) betterOdds / all.size() + " profit: "
+				+ (betterOddsProfit - all.size()));
+
+		int wins = 0;
+		float draws = 0f;
+		int certs = 0;
+		for (FinalEntry fe : all) {
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			if (certainty >= 0f) {
+				certs++;
+				if (fe.success()) {
+					wins++;
+				} else if ((fe.prediction >= fe.upper && fe.fixture.getTotalGoals() == 2)
+						|| (fe.prediction <= fe.lower && fe.fixture.getTotalGoals() == 3)) {
+					draws++;
+				}
+			}
+		}
+
+		System.out.println("Soft lines wins: " + (float) wins / certs + " draws: " + (float) draws / certs
+				+ " not losses: " + (float) (wins + draws) / certs);
 
 		// int failtimes = 0;
 		// int losses = 0;
