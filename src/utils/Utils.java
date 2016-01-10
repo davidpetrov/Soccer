@@ -11,7 +11,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 
+import org.apache.poi.hssf.record.ArrayRecord;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -491,7 +495,7 @@ public class Utils {
 				else
 					unders++;
 			}
-			
+
 			FinalEntry curr = lists[0].get(i);
 			curr.prediction = overs > unders ? 1f : 0f;
 			result.add(curr);
@@ -534,6 +538,229 @@ public class Utils {
 				return i;
 		}
 		return null;
+	}
+
+	public static void bestNperWeek(ArrayList<FinalEntry> all, int n) {
+		String[] literals = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
+		ArrayList<FinalEntry> filtered = new ArrayList<>();
+		for (FinalEntry fe : all) {
+			Calendar c = Calendar.getInstance();
+			c.setTime(fe.fixture.date);
+			int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
+			if (literals[dayOfWeek - 1].equals("SAT") || literals[dayOfWeek - 1].equals("SUN")) {
+				filtered.add(fe);
+			}
+
+		}
+		filtered.sort(new Comparator<FinalEntry>() {
+
+			@Override
+			public int compare(FinalEntry o1, FinalEntry o2) {
+				return o1.fixture.date.compareTo(o2.fixture.date);
+			}
+
+		});
+
+		ArrayList<FinalEntry> curr = new ArrayList<>();
+		Date currDate = filtered.get(0).fixture.date;
+		for (int i = 0; i < filtered.size(); i++) {
+			Date date = filtered.get(i).fixture.date;
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
+			cal.add(Calendar.DATE, 1);
+			Date next = cal.getTime();
+			if (date.equals(currDate) || date.equals(next)) {
+				curr.add(filtered.get(i));
+			} else {
+				if (i + 1 < filtered.size()) {
+					currDate = filtered.get(i + 1).fixture.date;
+
+					curr.sort(new Comparator<FinalEntry>() {
+
+						@Override
+						public int compare(FinalEntry o1, FinalEntry o2) {
+							Float certainty1 = o1.prediction > o1.threshold ? o1.prediction : (1f - o1.prediction);
+							Float certainty2 = o2.prediction > o2.threshold ? o2.prediction : (1f - o2.prediction);
+							return certainty2.compareTo(certainty1);
+						}
+					});
+
+					boolean flag = true;
+					float coeff = 1f;
+					if (curr.size() >= n) {
+						for (int j = 0; j < n; j++) {
+							if (curr.get(j).success()) {
+								coeff *= curr.get(j).prediction >= curr.get(j).upper ? curr.get(j).fixture.maxOver
+										: curr.get(j).fixture.maxUnder;
+							} else {
+								coeff = -1f;
+								break;
+							}
+						}
+						System.out.println(curr.get(0).fixture.date + " " + coeff);
+					}
+					curr = new ArrayList<>();
+				} else {
+					break;
+				}
+			}
+		}
+
+	}
+
+	public static void analysys(ArrayList<FinalEntry> all, int year) {
+		ArrayList<FinalEntry> overs = new ArrayList<>();
+		ArrayList<FinalEntry> unders = new ArrayList<>();
+
+		// System.out.println(all);
+		for (FinalEntry fe : all) {
+			if (fe.prediction >= fe.upper)
+				overs.add(fe);
+			else
+				unders.add(fe);
+		}
+		System.err.println(year);
+		System.out.println(overs.size() + " overs with rate: " + Utils.getSuccessRate(overs) + " profit: "
+				+ Utils.getProfit(overs));
+		System.out.println(unders.size() + " unders with rate: " + Utils.getSuccessRate(unders) + " profit: "
+				+ Utils.getProfit(unders));
+
+		ArrayList<FinalEntry> cer80 = new ArrayList<>();
+		ArrayList<FinalEntry> cer70 = new ArrayList<>();
+		ArrayList<FinalEntry> cer60 = new ArrayList<>();
+		ArrayList<FinalEntry> cer50 = new ArrayList<>();
+		ArrayList<FinalEntry> cer40 = new ArrayList<>();
+		for (FinalEntry fe : all) {
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			if (certainty >= 0.8f)
+				cer80.add(fe);
+			else if (certainty >= 0.7f) {
+				cer70.add(fe);
+			} else if (certainty >= 0.6f) {
+				cer60.add(fe);
+			} else if (certainty >= 0.5f) {
+				cer50.add(fe);
+			} else {
+				cer40.add(fe);
+			}
+
+		}
+
+		System.out.println(
+				cer80.size() + " 80s with rate: " + Utils.getSuccessRate(cer80) + "profit: " + Utils.getProfit(cer80));
+		System.out.println(
+				cer70.size() + " 70s with rate: " + Utils.getSuccessRate(cer70) + "profit: " + Utils.getProfit(cer70));
+		System.out.println(
+				cer60.size() + " 60s with rate: " + Utils.getSuccessRate(cer60) + "profit: " + Utils.getProfit(cer60));
+		System.out.println(
+				cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + "profit: " + Utils.getProfit(cer50));
+		System.out.println(cer40.size() + " under50s with rate: " + Utils.getSuccessRate(cer40) + " profit: "
+				+ Utils.getProfit(cer40));
+
+		int onlyOvers = 0;
+		float onlyOversProfit = 0f;
+		for (FinalEntry fe : all) {
+			if (fe.fixture.getTotalGoals() > 2.5) {
+				onlyOvers++;
+				onlyOversProfit += fe.fixture.maxOver;
+			}
+		}
+
+		System.out.println(
+				"Only overs: " + (float) onlyOvers / all.size() + " profit: " + (onlyOversProfit - all.size()));
+
+		int onlyUnders = 0;
+		float onlyUndersProfit = 0f;
+		for (FinalEntry fe : all) {
+			if (fe.fixture.getTotalGoals() < 2.5) {
+				onlyUnders++;
+				onlyUndersProfit += fe.fixture.maxUnder;
+			}
+		}
+
+		System.out.println(
+				"Only unders: " + (float) onlyUnders / all.size() + " profit: " + (onlyUndersProfit - all.size()));
+
+		int betterOdds = 0;
+		float betterOddsProfit = 0f;
+		for (FinalEntry fe : all) {
+			float biggerOdds = fe.fixture.maxOver >= fe.fixture.maxUnder ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			boolean pred = fe.fixture.maxOver >= fe.fixture.maxUnder;
+			if ((pred && fe.fixture.getTotalGoals() > 2.5) || (!pred && fe.fixture.getTotalGoals() < 2.5)) {
+				betterOdds++;
+				betterOddsProfit += biggerOdds;
+			}
+		}
+
+		System.out.println("Better odds choice: " + (float) betterOdds / all.size() + " profit: "
+				+ (betterOddsProfit - all.size()));
+
+		int wins = 0;
+		float draws = 0f;
+		int certs = 0;
+		for (FinalEntry fe : all) {
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			if (certainty >= 0f) {
+				certs++;
+				if (fe.success()) {
+					wins++;
+				} else if ((fe.prediction >= fe.upper && fe.fixture.getTotalGoals() == 2)
+						|| (fe.prediction <= fe.lower && fe.fixture.getTotalGoals() == 3)) {
+					draws++;
+				}
+			}
+		}
+
+		System.out.println("Soft lines wins: " + (float) wins / certs + "draws: " + (float) draws / certs
+				+ " not losses: " + (float) (wins + draws) / certs);
+	}
+
+	public static void triples(ArrayList<FinalEntry> all, int year) {
+		int failtimes = 0;
+		int losses = 0;
+		int testCount = 1_000_000;
+		double total = 0D;
+
+		for (int trials = 0; trials < testCount; trials++) {
+			Collections.shuffle(all);
+
+			float bankroll = 1000f;
+			float unit = 6f;
+			int yes = 0;
+			boolean flag = false;
+			for (int i = 0; i < all.size() - all.size() % 3; i += 3) {
+				if (bankroll < 0) {
+					flag = true;
+					break;
+				}
+				if (all.get(i).success() && all.get(i + 1).success() && all.get(i + 2).success()) {
+					float c1 = all.get(i).prediction > all.get(i).upper ? all.get(i).fixture.maxOver
+							: all.get(i).fixture.maxUnder;
+					float c2 = all.get(i + 1).prediction > all.get(i + 1).upper ? all.get(i + 1).fixture.maxOver
+							: all.get(i + 1).fixture.maxUnder;
+					float c3 = all.get(i + 2).prediction > all.get(i + 2).upper ? all.get(i + 2).fixture.maxOver
+							: all.get(i + 2).fixture.maxUnder;
+					bankroll += unit * (c1 * c2 * c3 - 1f);
+					yes++;
+				} else {
+					bankroll -= unit;
+				}
+			}
+
+			// System.out.println(
+			// flag ? "bankrupt" : "bankroll: " + bankroll + " successrate: " +
+			// (float) yes / (all.size() / 3));
+			if (flag) {
+				failtimes++;
+			} else {
+				total += bankroll;
+				if (bankroll < 1000f)
+					losses++;
+			}
+		}
+
+		System.out.println(year + " Out of " + testCount + " fails: " + failtimes + " losses " + losses + " successes: "
+				+ (testCount - failtimes - losses) + " with AVG: " + total / (testCount - failtimes));
 	}
 
 }

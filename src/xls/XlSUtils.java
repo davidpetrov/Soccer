@@ -793,7 +793,7 @@ public class XlSUtils {
 	public static void makePrediction(HSSFSheet odds, HSSFSheet league, ExtendedFixture f, Settings sett)
 			throws IOException {
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
-		if (dont.contains(league.getSheetName()) || sett == null)
+		if (/*dont.contains(league.getSheetName()) || */sett == null)
 			return;
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league, f.date)
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
@@ -801,12 +801,12 @@ public class XlSUtils {
 		float certainty = score > sett.threshold ? score : (1f - score);
 		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
 		float value = certainty * coeff;
-		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (value > 0.9f)
-				&& (score >= sett.upperBound || score <= sett.lowerBound)) {
+//		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (value > 0.9f)
+//				&& (score >= sett.upperBound || score <= sett.lowerBound)) {
 			String prediction = score > sett.threshold ? "over" : "under";
 			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
 					+ prediction + " " + coeff);
-		}
+//		}
 
 	}
 
