@@ -763,4 +763,36 @@ public class Utils {
 				+ (testCount - failtimes - losses) + " with AVG: " + total / (testCount - failtimes));
 	}
 
+	public static void hyperReal(ArrayList<FinalEntry> all, int year, float bankroll, float percent) {
+		System.err.println(year);
+		float bank = bankroll;
+		all.sort(new Comparator<FinalEntry>() {
+
+			@Override
+			public int compare(FinalEntry o1, FinalEntry o2) {
+				return o1.fixture.date.compareTo(o2.fixture.date);
+			}
+
+		});
+
+		float betSize = percent * bankroll;
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(all.get(0).fixture.date);
+		int month = cal.get(Calendar.MONTH);
+		for (FinalEntry i : all) {
+			cal.setTime(i.fixture.date);
+			if (cal.get(Calendar.MONTH) == month) {
+				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+				bank += betSize * (i.success() ? (gain - 1f) : -1f);
+			} else {
+				System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize);
+//				betSize = bank * percent;
+				month = cal.get(Calendar.MONTH);
+				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+				bank += betSize * (i.success() ? (gain - 1f) : -1f);
+			}
+		}
+		System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize);
+	}
+
 }

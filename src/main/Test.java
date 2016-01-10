@@ -51,7 +51,7 @@ public class Test {
 		// total += simulation(year);
 		// System.out.println("Avg profit is " + (total / 11));
 
-		for (int year = 2015; year <= 2015; year++)
+		for (int year = 2010; year <= 2015; year++)
 			triples(year);
 
 		// makePredictions();
@@ -199,9 +199,10 @@ public class Test {
 		file.close();
 		pool.shutdown();
 
-		Utils.analysys(all, year);
-//		Utils.bestNperWeek(all, 4);
-//		Utils.triples(all, year);
+		// Utils.analysys(all, year);
+		Utils.hyperReal(all, year, 1000f, 0.025f);
+		// Utils.bestNperWeek(all, 4);
+		// Utils.triples(all, year);
 
 	}
 
