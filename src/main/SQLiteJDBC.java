@@ -538,6 +538,41 @@ public class SQLiteJDBC {
 		}
 	}
 
+	// insert score
+	public static void insertBasic(ExtendedFixture f, float score, int year, String tableName) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+			// System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			String sql = "INSERT INTO " + tableName + " (DATE,HOMETEAMNAME,AWAYTEAMNAME,YEAR,COMPETITION,SCORE)"
+					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+					+ addQuotes(f.awayTeam) + "," + year + "," + addQuotes(f.competition) + "," + score + " );";
+			try {
+				if (!Float.isNaN(score))
+					stmt.executeUpdate(sql);
+			} catch (SQLException e) {
+				System.out.println("tuka");
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+	}
+
 	public static Settings getSettings(String league, int year) {
 		Settings sett = null;
 		Connection c = null;

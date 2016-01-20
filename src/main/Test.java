@@ -46,15 +46,15 @@ public class Test {
 
 		// simplePredictions();
 
-		// float total = 0f;
-		// for (int year = 2015; year <= 2015; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+		float total = 0f;
+		for (int year = 2014; year <= 2014; year++)
+			total += simulation(year);
+		System.out.println("Avg profit is " + (total / 11));
 
-		for (int year = 2010; year <= 2015; year++)
-			triples(year);
+//		for (int year = 2014; year <= 2014; year++)
+//			triples(year);
 
-		// makePredictions();
+//		 makePredictions();
 
 		// singleMethod();
 
@@ -151,11 +151,11 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(7);
+		ExecutorService pool = Executors.newFixedThreadPool(1);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (dont.contains(sh.getSheetName()))
+			if (dont.contains(sh.getSheetName()) /*|| !sh.getSheetName().equals("E0")*/)
 				continue;
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
@@ -186,8 +186,8 @@ public class Test {
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (dont.contains(sh.getSheetName()))
-				continue;
+//			if (dont.contains(sh.getSheetName()))
+//				continue;
 			threadArray.add(pool.submit(new RunnerTriples(sh, year)));
 		}
 
@@ -199,11 +199,25 @@ public class Test {
 		file.close();
 		pool.shutdown();
 
-		// Utils.analysys(all, year);
+		 Utils.analysys(all, year);
 		Utils.hyperReal(all, year, 1000f, 0.025f);
-		// Utils.bestNperWeek(all, 4);
-		// Utils.triples(all, year);
-
+//		System.out.println("3");
+//		 Utils.bestNperWeek(all, 3);
+//		System.out.println("4");
+//		 Utils.bestNperWeek(all, 4);
+//		 System.out.println("5");
+//		 Utils.bestNperWeek(all, 5);
+//		 System.out.println("6");
+//		 Utils.bestNperWeek(all, 6);
+//		 System.out.println("7");
+//		 Utils.bestNperWeek(all, 7);
+//		 System.out.println("8");
+//		 Utils.bestNperWeek(all, 8);
+//		// Utils.triples(all, year);
+//		 System.out.println("9");
+//		 Utils.bestNperWeek(all, 9);
+//		 System.out.println("10");
+//		 Utils.bestNperWeek(all, 10);
 	}
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {

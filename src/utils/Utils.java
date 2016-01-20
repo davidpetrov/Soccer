@@ -587,17 +587,18 @@ public class Utils {
 
 					boolean flag = true;
 					float coeff = 1f;
+					int successes = 0;
 					if (curr.size() >= n) {
 						for (int j = 0; j < n; j++) {
 							if (curr.get(j).success()) {
 								coeff *= curr.get(j).prediction >= curr.get(j).upper ? curr.get(j).fixture.maxOver
 										: curr.get(j).fixture.maxUnder;
+								successes++;
 							} else {
 								coeff = -1f;
-								break;
 							}
 						}
-						System.out.println(curr.get(0).fixture.date + " " + coeff);
+						System.out.println(curr.get(0).fixture.date + " " + " " + successes);
 					}
 					curr = new ArrayList<>();
 				} else {
@@ -625,6 +626,9 @@ public class Utils {
 		System.out.println(unders.size() + " unders with rate: " + Utils.getSuccessRate(unders) + " profit: "
 				+ Utils.getProfit(unders));
 
+		ArrayList<FinalEntry> cot15 = new ArrayList<>();
+		ArrayList<FinalEntry> cot20 = new ArrayList<>();
+		ArrayList<FinalEntry> cot25 = new ArrayList<>();
 		ArrayList<FinalEntry> cer80 = new ArrayList<>();
 		ArrayList<FinalEntry> cer70 = new ArrayList<>();
 		ArrayList<FinalEntry> cer60 = new ArrayList<>();
@@ -644,6 +648,15 @@ public class Utils {
 				cer40.add(fe);
 			}
 
+			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
+			if (cot >= 0.25f) {
+				cot25.add(fe);
+			} else if (cot >= 0.2f) {
+				cot20.add(fe);
+			} else if (cot >= 0.15f) {
+				cot15.add(fe);
+			}
+
 		}
 
 		System.out.println(
@@ -656,6 +669,15 @@ public class Utils {
 				cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + "profit: " + Utils.getProfit(cer50));
 		System.out.println(cer40.size() + " under50s with rate: " + Utils.getSuccessRate(cer40) + " profit: "
 				+ Utils.getProfit(cer40));
+		
+		
+		System.out.println(
+				cot25.size() + " cot25s with rate: " + Utils.getSuccessRate(cot25) + "profit: " + Utils.getProfit(cot25));
+		System.out.println(
+				cot20.size() + " cot20s with rate: " + Utils.getSuccessRate(cot20) + "profit: " + Utils.getProfit(cot20));
+		System.out.println(
+				cot15.size() + " cot15s with rate: " + Utils.getSuccessRate(cot15) + "profit: " + Utils.getProfit(cot15));
+		
 
 		int onlyOvers = 0;
 		float onlyOversProfit = 0f;
@@ -766,6 +788,9 @@ public class Utils {
 	public static void hyperReal(ArrayList<FinalEntry> all, int year, float bankroll, float percent) {
 		System.err.println(year);
 		float bank = bankroll;
+		float previous = bank;
+		int succ = 0;
+		int alls = 0;
 		all.sort(new Comparator<FinalEntry>() {
 
 			@Override
@@ -784,15 +809,24 @@ public class Utils {
 			if (cal.get(Calendar.MONTH) == month) {
 				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
+				succ += i.success() ? 1 : 0;
+				alls++;
 			} else {
-				System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize);
-//				betSize = bank * percent;
+				System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize
+						+ " profit: " + (bank - previous) + " in units: " + (bank - previous) / betSize + " rate: "
+						+ (float) succ / alls + "%");
+				previous = bank;
+				// betSize = bank * percent;
 				month = cal.get(Calendar.MONTH);
 				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
+				alls = 1;
+				succ = i.success() ? 1 : 0;
 			}
 		}
-		System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize);
+		System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize + " profit: "
+				+ (bank - previous) + " in units: " + (bank - previous) / betSize + " rate: " + (float) succ / alls
+				+ "%");
 	}
 
 }

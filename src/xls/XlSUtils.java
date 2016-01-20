@@ -15,18 +15,23 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.spi.CalendarDataProvider;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 
 import constants.MinMaxOdds;
 import main.ExtendedFixture;
 import main.FinalEntry;
 import main.Result;
 import main.SQLiteJDBC;
+import runner.Runner;
 import settings.Settings;
 import utils.Utils;
 
@@ -793,7 +798,7 @@ public class XlSUtils {
 	public static void makePrediction(HSSFSheet odds, HSSFSheet league, ExtendedFixture f, Settings sett)
 			throws IOException {
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
-		if (/*dont.contains(league.getSheetName()) || */sett == null)
+		if (dont.contains(league.getSheetName()) || sett == null)
 			return;
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league, f.date)
 				+ sett.weightedPoisson * poissonWeighted(f, league, f.date);
@@ -801,12 +806,12 @@ public class XlSUtils {
 		float certainty = score > sett.threshold ? score : (1f - score);
 		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
 		float value = certainty * coeff;
-//		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (value > 0.9f)
-//				&& (score >= sett.upperBound || score <= sett.lowerBound)) {
+		if (coeff >= sett.minOdds && coeff <= sett.maxOdds && (value > 0.9f)
+				&& (score >= sett.upperBound || score <= sett.lowerBound)) {
 			String prediction = score > sett.threshold ? "over" : "under";
 			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
 					+ prediction + " " + coeff);
-//		}
+		}
 
 	}
 
@@ -839,6 +844,14 @@ public class XlSUtils {
 	public static float realisticRun(HSSFSheet sheet, int year) throws IOException {
 		float profit = 0.0f;
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+
+		for (ExtendedFixture f : all) {
+			SQLiteJDBC.insertBasic(f, poisson(f, sheet, f.date), year, "POISSON");
+			SQLiteJDBC.insertBasic(f, poissonWeighted(f, sheet, f.date), year, "WEIGHTED");
+			SQLiteJDBC.insertBasic(f, halfTimeOnly(f, sheet, 1), year, "HALFTIME1");
+			SQLiteJDBC.insertBasic(f, halfTimeOnly(f, sheet, 2), year, "HALFTIME2");
+		}
+
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
@@ -894,8 +907,8 @@ public class XlSUtils {
 			// return profit;
 			// }
 
-			float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
-			float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
+			float minOdds = 1.6f;
+			float maxOdds = 10f;
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 			data = Utils.filterByOdds(data, minOdds, maxOdds);
@@ -1251,6 +1264,28 @@ public class XlSUtils {
 		set.profit = bestProfit;
 
 		return set;
+	}
+
+	public static void populateScores(int year) throws IOException {
+		String base = new File("").getAbsolutePath();
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+			ArrayList<ExtendedFixture> all = selectAllAll(sh);
+
+			for (ExtendedFixture f : all) {
+				SQLiteJDBC.insertBasic(f, poisson(f, sh, f.date), year, "POISSON");
+				SQLiteJDBC.insertBasic(f, poissonWeighted(f, sh, f.date), year, "WEIGHTED");
+				SQLiteJDBC.insertBasic(f, halfTimeOnly(f, sh, 1), year, "HALFTIME1");
+				SQLiteJDBC.insertBasic(f, halfTimeOnly(f, sh, 2), year, "HALFTIME2");
+			}
+		}
+		workbook.close();
+		file.close();
 	}
 
 }
