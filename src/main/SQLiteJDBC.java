@@ -6,6 +6,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -639,6 +640,41 @@ public class SQLiteJDBC {
 			System.exit(0);
 		}
 
+	}
+
+	public static synchronized HashMap<ExtendedFixture, Float> selectScores(ArrayList<ExtendedFixture> all, String table, int year,
+			String competition) throws InterruptedException {
+
+		HashMap<ExtendedFixture, Float> result = new HashMap<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery(
+					"select * from " + table + " where year=" + year + " AND competition=" + addQuotes(competition) + ";");
+			while (rs.next()) {
+				String date = rs.getString("date");
+				String homeTeamName = rs.getString("hometeamname");
+				String awayTeamName = rs.getString("awayteamname");
+				Float score = rs.getFloat("score");
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(-1, -1), competition);
+				result.put(ef, score);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
 	}
 
 }

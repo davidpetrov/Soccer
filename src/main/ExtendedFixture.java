@@ -81,4 +81,41 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		return date.compareTo(o.date);
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((awayTeam == null) ? 0 : awayTeam.hashCode());
+		result = prime * result + ((date == null) ? 0 : date.hashCode());
+		result = prime * result + ((homeTeam == null) ? 0 : homeTeam.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ExtendedFixture other = (ExtendedFixture) obj;
+		if (awayTeam == null) {
+			if (other.awayTeam != null)
+				return false;
+		} else if (!awayTeam.equals(other.awayTeam))
+			return false;
+		if (date == null) {
+			if (other.date != null)
+				return false;
+		} else if (!date.equals(other.date))
+			return false;
+		if (homeTeam == null) {
+			if (other.homeTeam != null)
+				return false;
+		} else if (!homeTeam.equals(other.homeTeam))
+			return false;
+		return true;
+	}
+
 }
