@@ -1417,13 +1417,11 @@ public class XlSUtils {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			ArrayList<ExtendedFixture> all = selectAllAll(sh);
 
-			for (ExtendedFixture f : all) {
-				SQLiteJDBC.insertBasic(f, poisson(f, sh, f.date), year, "BASICS");
-				SQLiteJDBC.insertBasic(f, poisson(f, sh, f.date), year, "POISSON");
-				SQLiteJDBC.insertBasic(f, poissonWeighted(f, sh, f.date), year, "WEIGHTED");
-				SQLiteJDBC.insertBasic(f, halfTimeOnly(f, sh, 1), year, "HALFTIME1");
-				SQLiteJDBC.insertBasic(f, halfTimeOnly(f, sh, 2), year, "HALFTIME2");
-			}
+			SQLiteJDBC.insertBasic(sh, all, year, "BASICS");
+			SQLiteJDBC.insertBasic(sh, all, year, "POISSON");
+			SQLiteJDBC.insertBasic(sh, all, year, "WEIGHTED");
+			SQLiteJDBC.insertBasic(sh, all, year, "HALFTIME1");
+			SQLiteJDBC.insertBasic(sh, all, year, "HALFTIME2");
 		}
 		workbook.close();
 		file.close();

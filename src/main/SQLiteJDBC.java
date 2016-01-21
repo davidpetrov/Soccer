@@ -8,11 +8,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import settings.Settings;
 import utils.Utils;
+import xls.XlSUtils;
 
 public class SQLiteJDBC {
 
@@ -642,8 +644,8 @@ public class SQLiteJDBC {
 
 	}
 
-	public static synchronized HashMap<ExtendedFixture, Float> selectScores(ArrayList<ExtendedFixture> all, String table, int year,
-			String competition) throws InterruptedException {
+	public static synchronized HashMap<ExtendedFixture, Float> selectScores(ArrayList<ExtendedFixture> all,
+			String table, int year, String competition) throws InterruptedException {
 
 		HashMap<ExtendedFixture, Float> result = new HashMap<>();
 
@@ -655,8 +657,8 @@ public class SQLiteJDBC {
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
-			ResultSet rs = stmt.executeQuery(
-					"select * from " + table + " where year=" + year + " AND competition=" + addQuotes(competition) + ";");
+			ResultSet rs = stmt.executeQuery("select * from " + table + " where year=" + year + " AND competition="
+					+ addQuotes(competition) + ";");
 			while (rs.next()) {
 				String date = rs.getString("date");
 				String homeTeamName = rs.getString("hometeamname");
@@ -675,6 +677,55 @@ public class SQLiteJDBC {
 		}
 
 		return result;
+	}
+
+	public static void insertBasic(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, String tableName) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			for (ExtendedFixture f : all) {
+				float score = Float.NaN;
+				if (tableName.equals("BASICS")) {
+					score = XlSUtils.basic2(f, sheet, 0.6f, 0.3f, 0.1f);
+				} else if (tableName.equals("POISSON")) {
+					score = XlSUtils.poisson(f, sheet, f.date);
+				} else if (tableName.equals("WEIGHTED")) {
+					score = XlSUtils.poissonWeighted(f, sheet, f.date);
+				} else if (tableName.equals("HALFTIME1")) {
+					score = XlSUtils.halfTimeOnly(f, sheet, 1);
+				} else if (tableName.equals("HALFTIME2")) {
+					score = XlSUtils.halfTimeOnly(f, sheet, 2);
+				}
+
+				String sql = "INSERT INTO " + tableName + " (DATE,HOMETEAMNAME,AWAYTEAMNAME,YEAR,COMPETITION,SCORE)"
+						+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+						+ addQuotes(f.awayTeam) + "," + year + "," + addQuotes(f.competition) + "," + score + " );";
+				try {
+					if (!Float.isNaN(score))
+						stmt.executeUpdate(sql);
+				} catch (SQLException e) {
+					System.out.println("tuka");
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+
 	}
 
 }

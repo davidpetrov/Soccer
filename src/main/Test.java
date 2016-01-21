@@ -46,12 +46,13 @@ public class Test {
 
 		// simplePredictions();
 
-		float total = 0f;
-		for (int year = 2013; year <= 2013; year++)
-			total += simulation(year);
-		System.out.println("Avg profit is " + (total / 11));
+		 float total = 0f;
+		 for (int year = 2005; year <= 2014; year++)
+		 total += simulation(year);
+		 System.out.println("Avg profit is " + (total / 11));
 
-		// XlSUtils.populateScores(2013);
+//		for (int i = 2005; i <= 2011; i++)
+//			XlSUtils.populateScores(i);
 
 		// for (int year = 2014; year <= 2014; year++)
 		// triples(year);
