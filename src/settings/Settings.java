@@ -15,6 +15,7 @@ public class Settings {
 	public float successRate;
 	public float profit;
 	public float maxOdds;
+	public float value;
 
 	public Settings(String league, float basic, float poisson, float weightedPoisson, float threshold, float upperBound,
 			float lowerBound, float minOdds, float maxOdds, float successRate, float profit) {
@@ -52,6 +53,11 @@ public class Settings {
 
 	public Settings withHT(float ht) {
 		this.halfTimeOverOne = ht;
+		return this;
+	}
+
+	public Settings withValue(float value) {
+		this.value = value;
 		return this;
 	}
 

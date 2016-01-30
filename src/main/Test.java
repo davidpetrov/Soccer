@@ -45,19 +45,19 @@ public class Test {
 		long start = System.currentTimeMillis();
 
 		// simplePredictions();
+//
+//		float total = 0f;
+//		for (int year = 2005; year <= 2015; year++)
+//			total += simulation(year);
+//		System.out.println("Avg profit is " + (total / 11));
 
-		 float total = 0f;
-		 for (int year = 2005; year <= 2014; year++)
-		 total += simulation(year);
-		 System.out.println("Avg profit is " + (total / 11));
+		// for (int i = 2014; i <= 2015; i++)
+		// XlSUtils.populateScores(i);
 
-//		for (int i = 2005; i <= 2011; i++)
-//			XlSUtils.populateScores(i);
+//		 for (int year = 2014; year <= 2014; year++)
+//		 triples(year);
 
-		// for (int year = 2014; year <= 2014; year++)
-		// triples(year);
-
-		// makePredictions();
+//		 makePredictions();
 
 		// singleMethod();
 
@@ -65,7 +65,7 @@ public class Test {
 
 		// stats();
 
-		// optimals();
+		 optimals();
 
 		// optimalsbyCompetition();
 
@@ -205,6 +205,7 @@ public class Test {
 
 		Utils.analysys(all, year);
 		Utils.hyperReal(all, year, 1000f, 0.025f);
+		
 		// System.out.println("3");
 		// Utils.bestNperWeek(all, 3);
 		// System.out.println("4");
@@ -221,7 +222,7 @@ public class Test {
 		// System.out.println("9");
 		// Utils.bestNperWeek(all, 9);
 		// System.out.println("10");
-		// Utils.bestNperWeek(all, 10);
+		 Utils.bestNperWeek(all, 10);
 	}
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {
@@ -261,7 +262,7 @@ public class Test {
 
 		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
-			ExecutorService pool = Executors.newFixedThreadPool(8);
+			ExecutorService pool = Executors.newFixedThreadPool(3);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));

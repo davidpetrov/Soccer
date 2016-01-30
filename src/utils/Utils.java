@@ -259,19 +259,6 @@ public class Utils {
 		return profit - list.size();
 	}
 
-	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> list, float minOdds) {
-		float profit = 0.0f;
-		for (FinalEntry fe : list) {
-			if (fe.success()) {
-				float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
-				if (gain >= minOdds)
-					profit += gain;
-			}
-		}
-
-		return profit - list.size();
-	}
-
 	public static ArrayList<FinalEntry> filterFinals(HSSFSheet sheet, ArrayList<FinalEntry> finals, float minOdds) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
@@ -320,7 +307,7 @@ public class Utils {
 			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
-			if (value > 0.9f) {
+			if (value > set.value) {
 				size++;
 				if (fe.success()) {
 					if (gain != -1.0d) {
@@ -588,17 +575,25 @@ public class Utils {
 					boolean flag = true;
 					float coeff = 1f;
 					int successes = 0;
+					int notlosses = 0;
 					if (curr.size() >= n) {
 						for (int j = 0; j < n; j++) {
 							if (curr.get(j).success()) {
 								coeff *= curr.get(j).prediction >= curr.get(j).upper ? curr.get(j).fixture.maxOver
 										: curr.get(j).fixture.maxUnder;
 								successes++;
+								notlosses++;
+							} else if ((curr.get(j).prediction >= curr.get(j).upper
+									&& curr.get(j).fixture.getTotalGoals() == 2)
+									|| (curr.get(j).prediction <= curr.get(j).lower
+											&& curr.get(j).fixture.getTotalGoals() == 3)) {
+								notlosses++;
 							} else {
 								coeff = -1f;
 							}
 						}
-						System.out.println(curr.get(0).fixture.date + " " + " " + successes);
+						System.out.println(curr.get(0).fixture.date + " " + " " + successes + " not loss: " + notlosses
+								+ " pr: " + (successes * 1.35f - 10 + (notlosses - successes)));
 					}
 					curr = new ArrayList<>();
 				} else {
@@ -669,15 +664,13 @@ public class Utils {
 				cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + "profit: " + Utils.getProfit(cer50));
 		System.out.println(cer40.size() + " under50s with rate: " + Utils.getSuccessRate(cer40) + " profit: "
 				+ Utils.getProfit(cer40));
-		
-		
-		System.out.println(
-				cot25.size() + " cot25s with rate: " + Utils.getSuccessRate(cot25) + "profit: " + Utils.getProfit(cot25));
-		System.out.println(
-				cot20.size() + " cot20s with rate: " + Utils.getSuccessRate(cot20) + "profit: " + Utils.getProfit(cot20));
-		System.out.println(
-				cot15.size() + " cot15s with rate: " + Utils.getSuccessRate(cot15) + "profit: " + Utils.getProfit(cot15));
-		
+
+		System.out.println(cot25.size() + " cot25s with rate: " + Utils.getSuccessRate(cot25) + "profit: "
+				+ Utils.getProfit(cot25));
+		System.out.println(cot20.size() + " cot20s with rate: " + Utils.getSuccessRate(cot20) + "profit: "
+				+ Utils.getProfit(cot20));
+		System.out.println(cot15.size() + " cot15s with rate: " + Utils.getSuccessRate(cot15) + "profit: "
+				+ Utils.getProfit(cot15));
 
 		int onlyOvers = 0;
 		float onlyOversProfit = 0f;
@@ -827,6 +820,53 @@ public class Utils {
 		System.out.println("Bank after month: " + (month + 1) + " is: " + bank + " unit: " + betSize + " profit: "
 				+ (bank - previous) + " in units: " + (bank - previous) / betSize + " rate: " + (float) succ / alls
 				+ "%");
+	}
+
+	public static float correlation(float[] arr1, float[] arr2) {
+		if (arr1.length != arr2.length)
+			return -1;
+		float avg1 = 0f;
+		float avg2 = 0f;
+		for (int i = 0; i < arr1.length; i++) {
+			avg1 += arr1[i];
+			avg2 += arr2[i];
+		}
+
+		avg1 /= arr1.length;
+		avg2 /= arr2.length;
+
+		float sumXY = 0f;
+		float sumX2 = 0f;
+		float sumY2 = 0f;
+
+		for (int i = 0; i < arr1.length; i++) {
+			sumXY += (arr1[i] - avg1) * (arr2[i] - avg2);
+			sumX2 += Math.pow(arr1[i] - avg1, 2.0f);
+			sumY2 += Math.pow(arr2[i] - avg2, 2.0f);
+		}
+		return (float) (sumXY / (Math.sqrt(sumX2) * Math.sqrt(sumY2)));
+	}
+
+	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings set, float currentValue) {
+		float profit = 0.0f;
+		int size = 0;
+		for (FinalEntry fe : finals) {
+			fe.threshold = set.threshold;
+			fe.lower = set.lowerBound;
+			fe.upper = set.upperBound;
+			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			float value = certainty * gain;
+			if (value > currentValue) {
+				size++;
+				if (fe.success()) {
+					if (gain != -1.0d) {
+						profit += gain;
+					}
+				}
+			}
+		}
+		return profit - size;
 	}
 
 }
