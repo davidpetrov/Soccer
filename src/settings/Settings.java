@@ -7,6 +7,7 @@ public class Settings {
 	public float basic;
 	public float poisson;
 	public float weightedPoisson;
+	public float htCombo;
 	public float halfTimeOverOne;
 	public float threshold;
 	public float upperBound;
@@ -51,8 +52,9 @@ public class Settings {
 		return this;
 	}
 
-	public Settings withHT(float ht) {
-		this.halfTimeOverOne = ht;
+	public Settings withHT(float overOne, float htCombo) {
+		this.halfTimeOverOne = overOne;
+		this.htCombo = htCombo;
 		return this;
 	}
 
@@ -63,8 +65,8 @@ public class Settings {
 
 	@Override
 	public String toString() {
-		return league + " basic*" + format(basic) + " poisson*" + format(poisson) + " weighted*"
-				+ format(weightedPoisson) + " min " + format(minOdds) + " max " + format(maxOdds) + " thold "
+		return league + " bas*" + format(basic) + " poi*" + format(poisson) + " wei*" + format(weightedPoisson) + " ht*"
+				+ format(htCombo) + " min " + format(minOdds) + " max " + format(maxOdds) + " thold "
 				+ format(threshold) + " lower " + format(lowerBound) + " upper " + format(upperBound)
 				+ String.format(" %.2f%% ", successRate * 100) + format(profit);
 
