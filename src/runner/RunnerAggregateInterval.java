@@ -4,9 +4,10 @@ import java.util.concurrent.Callable;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 
+import settings.Settings;
 import xls.XlSUtils;
 
-public class RunnerAggregateInterval implements Callable<Float> {
+public class RunnerAggregateInterval implements Callable<Settings> {
 
 	public HSSFSheet sh;
 	public int startYear;
@@ -19,9 +20,11 @@ public class RunnerAggregateInterval implements Callable<Float> {
 	}
 
 	@Override
-	public Float call() throws Exception {
+	public Settings call() throws Exception {
 
-		System.out.println(XlSUtils.aggregateOptimals(startYear, endYear, sh.getSheetName()));
-		return 0f;
+		Settings setts = XlSUtils.aggregateOptimals(startYear, endYear, sh.getSheetName());
+		System.out.println(setts + " avg: " + setts.profit / (endYear - startYear + 1));
+
+		return setts;
 	}
 }
