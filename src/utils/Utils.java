@@ -259,21 +259,12 @@ public class Utils {
 		return profit - list.size();
 	}
 
-	public static ArrayList<FinalEntry> filterFinals(HSSFSheet sheet, ArrayList<FinalEntry> finals, float minOdds) {
+	public static ArrayList<FinalEntry> filterByOdds(ArrayList<FinalEntry> finals, float minOdds, float maxOdds,
+			float threshold) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
-			float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			if (gain >= minOdds)
-				filtered.add(fe);
-		}
-		return filtered;
-	}
-
-	public static ArrayList<FinalEntry> filterMaxFinals(HSSFSheet sheet, ArrayList<FinalEntry> finals, float maxOdds) {
-		ArrayList<FinalEntry> filtered = new ArrayList<>();
-		for (FinalEntry fe : finals) {
-			float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			if (gain <= maxOdds)
+			float coeff = fe.prediction > threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			if (coeff >= minOdds && coeff <= maxOdds)
 				filtered.add(fe);
 		}
 		return filtered;
@@ -297,7 +288,7 @@ public class Utils {
 		return filtered;
 	}
 
-	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings set) {
+	public static float getProfit( ArrayList<FinalEntry> finals, Settings set) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
@@ -867,6 +858,33 @@ public class Utils {
 			}
 		}
 		return profit - size;
+	}
+
+	public static boolean oddsInRange(float gain, float finalScore, Settings settings) {
+		boolean over = finalScore > settings.threshold;
+
+		if (over)
+			return (gain >= settings.minOver && gain <= settings.maxOver);
+		else
+			return (gain >= settings.minUnder && gain <= settings.maxUnder);
+	}
+
+	public static ArrayList<FinalEntry> onlyUnders(ArrayList<FinalEntry> finals) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			if (i.prediction <= i.threshold)
+				result.add(i);
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> onlyOvers(ArrayList<FinalEntry> finals) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			if (i.prediction > i.threshold)
+				result.add(i);
+		}
+		return result;
 	}
 
 }

@@ -21,7 +21,7 @@ public class RunnerAggregateInterval implements Callable<Float> {
 	@Override
 	public Float call() throws Exception {
 
-		System.out.println(XlSUtils.aggregateInterval(startYear, endYear, sh.getSheetName()));
+		System.out.println(XlSUtils.aggregateOptimals(startYear, endYear, sh.getSheetName()));
 		return 0f;
 	}
 }

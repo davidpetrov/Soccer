@@ -1,19 +1,12 @@
 package main;
 
-import settings.Settings;
-
-import java.awt.image.FilteredImageSource;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +27,7 @@ import runner.RunnerAggregateInterval;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
 import runner.RunnerTriples;
+import settings.Settings;
 import utils.Api;
 import utils.Utils;
 import xls.XlSUtils;
@@ -45,19 +39,19 @@ public class Test {
 		long start = System.currentTimeMillis();
 
 		// simplePredictions();
-//
-//		float total = 0f;
-//		for (int year = 2005; year <= 2015; year++)
-//			total += simulation(year);
-//		System.out.println("Avg profit is " + (total / 11));
+		//
+		// float total = 0f;
+		// for (int year = 2012; year <= 2015; year++)
+		// total += simulation(year);
+		// System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2014; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-//		 for (int year = 2014; year <= 2014; year++)
-//		 triples(year);
+		// for (int year = 2014; year <= 2014; year++)
+		// triples(year);
 
-//		 makePredictions();
+		// makePredictions();
 
 		// singleMethod();
 
@@ -65,7 +59,9 @@ public class Test {
 
 		// stats();
 
-		 optimals();
+		// optimals();
+		// System.out.println(XlSUtils.aggregateOptimals(2011, 2013, "E0"));
+		aggregate();
 
 		// optimalsbyCompetition();
 
@@ -113,6 +109,34 @@ public class Test {
 			if (dont.contains(sh.getSheetName()))
 				continue;
 			threadArray.add(pool.submit(new RunnerAggregateInterval(2005, 2007, sh)));
+			// System.out.println(XlSUtils.aggregateInterval(2005, 2014,
+			// sh.getSheetName()));
+		}
+
+		for (Future<Float> fd : threadArray)
+			fd.get();
+
+		workbook.close();
+		file.close();
+		pool.shutdown();
+	}
+
+	public static final void aggregate() throws IOException, InterruptedException, ExecutionException {
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		String base = new File("").getAbsolutePath();
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
+
+		ExecutorService pool = Executors.newFixedThreadPool(1);
+		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+			// if (dont.contains(sh.getSheetName()))
+			// continue;
+			if (sh.getSheetName().equals("EC"))
+				threadArray.add(pool.submit(new RunnerAggregateInterval(2011, 2013, sh)));
 			// System.out.println(XlSUtils.aggregateInterval(2005, 2014,
 			// sh.getSheetName()));
 		}
@@ -205,7 +229,7 @@ public class Test {
 
 		Utils.analysys(all, year);
 		Utils.hyperReal(all, year, 1000f, 0.025f);
-		
+
 		// System.out.println("3");
 		// Utils.bestNperWeek(all, 3);
 		// System.out.println("4");
@@ -222,7 +246,7 @@ public class Test {
 		// System.out.println("9");
 		// Utils.bestNperWeek(all, 9);
 		// System.out.println("10");
-		 Utils.bestNperWeek(all, 10);
+		Utils.bestNperWeek(all, 10);
 	}
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {
@@ -260,7 +284,7 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2005; year <= 2015; year++) {
+		for (int year = 2011; year <= 2013; year++) {
 			float total = 0f;
 			ExecutorService pool = Executors.newFixedThreadPool(3);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
@@ -271,8 +295,8 @@ public class Test {
 			Iterator<Sheet> sh = workbookdata.sheetIterator();
 			while (sh.hasNext()) {
 				HSSFSheet i = (HSSFSheet) sh.next();
-				// if(i.getSheetName().equals("E0"))
-				threadArray.add(pool.submit(new RunnerOptimals(i, year)));
+				if (i.getSheetName().equals("E0"))
+					threadArray.add(pool.submit(new RunnerOptimals(i, year)));
 			}
 
 			for (Future<Float> fd : threadArray) {
@@ -343,7 +367,7 @@ public class Test {
 				ArrayList<Settings> setts = optimals.get(i.getSheetName());
 				Settings set = Utils.getSettings(setts, year - 1);
 				ArrayList<FinalEntry> fes = XlSUtils.runWithSettingsList(i, XlSUtils.selectAllAll(i), set);
-				float profit = Utils.getProfit(i, fes, set);
+				float profit = Utils.getProfit(fes, set);
 				total += profit;
 				// System.out.println("Profit with best sets for " +
 				// i.getSheetName() + " : " + profit);
@@ -358,40 +382,42 @@ public class Test {
 
 	}
 
-	public static void findSettings(int year) throws IOException, ParseException {
-		FileInputStream file = new FileInputStream(new File(
-				"C:\\Users\\Admin\\workspace\\Soccer\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
-		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		Iterator<Sheet> sheet = workbook.sheetIterator();
-		float totalProfit = 0.0f;
-		while (sheet.hasNext()) {
-			HSSFSheet sh = (HSSFSheet) sheet.next();
-			Settings sett = /*
-							 * XlSUtils.runForLeagueWithOdds(sh,
-							 * xls.XlSUtils.selectAll(sh), 1.0d);
-							 */
-
-			XlSUtils.findInterval(XlSUtils.selectAll(sh), sh, year);
-			Settings stored = SQLiteJDBC.getSettings(sett.league, year);
-
-			if (stored == null) {
-				SQLiteJDBC.storeSettings(sett, year);
-				System.out.println(sett);
-				totalProfit += sett.profit;
-			} else if (stored.profit >= sett.profit) {
-				System.out.println(stored);
-				totalProfit += stored.profit;
-			} else {
-				System.out.println(sett);
-				SQLiteJDBC.deleteSettings(sett.league, year);
-				SQLiteJDBC.storeSettings(sett, year);
-				System.out.println(sett);
-				totalProfit += sett.profit;
-			}
-		}
-		System.out.println("TotalProfit: " + totalProfit);
-		workbook.close();
-	}
+	// public static void findSettings(int year) throws IOException,
+	// ParseException {
+	// FileInputStream file = new FileInputStream(new File(
+	// "C:\\Users\\Admin\\workspace\\Soccer\\data\\all-euro-data-" + year + "-"
+	// + (year + 1) + ".xls"));
+	// HSSFWorkbook workbook = new HSSFWorkbook(file);
+	// Iterator<Sheet> sheet = workbook.sheetIterator();
+	// float totalProfit = 0.0f;
+	// while (sheet.hasNext()) {
+	// HSSFSheet sh = (HSSFSheet) sheet.next();
+	// Settings sett = /*
+	// * XlSUtils.runForLeagueWithOdds(sh,
+	// * xls.XlSUtils.selectAll(sh), 1.0d);
+	// */
+	//
+	// XlSUtils.findInterval(XlSUtils.selectAll(sh), sh, year);
+	// Settings stored = SQLiteJDBC.getSettings(sett.league, year);
+	//
+	// if (stored == null) {
+	// SQLiteJDBC.storeSettings(sett, year);
+	// System.out.println(sett);
+	// totalProfit += sett.profit;
+	// } else if (stored.profit >= sett.profit) {
+	// System.out.println(stored);
+	// totalProfit += stored.profit;
+	// } else {
+	// System.out.println(sett);
+	// SQLiteJDBC.deleteSettings(sett.league, year);
+	// SQLiteJDBC.storeSettings(sett, year);
+	// System.out.println(sett);
+	// totalProfit += sett.profit;
+	// }
+	// }
+	// System.out.println("TotalProfit: " + totalProfit);
+	// workbook.close();
+	// }
 
 	public static void makePredictions() throws IOException {
 		String basePath = new File("").getAbsolutePath();

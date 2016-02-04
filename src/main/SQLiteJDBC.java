@@ -518,8 +518,8 @@ public class SQLiteJDBC {
 			String sql = "INSERT INTO SETTINGS"
 					+ " (LEAGUE,SEASON,BASIC,POISSON,WPOISSON,THRESHOLD,MINODDS,MAXODDS,SUCCESSRATE,PROFIT)"
 					+ "VALUES (" + addQuotes(s.league) + "," + year + "," + s.basic + "," + s.poisson + ","
-					+ s.weightedPoisson + "," + s.threshold + "," + s.minOdds + ", " + s.maxOdds + ", " + s.successRate
-					+ "," + s.profit + " );";
+					+ s.weightedPoisson + "," + s.threshold + ","
+					+ /* s.minOdds + ", " + s.maxOdds + */ ", " + s.successRate + "," + s.profit + " );";
 			try {
 				stmt.executeUpdate(sql);
 			} catch (SQLException e) {
@@ -576,6 +576,7 @@ public class SQLiteJDBC {
 		}
 	}
 
+	//refavtor after min max odds change
 	public static Settings getSettings(String league, int year) {
 		Settings sett = null;
 		Connection c = null;
@@ -597,8 +598,7 @@ public class SQLiteJDBC {
 				float maxOdds = rs.getFloat("maxOdds");
 				float success = rs.getFloat("successrate");
 				float profit = rs.getFloat("profit");
-				sett = new Settings(league, basic, poisson, wpoisson, threshold, 0.0f, 0.0f, minOdds, maxOdds, success,
-						profit);
+				sett = new Settings(league, basic, poisson, wpoisson, threshold, 0.0f, 0.0f, success, profit);
 			}
 			rs.close();
 			stmt.close();
@@ -693,9 +693,9 @@ public class SQLiteJDBC {
 				if (tableName.equals("BASICS")) {
 					score = XlSUtils.basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 				} else if (tableName.equals("POISSON")) {
-					score = XlSUtils.poisson(f, sheet, f.date);
+					score = XlSUtils.poisson(f, sheet);
 				} else if (tableName.equals("WEIGHTED")) {
-					score = XlSUtils.poissonWeighted(f, sheet, f.date);
+					score = XlSUtils.poissonWeighted(f, sheet);
 				} else if (tableName.equals("HALFTIME1")) {
 					score = XlSUtils.halfTimeOnly(f, sheet, 1);
 				} else if (tableName.equals("HALFTIME2")) {
