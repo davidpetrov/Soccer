@@ -62,7 +62,8 @@ public class Test {
 		// stats();
 
 		// optimals();
-		aggregate(2014, 3);
+		for (int year = 2010; year <= 2014; year++)
+			aggregate(year, 3);
 
 		// optimalsbyCompetition();
 
@@ -134,8 +135,8 @@ public class Test {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (dont.contains(sh.getSheetName()))
 			// continue;
-//			if (sh.getSheetName().equals("D1"))
-				threadArray.add(pool.submit(new RunnerAggregateInterval(year - n, year - 1, sh)));
+			// if (sh.getSheetName().equals("D1"))
+			threadArray.add(pool.submit(new RunnerAggregateInterval(year - n, year - 1, sh)));
 		}
 
 		HashMap<String, Settings> optimals = new HashMap<>();
@@ -143,23 +144,24 @@ public class Test {
 		for (Future<Settings> fd : threadArray) {
 			Settings result = fd.get();
 			optimals.put(result.league, result);
+			SQLiteJDBC.storeSettings(result, year, n);
 		}
 
-		// TESTING
-		float totalProfit = 0f;
-		Iterator<Sheet> sheets = workbook.sheetIterator();
-		while (sheets.hasNext()) {
-			HSSFSheet sh = (HSSFSheet) sheets.next();
-//			if (sh.getSheetName().equals("D1")) {
-				ArrayList<FinalEntry> list = XlSUtils.runWithSettingsList(sh, XlSUtils.selectAllAll(sh),
-						optimals.get(sh.getSheetName()));
-				float profit = Utils.getProfit(list, optimals.get(sh.getSheetName()));
-				totalProfit += profit;
-				System.out.println(sh.getSheetName() + ": " + profit);
-//			}
-		}
+//		// TESTING
+//		float totalProfit = 0f;
+//		Iterator<Sheet> sheets = workbook.sheetIterator();
+//		while (sheets.hasNext()) {
+//			HSSFSheet sh = (HSSFSheet) sheets.next();
+//			// if (sh.getSheetName().equals("D1")) {
+//			ArrayList<FinalEntry> list = XlSUtils.runWithSettingsList(sh, XlSUtils.selectAll(sh),
+//					optimals.get(sh.getSheetName()));
+//			float profit = Utils.getProfit(list, optimals.get(sh.getSheetName()));
+//			totalProfit += profit;
+//			System.out.println(sh.getSheetName() + ": " + profit);
+//			// }
+//		}
 
-		System.out.println("Total: " + totalProfit);
+//		System.out.println("Total for " + year + " : " + totalProfit);
 
 		workbook.close();
 		file.close();

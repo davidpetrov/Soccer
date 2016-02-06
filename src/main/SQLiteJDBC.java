@@ -504,22 +504,22 @@ public class SQLiteJDBC {
 	}
 
 	// insert Fixture entry into DB
-	public static void storeSettings(Settings s, int year) {
+	public static void storeSettings(Settings s, int year, int period) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
 			c = DriverManager.getConnection("jdbc:sqlite:test.db");
 			c.setAutoCommit(false);
-			// System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 
 			String sql = "INSERT INTO SETTINGS"
-					+ " (LEAGUE,SEASON,BASIC,POISSON,WPOISSON,THRESHOLD,MINODDS,MAXODDS,SUCCESSRATE,PROFIT)"
-					+ "VALUES (" + addQuotes(s.league) + "," + year + "," + s.basic + "," + s.poisson + ","
-					+ s.weightedPoisson + "," + s.threshold + ","
-					+ /* s.minOdds + ", " + s.maxOdds + */ ", " + s.successRate + "," + s.profit + " );";
+					+ " (LEAGUE,PERIOD,SEASON,BASIC,POISSON,WPOISSON,HTCOMBO,HTOVERONE,THRESHOLD,LOWER,UPPER,MINUNDER,MAXUNDER,MINOVER,MAXOVER,VALUE,SUCCESSRATE,PROFIT)"
+					+ "VALUES (" + addQuotes(s.league) + "," + period + "," + year + "," + s.basic + "," + s.poisson
+					+ "," + s.weightedPoisson + "," + s.htCombo + "," + s.halfTimeOverOne + "," + s.threshold + ","
+					+ s.upperBound + "," + s.lowerBound + "," + s.minUnder + "," + s.maxUnder + "," + s.minOver + ","
+					+ s.maxOver + "," + s.value + "," + s.successRate + "," + s.profit + " );";
 			try {
 				stmt.executeUpdate(sql);
 			} catch (SQLException e) {
@@ -576,8 +576,8 @@ public class SQLiteJDBC {
 		}
 	}
 
-	//refavtor after min max odds change
-	public static Settings getSettings(String league, int year) {
+	// refavtor after min max odds change
+	public static Settings getSettings(String league, int year, int period) {
 		Settings sett = null;
 		Connection c = null;
 		Statement stmt = null;
@@ -587,18 +587,27 @@ public class SQLiteJDBC {
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
-			ResultSet rs = stmt.executeQuery(
-					"select * from settings where league=" + addQuotes(league) + " and SEASON=" + year + ";");
+			ResultSet rs = stmt.executeQuery("select * from settings where league=" + addQuotes(league) + " and SEASON="
+					+ year + " and PERIOD=" + period + ";");
 			while (rs.next()) {
 				float basic = rs.getFloat("basic");
 				float poisson = rs.getFloat("poisson");
 				float wpoisson = rs.getFloat("wpoisson");
+				float htCombo = rs.getFloat("htcombo");
+				float htOverOne = rs.getFloat("htoverone");
 				float threshold = rs.getFloat("threshold");
-				float minOdds = rs.getFloat("minOdds");
-				float maxOdds = rs.getFloat("maxOdds");
+				float lower = rs.getFloat("lower");
+				float upper = rs.getFloat("upper");
+				float minUnder = rs.getFloat("minunder");
+				float maxUnder = rs.getFloat("maxunder");
+				float minOver = rs.getFloat("minover");
+				float maxOver = rs.getFloat("maxover");
+				float value = rs.getFloat("value");
 				float success = rs.getFloat("successrate");
 				float profit = rs.getFloat("profit");
-				sett = new Settings(league, basic, poisson, wpoisson, threshold, 0.0f, 0.0f, success, profit);
+				sett = new Settings(league, basic, poisson, wpoisson, threshold, upper, lower, success, profit)
+						.withYear(year).withValue(value).withMinMax(minUnder, maxUnder, minOver, maxOver)
+						.withHT(htOverOne, htCombo);
 			}
 			rs.close();
 			stmt.close();
