@@ -223,7 +223,7 @@ public class Utils {
 			if (f.awayTeam.equals(team))
 				total += f.result.goalsAwayTeam;
 		}
-		return total / fixtures.size();
+		return fixtures.size() == 0 ? 0 : total / fixtures.size();
 	}
 
 	public static float getSuccessRate(ArrayList<FinalEntry> list) {
@@ -288,7 +288,7 @@ public class Utils {
 		return filtered;
 	}
 
-	public static float getProfit( ArrayList<FinalEntry> finals, Settings set) {
+	public static float getProfit(ArrayList<FinalEntry> finals, Settings set) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
@@ -845,7 +845,7 @@ public class Utils {
 			fe.threshold = set.threshold;
 			fe.lower = set.lowerBound;
 			fe.upper = set.upperBound;
-			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float gain = fe.prediction > fe.threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > currentValue) {

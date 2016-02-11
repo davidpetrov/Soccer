@@ -14,8 +14,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.xml.crypto.dsig.spec.XSLTTransformParameterSpec;
-
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -42,13 +40,14 @@ public class Test {
 
 		// simplePredictions();
 		//
-		// float total = 0f;
-		// for (int year = 2012; year <= 2015; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+
+//		 float total = 0f;
+//		 for (int year = 2005; year <= 2015; year++)
+//		 total += simulation(year);
+//		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2014; i <= 2015; i++)
-		// XlSUtils.populateScores(i);
+		// XlSUtils.populateScores(i);	
 
 		// for (int year = 2014; year <= 2014; year++)
 		// triples(year);
@@ -61,9 +60,9 @@ public class Test {
 
 		// stats();
 
-		// optimals();
-		for (int year = 2010; year <= 2014; year++)
-			aggregate(year, 3);
+		 optimals();
+		// for (int year = 2013; year <= 2013; year++)
+		// aggregate(year, 5);
 
 		// optimalsbyCompetition();
 
@@ -147,21 +146,23 @@ public class Test {
 			SQLiteJDBC.storeSettings(result, year, n);
 		}
 
-//		// TESTING
-//		float totalProfit = 0f;
-//		Iterator<Sheet> sheets = workbook.sheetIterator();
-//		while (sheets.hasNext()) {
-//			HSSFSheet sh = (HSSFSheet) sheets.next();
-//			// if (sh.getSheetName().equals("D1")) {
-//			ArrayList<FinalEntry> list = XlSUtils.runWithSettingsList(sh, XlSUtils.selectAll(sh),
-//					optimals.get(sh.getSheetName()));
-//			float profit = Utils.getProfit(list, optimals.get(sh.getSheetName()));
-//			totalProfit += profit;
-//			System.out.println(sh.getSheetName() + ": " + profit);
-//			// }
-//		}
+		// // TESTING
+		// float totalProfit = 0f;
+		// Iterator<Sheet> sheets = workbook.sheetIterator();
+		// while (sheets.hasNext()) {
+		// HSSFSheet sh = (HSSFSheet) sheets.next();
+		// // if (sh.getSheetName().equals("D1")) {
+		// ArrayList<FinalEntry> list = XlSUtils.runWithSettingsList(sh,
+		// XlSUtils.selectAll(sh),
+		// optimals.get(sh.getSheetName()));
+		// float profit = Utils.getProfit(list,
+		// optimals.get(sh.getSheetName()));
+		// totalProfit += profit;
+		// System.out.println(sh.getSheetName() + ": " + profit);
+		// // }
+		// }
 
-//		System.out.println("Total for " + year + " : " + totalProfit);
+		// System.out.println("Total for " + year + " : " + totalProfit);
 
 		workbook.close();
 		file.close();
@@ -201,9 +202,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (dont.contains(
-					sh.getSheetName()) /* || !sh.getSheetName().equals("E0") */)
-				continue;
+			/*
+			 * if (dont.contains( sh.getSheetName()) ||
+			 * !sh.getSheetName().equals("E0") ) continue;
+			 */
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
 
@@ -303,9 +305,9 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2011; year <= 2013; year++) {
+		for (int year = 2015; year <= 2015; year++) {
 			float total = 0f;
-			ExecutorService pool = Executors.newFixedThreadPool(3);
+			ExecutorService pool = Executors.newFixedThreadPool(1);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
