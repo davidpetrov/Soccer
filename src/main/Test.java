@@ -41,10 +41,10 @@ public class Test {
 		// simplePredictions();
 		//
 
-//		 float total = 0f;
-//		 for (int year = 2005; year <= 2015; year++)
-//		 total += simulation(year);
-//		 System.out.println("Avg profit is " + (total / 11));
+		 float total = 0f;
+		 for (int year = 2005; year <= 2015; year++)
+		 total += simulation(year);
+		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2014; i <= 2015; i++)
 		// XlSUtils.populateScores(i);	
@@ -60,7 +60,7 @@ public class Test {
 
 		// stats();
 
-		 optimals();
+//		 optimals();
 		// for (int year = 2013; year <= 2013; year++)
 		// aggregate(year, 5);
 
@@ -307,7 +307,7 @@ public class Test {
 
 		for (int year = 2015; year <= 2015; year++) {
 			float total = 0f;
-			ExecutorService pool = Executors.newFixedThreadPool(1);
+			ExecutorService pool = Executors.newFixedThreadPool(3);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -316,7 +316,7 @@ public class Test {
 			Iterator<Sheet> sh = workbookdata.sheetIterator();
 			while (sh.hasNext()) {
 				HSSFSheet i = (HSSFSheet) sh.next();
-				if (i.getSheetName().equals("E0"))
+//				if (i.getSheetName().equals("SP2"))
 					threadArray.add(pool.submit(new RunnerOptimals(i, year)));
 			}
 
@@ -340,7 +340,7 @@ public class Test {
 
 		String basePath = new File("").getAbsolutePath();
 
-		for (int year = 2005; year <= 2015; year++) {
+		for (int year = 2015; year <= 2015; year++) {
 
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));

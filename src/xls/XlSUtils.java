@@ -896,6 +896,13 @@ public class XlSUtils {
 
 	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
 			Settings settings) {
+		ArrayList<FinalEntry> finals = calculateScores(sheet, all, settings);
+
+		return restrict(finals, settings);
+	}
+
+	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+			Settings settings) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
 		for (ExtendedFixture f : all) {
 			// float finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f,
@@ -914,19 +921,28 @@ public class XlSUtils {
 					+ settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
 							+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
 
-			float gain = finalScore > settings.threshold ? f.maxOver : f.maxUnder;
-			float certainty = finalScore > settings.threshold ? finalScore : (1f - finalScore);
-			float value = certainty * gain;
-			if (value > settings.value && Utils.oddsInRange(gain, finalScore, settings)
-					&& (finalScore >= settings.upperBound || finalScore <= settings.lowerBound)) {
-				FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
-						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), settings.threshold,
-						settings.lowerBound, settings.upperBound);
-				if (!fe.prediction.equals(Float.NaN))
-					finals.add(fe);
-			}
+			FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), settings.threshold, settings.lowerBound,
+					settings.upperBound);
+			// if (!fe.prediction.equals(Float.NaN))
+			finals.add(fe);
 		}
 		return finals;
+	}
+
+	public static ArrayList<FinalEntry> restrict(ArrayList<FinalEntry> finals, Settings settings) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry fe : finals) {
+
+			float gain = fe.prediction > settings.threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float certainty = fe.prediction > settings.threshold ? fe.prediction : (1f - fe.prediction);
+			float value = certainty * gain;
+			if (value > settings.value && Utils.oddsInRange(gain, fe.prediction, settings)
+					&& (fe.prediction >= settings.upperBound || fe.prediction <= settings.lowerBound)) {
+				result.add(fe);
+			}
+		}
+		return result;
 	}
 
 	public static ArrayList<FinalEntry> runWithoutMinOddsSettings(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
@@ -1012,15 +1028,18 @@ public class XlSUtils {
 
 		System.out.println("Run for? " + initpr + " == " + Utils.getProfit(finals, temp));
 
-		System.out.println("Under over breakdown? " + Utils.getProfit(finals, temp) + " == "
-				+ (Utils.getProfit(Utils.onlyOvers(finals)) + Utils.getProfit(Utils.onlyUnders(finals))));
+		temp = findThreshold(sheet, finals, temp);
+		float th1 = temp.profit;
+		finals = restrict(finals, temp);
+		//
+		System.out.println("Th1: " + temp.profit + "==" + Utils.getProfit(finals, temp));
 
 		// temp = findValue(finals, sheet, year, temp);
 		// finals = runWithSettingsList(sheet, data, temp);
 		// temp = findValue(finals, sheet, year, temp);
 		temp = findIntervalReal(finals, year, temp);
 		float pr = temp.profit;
-		finals = runWithSettingsList(sheet, data, temp);
+		finals = restrict(finals, temp);
 		System.out.println("Interval? " + pr + " == " + Utils.getProfit(finals, temp));
 		System.out.println("Under over breakdown? " + Utils.getProfit(finals, temp) + " == "
 				+ (Utils.getProfit(Utils.onlyOvers(finals)) + Utils.getProfit(Utils.onlyUnders(finals))));
@@ -1030,10 +1049,16 @@ public class XlSUtils {
 
 		// System.out.println(temp);
 		temp = findThreshold(sheet, finals, temp);
+		 finals = restrict(finals, temp);
+
+		System.out.println("Thold: " + temp.profit + "==" + Utils.getProfit(finals, temp));
 		// temp = trustInterval(sheet, finals, temp);
 		// System.out.println(temp);
 		temp = findIntervalReal(finals, year, temp);
-		finals = runWithSettingsList(sheet, data, temp);
+		float pr2 = temp.profit;
+		finals = restrict(finals, temp);
+
+		System.out.println("Interval? " + pr2 + " == " + Utils.getProfit(finals, temp));
 		temp = findValue(finals, sheet, year, temp);
 
 		// System.out.println(temp);
@@ -1271,16 +1296,21 @@ public class XlSUtils {
 			// temp.minOdds = minOdds;
 
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
+			
+			temp = findThreshold(sheet, finals, temp);
+			finals = restrict(finals, temp);
+			
 			temp = findIntervalReal(finals, year, temp);
-			finals = runWithSettingsList(sheet, data, temp);
+			finals = restrict(finals, temp);
 
 			// temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals),
 			// year);
 			// finals = runWithSettingsList(sheet, data, temp);
 
 			temp = findThreshold(sheet, finals, temp);
+			finals = restrict(finals, temp);
 			temp = findIntervalReal(finals, year, temp);
-			finals = runWithSettingsList(sheet, data, temp);
+			finals = restrict(finals, temp);
 			temp = findValue(finals, sheet, year, temp);
 			// System.out.println(temp);
 
@@ -1721,7 +1751,8 @@ public class XlSUtils {
 			trset.threshold = current;
 			trset.lowerBound = current;
 			trset.upperBound = current;
-			float currentProfit = Utils.getProfit(finals, trset);
+			ArrayList<FinalEntry> result = restrict(finals, trset);
+			float currentProfit = Utils.getProfit(result, trset);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestThreshold = current;
@@ -1732,12 +1763,16 @@ public class XlSUtils {
 		trset.threshold = bestThreshold;
 		trset.lowerBound = bestThreshold;
 		trset.upperBound = bestThreshold;
+		
+//		finals = restrict(finals, trset);
 
 		for (FinalEntry fe : finals) {
 			fe.threshold = bestThreshold;
 			fe.lower = bestThreshold;
 			fe.upper = bestThreshold;
 		}
+		
+		finals = restrict(finals, trset);
 		// System.out.println("thold: " + trset.threshold + " profit: " +
 		// trset.profit + " lower: " + trset.lowerBound
 		// + " upper: " + trset.upperBound);
@@ -1758,66 +1793,76 @@ public class XlSUtils {
 	}
 
 	private static Settings findIntervalReal(ArrayList<FinalEntry> finals, int year, Settings initial) {
-		float profit = initial.profit;
-		Settings newSetts = new Settings(initial);
+		Settings underSetts = new Settings(initial);
 		ArrayList<FinalEntry> unders = Utils.onlyUnders(finals);
+		float profitUnders = Utils.getProfit(unders, underSetts);
+		underSetts.profit = profitUnders;
 
 		int bestminx = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filtered = Utils.filterByOdds(unders, currentMin, 10f, initial.threshold);
-			float currentProfit = Utils.getProfit(filtered, newSetts);
+			float currentProfit = Utils.getProfit(filtered, underSetts);
 
-			if (currentProfit > profit) {
+			if (currentProfit > profitUnders) {
 				bestminx = x;
-				profit = currentProfit;
-				newSetts.minUnder = currentMin;
-				newSetts.profit = profit;
+				profitUnders = currentProfit;
+				underSetts.minUnder = currentMin;
+				underSetts.profit = profitUnders;
 			}
 		}
 
 		for (int x = bestminx; 1.3f + x * 0.02 < 2.5f; x++) {
 			float currentMax = 1.3f + x * 0.02f;
-			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(unders, newSetts.minUnder, currentMax,
+			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(unders, underSetts.minUnder, currentMax,
 					initial.threshold);
-			float currentProfit = Utils.getProfit(filteredMax, newSetts);
+			float currentProfit = Utils.getProfit(filteredMax, underSetts);
 
-			if (currentProfit > profit) {
-				profit = currentProfit;
-				newSetts.maxUnder = currentMax;
-				newSetts.profit = profit;
+			if (currentProfit > profitUnders) {
+				profitUnders = currentProfit;
+				underSetts.maxUnder = currentMax;
+				underSetts.profit = profitUnders;
 			}
+
 		}
 
+		Settings overSetts = new Settings(initial);
 		ArrayList<FinalEntry> overs = Utils.onlyOvers(finals);
+		float profitOvers = Utils.getProfit(overs, overSetts);
+		overSetts.profit = profitOvers;
+
 		int bestminy = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filtered = Utils.filterByOdds(overs, currentMin, 10f, initial.threshold);
-			float currentProfit = Utils.getProfit(filtered, newSetts);
+			float currentProfit = Utils.getProfit(filtered, overSetts);
 
-			if (currentProfit > profit) {
+			if (currentProfit > profitOvers) {
 				bestminy = x;
-				profit = currentProfit;
-				newSetts.minOver = currentMin;
-				newSetts.profit = profit;
+				profitOvers = currentProfit;
+				overSetts.minOver = currentMin;
+				overSetts.profit = profitOvers;
 			}
 		}
 
 		for (int x = bestminy; 1.3f + x * 0.02 < 2.5f; x++) {
 			float currentMax = 1.3f + x * 0.02f;
-			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(overs, newSetts.minOver, currentMax,
+			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(overs, overSetts.minOver, currentMax,
 					initial.threshold);
-			float currentProfit = Utils.getProfit(filteredMax, newSetts);
+			float currentProfit = Utils.getProfit(filteredMax, overSetts);
 
-			if (currentProfit > profit) {
-				profit = currentProfit;
-				newSetts.maxOver = currentMax;
-				newSetts.profit = profit;
+			if (currentProfit > profitOvers) {
+				profitOvers = currentProfit;
+				overSetts.maxOver = currentMax;
+				overSetts.profit = profitOvers;
 			}
 		}
-		
-		return newSetts.withYear(initial.year).withHT(initial.halfTimeOverOne, initial.htCombo);
+
+		Settings result = new Settings(initial).withYear(initial.year).withHT(initial.halfTimeOverOne, initial.htCombo)
+				.withValue(initial.value)
+				.withMinMax(underSetts.minUnder, underSetts.maxUnder, overSetts.minOver, overSetts.maxOver);
+		result.profit = underSetts.profit + overSetts.profit;
+		return result;
 	}
 
 	private static Settings findIntervalAggregate(ArrayList<ArrayList<FinalEntry>> byYear, Settings initial) {
