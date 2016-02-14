@@ -42,7 +42,7 @@ public class Test {
 		//
 
 		 float total = 0f;
-		 for (int year = 2005; year <= 2015; year++)
+		 for (int year = 2005; year <= 2006; year++)
 		 total += simulation(year);
 		 System.out.println("Avg profit is " + (total / 11));
 
@@ -202,10 +202,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			/*
-			 * if (dont.contains( sh.getSheetName()) ||
-			 * !sh.getSheetName().equals("E0") ) continue;
-			 */
+			
+//			 if (dont.contains( sh.getSheetName()) )/*||
+//			 !sh.getSheetName().equals("E0") )*/ continue;
+
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
 
@@ -305,7 +305,7 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2015; year <= 2015; year++) {
+		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
 			ExecutorService pool = Executors.newFixedThreadPool(3);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
