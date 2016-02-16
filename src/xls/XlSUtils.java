@@ -1156,7 +1156,7 @@ public class XlSUtils {
 	public static Settings optimalSettings(HSSFSheet sheet, int year) throws IOException {
 		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
 
-		Settings temp = /* runForLeagueWithOdds(sheet, data, year, 0.55f) */runWithTH(sheet, data, year);
+		Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f);
 
 		float initpr = temp.profit;
 
@@ -1176,8 +1176,13 @@ public class XlSUtils {
 		System.out.println("Under over breakdown? " + Utils.getProfit(finals, temp) + " == "
 				+ (Utils.getProfit(Utils.onlyOvers(finals)) + Utils.getProfit(Utils.onlyUnders(finals))));
 
-		// temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year);
-		// finals = runWithSettingsList(sheet, data, temp);
+		temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year, temp.threshold);
+
+		float initpr2 = temp.profit;
+
+		finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), temp);
+
+		System.out.println("Run for2? " + initpr2 + " == " + Utils.getProfit(finals, temp));
 
 		// System.out.println(temp);
 		temp = findThreshold(sheet, finals, temp);
@@ -1430,7 +1435,8 @@ public class XlSUtils {
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
-			Settings temp = /* runForLeagueWithOdds(sheet, data, year, 0.55f) */runWithTH(sheet, data, year);
+			Settings temp = runForLeagueWithOdds(sheet, data, year,
+					0.55f) /* runWithTH(sheet, data, year) */;
 			// System.out.println("match " + i + temp);
 			// temp.maxOdds = maxOdds;
 			// temp.minOdds = minOdds;
@@ -1443,9 +1449,8 @@ public class XlSUtils {
 			temp = findIntervalReal(finals, year, temp);
 			finals = restrict(finals, temp);
 
-			// temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals),
-			// year);
-			// finals = runWithSettingsList(sheet, data, temp);
+			temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year, temp.threshold);
+			finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), temp);
 
 			temp = findThreshold(sheet, finals, temp);
 			finals = restrict(finals, temp);

@@ -1,14 +1,19 @@
 package main;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +27,7 @@ import org.json.JSONException;
 import algorithms.Algorithm;
 import algorithms.Basic1;
 import constants.MinMaxOdds;
+import results.Results;
 import runner.Runner;
 import runner.RunnerAggregateInterval;
 import runner.RunnerIntersect;
@@ -41,13 +47,14 @@ public class Test {
 		// simplePredictions();
 		//
 
-		 float total = 0f;
-		 for (int year = 2005; year <= 2006; year++)
-		 total += simulation(year);
-		 System.out.println("Avg profit is " + (total / 11));
+		Results.eval("aggregate(5)");
+		// float total = 0f;
+		// for (int year = 2005; year <= 2015; year++)
+		// total += simulation(year);
+		// System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2014; i <= 2015; i++)
-		// XlSUtils.populateScores(i);	
+		// XlSUtils.populateScores(i);
 
 		// for (int year = 2014; year <= 2014; year++)
 		// triples(year);
@@ -60,7 +67,7 @@ public class Test {
 
 		// stats();
 
-//		 optimals();
+		// optimals();
 		// for (int year = 2013; year <= 2013; year++)
 		// aggregate(year, 5);
 
@@ -202,9 +209,9 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			
-//			 if (dont.contains( sh.getSheetName()) )/*||
-//			 !sh.getSheetName().equals("E0") )*/ continue;
+
+			// if (dont.contains( sh.getSheetName()) )/*||
+			// !sh.getSheetName().equals("E0") )*/ continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
@@ -305,9 +312,9 @@ public class Test {
 		String basePath = new File("").getAbsolutePath();
 		float totalTotal = 0f;
 
-		for (int year = 2005; year <= 2015; year++) {
+		for (int year = 2015; year <= 2015; year++) {
 			float total = 0f;
-			ExecutorService pool = Executors.newFixedThreadPool(3);
+			ExecutorService pool = Executors.newFixedThreadPool(1);
 			ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 			FileInputStream filedata = new FileInputStream(
 					new File(basePath + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -316,8 +323,8 @@ public class Test {
 			Iterator<Sheet> sh = workbookdata.sheetIterator();
 			while (sh.hasNext()) {
 				HSSFSheet i = (HSSFSheet) sh.next();
-//				if (i.getSheetName().equals("SP2"))
-					threadArray.add(pool.submit(new RunnerOptimals(i, year)));
+				// if (i.getSheetName().equals("SP2"))
+				threadArray.add(pool.submit(new RunnerOptimals(i, year)));
 			}
 
 			for (Future<Float> fd : threadArray) {

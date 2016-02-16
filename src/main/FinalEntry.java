@@ -3,9 +3,7 @@ package main;
 public class FinalEntry implements Comparable<FinalEntry> {
 	public ExtendedFixture fixture;
 	public Float prediction;
-	String alg;
 	public Result result;
-	float odds;
 	public float threshold;
 	public float upper;
 	public float lower;
