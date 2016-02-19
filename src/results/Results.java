@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
+import constants.MinMaxOdds;
 
 public class Results {
 
@@ -44,6 +47,8 @@ public class Results {
 		restric(results);
 
 		fullRestric(results);
+		
+		dontRestric(results);
 
 	}
 
@@ -111,6 +116,33 @@ public class Results {
 		System.out.println("Simple restrict average: " + format(avg));
 
 	}
+	
+	public static void dontRestric(HashMap<Integer, Map<String, Float>> results) {
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		HashMap<Integer, Float> byYear = new HashMap<>();
+		for (Entry<Integer, Map<String, Float>> entry : results.entrySet()) {
+			int year = entry.getKey();
+			
+
+			for (Entry<String, Float> i : results.get(year).entrySet()) {
+				if (!dont.contains(i.getKey())) {
+					if (byYear.containsKey(year)) {
+						float curr = byYear.get(year);
+						byYear.put(year, curr + entry.getValue().get(i.getKey()));
+					} else {
+						byYear.put(year, entry.getValue().get(i.getKey()));
+					}
+				}
+
+			}
+		}
+
+		float avg = byYear.values().stream().reduce(0f, (a, b) -> a + b) / byYear.size();
+
+		byYear.forEach((k, v) -> System.out.println(k + " " + format(v)));
+		System.out.println("Dont restrict average: " + format(avg));
+
+	}
 
 	public static void fullRestric(HashMap<Integer, Map<String, Float>> results) {
 		HashMap<String, Float> competitions = new HashMap<>();
@@ -153,7 +185,7 @@ public class Results {
 
 	}
 
-	private static String format(float d) {
+	public static String format(float d) {
 		return String.format("%.2f", d);
 	}
 }

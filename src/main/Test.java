@@ -41,17 +41,17 @@ import xls.XlSUtils;
 public class Test {
 
 	public static void main(String[] args) throws JSONException, IOException, InterruptedException, ExecutionException {
-
 		long start = System.currentTimeMillis();
 
 		// simplePredictions();
-		//
 
-		Results.eval("aggregate(5)");
-		// float total = 0f;
-		// for (int year = 2005; year <= 2015; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+//		Results.eval("24(1)");
+		
+		
+		 float total = 0f;
+		 for (int year = 2015; year <= 2015; year++)
+		 total += simulation(year);
+		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2014; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -279,7 +279,7 @@ public class Test {
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+//		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -287,12 +287,12 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(7);
+		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (dont.contains(sh.getSheetName()))
-				continue;
+//			if (dont.contains(sh.getSheetName()))
+//				continue;
 			threadArray.add(pool.submit(new RunnerIntersect(sh, year)));
 		}
 

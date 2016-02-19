@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.poi.hssf.record.ArrayRecord;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -883,6 +884,27 @@ public class Utils {
 		for (FinalEntry i : finals) {
 			if (i.prediction > i.threshold)
 				result.add(i);
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> ratioRestrict(ArrayList<FinalEntry> finals, Map<String, Integer> played,
+			Map<String, Integer> success) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			if (!played.containsKey(i.fixture.homeTeam) || !played.containsKey(i.fixture.awayTeam)
+					|| played.get(i.fixture.homeTeam) + played.get(i.fixture.awayTeam) < 8)
+				result.add(i);
+			else {
+				float homeRate = success.get(i.fixture.homeTeam) == 0 ? 0f
+						: ((float) success.get(i.fixture.homeTeam) / played.get(i.fixture.homeTeam));
+				float awayRate = success.get(i.fixture.awayTeam) == 0 ? 0f
+						: ((float) success.get(i.fixture.awayTeam) / played.get(i.fixture.awayTeam));
+				float avgRate = (homeRate + awayRate) / 2;
+				if (avgRate >= 0.4)
+					result.add(i);
+			}
+
 		}
 		return result;
 	}
