@@ -620,7 +620,7 @@ public class SQLiteJDBC {
 		return sett;
 	}
 
-	private static String addQuotes(String s) {
+	public static String addQuotes(String s) {
 		StringBuilder sb = new StringBuilder();
 		for (char c : s.toCharArray()) {
 			if (c == '\'')
