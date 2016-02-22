@@ -8,12 +8,12 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import main.FinalEntry;
 import xls.XlSUtils;
 
-public class RunnerTriples implements Callable<ArrayList<FinalEntry>> {
+public class RunnerFinals implements Callable<ArrayList<FinalEntry>> {
 
 	public HSSFSheet sh;
 	public int year;
 
-	public RunnerTriples(HSSFSheet sh, int year) {
+	public RunnerFinals(HSSFSheet sh, int year) {
 		this.sh = sh;
 		this.year = year;
 	}

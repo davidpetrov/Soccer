@@ -32,7 +32,7 @@ import runner.Runner;
 import runner.RunnerAggregateInterval;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
-import runner.RunnerTriples;
+import runner.RunnerFinals;
 import settings.Settings;
 import utils.Api;
 import utils.Utils;
@@ -45,20 +45,20 @@ public class Test {
 
 		// simplePredictions();
 
-		// Results.eval("24(1)");
+		 Results.eval("24+realdouble+cot(15)");
 
-		float total = 0f;
-		for (int year = 2015; year <= 2015; year++)
-			total += simulation(year);
-		System.out.println("Avg profit is " + (total / 11));
+		// float total = 0f;
+		// for (int year = 2005; year <= 2014; year++)
+		// total += simulation(year);
+		// System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-		// for (int year = 2014; year <= 2014; year++)
+		// for (int year = 2015; year <= 2015; year++)
 		// triples(year);
 
-		// makePredictions();
+//		makePredictions();
 
 		// singleMethod();
 
@@ -196,7 +196,8 @@ public class Test {
 
 	public static float simulation(int year) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		// ArrayList<String> dont = new
+		// ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -208,9 +209,9 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-
-//			if (!sh.getSheetName().equals("D1"))
-//				continue;
+			//
+			// if (!sh.getSheetName().equals("E0"))
+			// continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
@@ -243,7 +244,10 @@ public class Test {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (dont.contains(sh.getSheetName()))
 			// continue;
-			threadArray.add(pool.submit(new RunnerTriples(sh, year)));
+
+			if (!sh.getSheetName().equals("E0"))
+				continue;
+			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
 
 		for (Future<ArrayList<FinalEntry>> fd : threadArray) {
@@ -255,7 +259,7 @@ public class Test {
 		pool.shutdown();
 
 		Utils.analysys(all, year);
-		Utils.hyperReal(all, year, 1000f, 0.025f);
+		// Utils.hyperReal(all, year, 1000f, 0.025f);
 
 		// System.out.println("3");
 		// Utils.bestNperWeek(all, 3);
@@ -273,7 +277,7 @@ public class Test {
 		// System.out.println("9");
 		// Utils.bestNperWeek(all, 9);
 		// System.out.println("10");
-		Utils.bestNperWeek(all, 10);
+		// Utils.bestNperWeek(all, 10);
 	}
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {
@@ -449,12 +453,13 @@ public class Test {
 
 	public static void makePredictions() throws IOException {
 		String basePath = new File("").getAbsolutePath();
-		FileInputStream file = new FileInputStream(new File(basePath + "\\data\\fixtures.xls"));
+		FileInputStream file = new FileInputStream(new File("C:\\Users\\Tereza\\Desktop\\fixtures.xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sheet = workbook.getSheetAt(0);
 		ArrayList<ExtendedFixture> fixtures = XlSUtils.selectForPrediction(sheet);
 
-		FileInputStream filedata = new FileInputStream(new File(basePath + "\\data\\all-euro-data-2015-2016.xls"));
+		FileInputStream filedata = new FileInputStream(
+				new File("C:\\Users\\Tereza\\Desktop\\all-euro-data-2015-2016.xls"));
 		HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
 
 		HashMap<String, Settings> optimal = new HashMap<>();

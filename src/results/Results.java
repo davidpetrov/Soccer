@@ -14,7 +14,7 @@ import constants.MinMaxOdds;
 
 public class Results {
 
-	public static final String[] leagues = { "E0", "E1", "E2", "E3", "EC", "SC0", "SC1", "SC2", "SC3", "D1", "D2",
+	public static final String[] LEAGUES = { "E0", "E1", "E2", "E3", "EC", "SC0", "SC1", "SC2", "SC3", "D1", "D2",
 			"SP1", "SP2", "I1", "I2", "F1", "F2", "B1", "N1", "P1", "T1", "G1" };
 
 	public static void eval(String name) throws IOException {
@@ -22,13 +22,20 @@ public class Results {
 
 		BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Tereza\\Desktop\\" + name + ".txt"));
 		String line = br.readLine();
-
+		float count = 0;
+		
 		while (line != null) {
 			if (line.startsWith("Profit")) {
 				String[] split = line.split(" ");
 				String league = split[3];
 				int year = Integer.parseInt(split[4]);
 				float profit = Float.parseFloat(split[6].replace(",", "."));
+				float yield = Float.NaN;
+				if (split.length > 7){
+					yield = Float.parseFloat(split[9].replace(",", ".").substring(0, split[9].length()-1)) / 100;
+					count += Math.round((profit/yield));
+				}
+
 				if (results.containsKey(year)) {
 					results.get(year).put(league, profit);
 				} else {
@@ -38,8 +45,12 @@ public class Results {
 			}
 			line = br.readLine();
 		}
+		
+		
 
 		br.close();
+		
+//		System.out.println("Count: "+count);
 		stats(results);
 
 		avgByLeague(results);
@@ -47,7 +58,7 @@ public class Results {
 		restric(results);
 
 		fullRestric(results);
-		
+
 		dontRestric(results);
 
 	}
@@ -68,6 +79,10 @@ public class Results {
 
 	public static HashMap<String, Float> avgByLeague(HashMap<Integer, Map<String, Float>> results) {
 		HashMap<String, Float> leagues = new HashMap<>();
+		HashMap<String, Integer> positives = new HashMap<String, Integer>();
+		for (String i : LEAGUES) {
+			positives.put(i, 0);
+		}
 
 		for (Entry<Integer, Map<String, Float>> entry : results.entrySet()) {
 			for (Entry<String, Float> league : entry.getValue().entrySet()) {
@@ -77,10 +92,14 @@ public class Results {
 				} else {
 					leagues.put(league.getKey(), league.getValue());
 				}
+				int pos = positives.get(league.getKey());
+				if (league.getValue() >= 0f)
+					positives.put(league.getKey(), pos + 1);
 			}
 		}
 
-		leagues.forEach((league, profit) -> System.out.println(league + " " + format(profit)));
+		leagues.forEach((league, profit) -> System.out.println(league + " " + format(profit) + "             "
+				+ positives.get(league) + "+ " + (results.size() - positives.get(league)) + "-"));
 
 		float fgnRestrict = leagues.values().stream().filter(v -> v >= 0).collect(Collectors.toList()).stream()
 				.reduce(0f, (a, b) -> a + b) / results.size();
@@ -116,13 +135,12 @@ public class Results {
 		System.out.println("Simple restrict average: " + format(avg));
 
 	}
-	
+
 	public static void dontRestric(HashMap<Integer, Map<String, Float>> results) {
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 		HashMap<Integer, Float> byYear = new HashMap<>();
 		for (Entry<Integer, Map<String, Float>> entry : results.entrySet()) {
 			int year = entry.getKey();
-			
 
 			for (Entry<String, Float> i : results.get(year).entrySet()) {
 				if (!dont.contains(i.getKey())) {

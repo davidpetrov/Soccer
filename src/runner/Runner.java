@@ -19,7 +19,7 @@ public class Runner implements Callable<Float> {
 	@Override
 	public Float call() throws Exception {
 		Float profit = /*XlSUtils.realisticAggregate(sh, year, 5);*/ XlSUtils.realisticFromDB(sh, year);
-		System.out.println("Profit for  " + sh.getSheetName() + " " + year + " is: " + String.format("%.2f", profit));
+//		System.out.println("Profit for  " + sh.getSheetName() + " " + year + " is: " + String.format("%.2f", profit));
 		return profit;
 	}
 }

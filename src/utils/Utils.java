@@ -246,20 +246,6 @@ public class Utils {
 		return (float) success / list.size();
 	}
 
-	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> list) {
-		float profit = 0.0f;
-		for (FinalEntry fe : list) {
-			if (fe.success()) {
-				float gain = fe.prediction > 0.55d ? fe.fixture.maxOver : fe.fixture.maxUnder;
-				if (gain != -1.0d)
-					profit += gain;
-
-			}
-		}
-
-		return profit - list.size();
-	}
-
 	public static ArrayList<FinalEntry> filterByOdds(ArrayList<FinalEntry> finals, float minOdds, float maxOdds,
 			float threshold) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
@@ -296,6 +282,7 @@ public class Utils {
 			fe.threshold = set.threshold;
 			fe.lower = set.lowerBound;
 			fe.upper = set.upperBound;
+			fe.value = set.value;
 			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
@@ -318,7 +305,7 @@ public class Utils {
 			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
-			if (value > 0.9f) {
+			if (value > fe.value) {
 				size++;
 				if (fe.success()) {
 					if (gain != -1.0d) {
@@ -602,10 +589,14 @@ public class Utils {
 
 		// System.out.println(all);
 		for (FinalEntry fe : all) {
-			if (fe.prediction >= fe.upper)
-				overs.add(fe);
-			else
-				unders.add(fe);
+//			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
+//			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+//			float value = certainty * gain;
+//			if (value > fe.value)
+				if (fe.prediction >= fe.upper)
+					overs.add(fe);
+				else
+					unders.add(fe);
 		}
 		System.err.println(year);
 		System.out.println(overs.size() + " overs with rate: " + Utils.getSuccessRate(overs) + " profit: "
@@ -906,6 +897,28 @@ public class Utils {
 			}
 
 		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> certaintyRestrict(ArrayList<FinalEntry> finals, float cert) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			float certainty = i.prediction > i.threshold ? i.prediction : (1f - i.prediction);
+			if (certainty >= cert)
+				result.add(i);
+		}
+
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> cotRestrict(ArrayList<FinalEntry> finals, float f) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry fe : finals) {
+			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
+			if (cot >= f)
+				result.add(fe);
+		}
+
 		return result;
 	}
 

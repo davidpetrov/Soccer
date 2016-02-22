@@ -1103,6 +1103,9 @@ public class XlSUtils {
 
 	public static void makePrediction(HSSFSheet odds, HSSFSheet league, ExtendedFixture f, Settings sett)
 			throws IOException {
+
+		ArrayList<ExtendedFixture> one = new ArrayList<>();
+
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 		if (sett == null)
 			return;
@@ -1114,7 +1117,9 @@ public class XlSUtils {
 		float certainty = score > sett.threshold ? score : (1f - score);
 		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
 		float value = certainty * coeff;
-		if (Utils.oddsInRange(coeff, score, sett) && (value > sett.value)
+
+		float cot = score > sett.threshold ? (score - sett.threshold) : (sett.threshold - score);
+		if (Utils.oddsInRange(coeff, score, sett) && (value > sett.value) && (cot >= 0.15f)
 				&& (score >= sett.upperBound || score <= sett.lowerBound) && !dont.contains(league.getSheetName())) {
 			String prediction = score > sett.threshold ? "over" : "under";
 			System.err.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
@@ -1130,32 +1135,26 @@ public class XlSUtils {
 	public static Settings predictionSettings(HSSFSheet sheet, int year) throws IOException {
 		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
 
-		float minOdds = MinMaxOdds.getMinOdds(sheet.getSheetName());
-		float maxOdds = MinMaxOdds.getMaxOdds(sheet.getSheetName());
-		data = Utils.filterByOdds(data, minOdds, maxOdds);
 		Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f);
-
-		// System.out.println(temp);
-		temp.maxOver = maxOdds;
-		temp.minOver = minOdds;
-		temp.maxUnder = maxOdds;
-		temp.minUnder = minOdds;
 		ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
 
-		// System.out.println(temp);
-		temp = findValue(finals, sheet, temp);
-		finals = runWithSettingsList(sheet, data, temp);
 		temp = findThreshold(sheet, finals, temp);
-		// System.out.println(temp);
-		temp = trustInterval(sheet, finals, temp);
-		// System.out.println(temp);
+		finals = restrict(finals, temp);
+
+		temp = findIntervalReal(finals, year, temp);
+		finals = restrict(finals, temp);
+
+		temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year, temp.threshold);
+		finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), temp);
+
+		temp = findThreshold(sheet, finals, temp);
+		finals = restrict(finals, temp);
+
+		temp = findIntervalReal(finals, year, temp);
+		finals = restrict(finals, temp);
+
 		temp = findValue(finals, sheet, temp);
 
-		// temp = findIntervalReal(finals, sheet, year, temp);
-
-		// System.out.println("======================================================");
-		// finals = runWithSettingsList(sheet, data, temp);
-		// Utils.overUnderStats(finals);
 		return temp;
 	}
 
@@ -1587,6 +1586,7 @@ public class XlSUtils {
 
 	public static float realisticFromDB(HSSFSheet sheet, int year) throws IOException, InterruptedException {
 		float profit = 0.0f;
+		int played = 0;
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
 
 		HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all, "BASICS", year, sheet.getSheetName());
@@ -1596,7 +1596,7 @@ public class XlSUtils {
 		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
 
 		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay; i++) {
+		for (int i = 24; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
@@ -1623,10 +1623,18 @@ public class XlSUtils {
 
 			finals = runWithSettingsList(sheet, current, temp);
 
+			// finals = Utils.certaintyRestrict(finals, 0.6f);
+			finals = Utils.cotRestrict(finals, 0.10f);
+			played += finals.size();
+
 			float trprofit = Utils.getProfit(finals, temp);
 
 			profit += trprofit;
+
 		}
+		float yield = (profit / played) * 100f;
+		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
+				+ " yield is: " + String.format("%.2f%%", yield));
 		return profit;
 	}
 
@@ -1814,47 +1822,47 @@ public class XlSUtils {
 
 	}
 
-	public static ArrayList<FinalEntry> triples(HSSFSheet sheet, int year) throws IOException {
+	public static ArrayList<FinalEntry> triples(HSSFSheet sheet, int year) throws IOException, InterruptedException {
 		ArrayList<FinalEntry> toBet = new ArrayList<>();
-		float profit = 0.0f;
+
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+
+		HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all, "BASICS", year, sheet.getSheetName());
+		HashMap<ExtendedFixture, Float> poissons = SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
+		HashMap<ExtendedFixture, Float> weighted = SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
+		HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all, "HALFTIME1", year, sheet.getSheetName());
+		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
+
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-			// Calendar cal = Calendar.getInstance();
-			// cal.set(year + 1, 1, 1);
-			// if (!current.isEmpty() &&
-			// current.get(0).date.after(cal.getTime())) {
-			// return profit;
-			// }
-
-			float minOdds = 1.8f;
-			float maxOdds = 10f;
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
-			data = Utils.filterByOdds(data, minOdds, maxOdds);
-			Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f);
-			// System.out.println("match " + i + temp);
-			// temp.maxOdds = maxOdds;
-			// temp.minOdds = minOdds;
+			Settings temp = runForLeagueWithOdds(sheet, data, year, basics, poissons, weighted, ht1, ht2, 0.55f)
+					.withValue(0.9f);
+
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
-			// temp = findIntervalReal(finals, sheet, year, temp);
-			// finals = runWithSettingsList(sheet, data, temp);
 			temp = findThreshold(sheet, finals, temp);
-			temp = trustInterval(sheet, finals, temp);
+			finals = restrict(finals, temp);
 
-			// temp = findIntervalReal(finals, sheet, year, temp);
-			current = Utils.filterByOdds(current, minOdds, maxOdds);
+			temp = findIntervalReal(finals, year, temp);
+			finals = restrict(finals, temp);
+
+			temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year, temp.threshold);
+			finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), temp);
+
+			temp = findThreshold(sheet, finals, temp);
+			finals = restrict(finals, temp);
+
+			temp = findIntervalReal(finals, year, temp);
+			finals = restrict(finals, temp);
+
+			temp = findValue(finals, sheet, temp);
+
 			finals = runWithSettingsList(sheet, current, temp);
-			toBet.addAll(finals);
-			// finals = Utils.intersectDiff(finals,
-			// intersectAllClassifier(sheet, current, year));
 
-			// System.out.println(finals);
-			// float trprofit = Utils.getProfit(sheet, finals, temp);
-			// // System.out.println(i + " " + trprofit);
-			// // System.out.println("--------------------------");
-			// profit += trprofit;
+			finals = Utils.cotRestrict(finals, 0.15f);
+			toBet.addAll(finals);
 		}
 		return toBet;
 	}
@@ -2011,6 +2019,7 @@ public class XlSUtils {
 			fe.threshold = trset.threshold;
 			fe.lower = trset.lowerBound;
 			fe.upper = trset.upperBound;
+			fe.value = trset.value;
 		}
 
 		// System.out.println("lower: " + trset.lowerBound + " upper: " +
@@ -2053,6 +2062,7 @@ public class XlSUtils {
 			fe.threshold = bestThreshold;
 			fe.lower = bestThreshold;
 			fe.upper = bestThreshold;
+			fe.value = trset.value;
 		}
 
 		finals = restrict(finals, trset);

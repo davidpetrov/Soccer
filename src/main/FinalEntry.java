@@ -7,15 +7,17 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float threshold;
 	public float upper;
 	public float lower;
+	public float value;
 
-	public FinalEntry(ExtendedFixture fixture, float prediction, Result result, float threshold,
-			float lower, float upper) {
+	public FinalEntry(ExtendedFixture fixture, float prediction, Result result, float threshold, float lower,
+			float upper) {
 		this.fixture = fixture;
 		this.prediction = prediction;
 		this.result = result;
 		this.threshold = threshold;
 		this.upper = upper;
 		this.lower = lower;
+		this.value = 0.9f;
 	}
 
 	@Override
