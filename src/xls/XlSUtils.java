@@ -1623,8 +1623,9 @@ public class XlSUtils {
 
 			finals = runWithSettingsList(sheet, current, temp);
 
+			SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(), "realdouble24");
 			// finals = Utils.certaintyRestrict(finals, 0.6f);
-			finals = Utils.cotRestrict(finals, 0.10f);
+			// finals = Utils.cotRestrict(finals, 0.10f);
 			played += finals.size();
 
 			float trprofit = Utils.getProfit(finals, temp);

@@ -45,12 +45,12 @@ public class Test {
 
 		// simplePredictions();
 
-		 Results.eval("24+realdouble+cot(15)");
+//		 Results.eval("realdouble24");
 
-		// float total = 0f;
-		// for (int year = 2005; year <= 2014; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+//		 float total = 0f;
+//		 for (int year = 2010; year <= 2013; year++)
+//		 total += simulation(year);
+//		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -58,7 +58,7 @@ public class Test {
 		// for (int year = 2015; year <= 2015; year++)
 		// triples(year);
 
-//		makePredictions();
+		makePredictions();
 
 		// singleMethod();
 

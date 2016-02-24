@@ -737,4 +737,95 @@ public class SQLiteJDBC {
 
 	}
 
+	public static synchronized void storeFinals(ArrayList<FinalEntry> finals, int year, String competition,
+			String description) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			for (FinalEntry f : finals) {
+
+				String sql = "INSERT INTO FINALS "
+						+ "(DESCRIPTION,YEAR,DATE,COMPETITION,MATCHDAY,HOMETEAMNAME,AWAYTEAMNAME,HOMEGOALS,AWAYGOALS,OVER,UNDER,SCORE,THOLD,LOWER,UPPER,VALUE)"
+						+ "VALUES (" + addQuotes(description) + "," + year + ","
+						+ addQuotes(format.format(f.fixture.date)) + "," + addQuotes(competition) + ","
+						+ f.fixture.matchday + "," + addQuotes(f.fixture.homeTeam) + "," + addQuotes(f.fixture.awayTeam)
+						+ "," + f.fixture.result.goalsHomeTeam + "," + f.fixture.result.goalsAwayTeam + ","
+						+ f.fixture.maxOver + "," + f.fixture.maxUnder + "," + f.prediction + "," + f.threshold + ","
+						+ f.lower + "," + f.upper + "," + f.value + " );";
+				try {
+					if (!Float.isNaN(f.prediction))
+						stmt.executeUpdate(sql);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					System.out.println("tuka");
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+	}
+
+	public static synchronized ArrayList<FinalEntry> selectFinals(String competition, int year, String description)
+			throws InterruptedException {
+
+		ArrayList<FinalEntry> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from finals" +  " where year=" + year + " AND competition="
+					+ addQuotes(competition) +" AND description=" +addQuotes(description)+ ";");
+			while (rs.next()) {
+				String date = rs.getString("date");
+				int matchday = rs.getInt("matchday");
+				String homeTeamName = rs.getString("hometeamname");
+				String awayTeamName = rs.getString("awayteamname");
+				int homeGoals = rs.getInt("homeGoals");
+				int awayGoals = rs.getInt("awayGoals");
+				float over = rs.getFloat("over");
+				float under = rs.getFloat("under");
+				Float score = rs.getFloat("score");
+				float thold = rs.getFloat("thold");
+				float lower = rs.getFloat("lower");
+				float upper = rs.getFloat("upper");
+				float value = rs.getFloat("value");
+				
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals), competition).withMatchday(matchday).withOdds(0f, 0f ,over, under);
+				FinalEntry f = new FinalEntry(ef, score, new Result(homeGoals, awayGoals), thold, lower, upper);
+				f.value = value;
+				
+				result.add(f);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
+	}
+
 }
