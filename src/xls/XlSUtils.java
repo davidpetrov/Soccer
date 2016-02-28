@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.spi.CalendarDataProvider;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -1102,7 +1104,7 @@ public class XlSUtils {
 	}
 
 	public static void makePrediction(HSSFSheet odds, HSSFSheet league, ExtendedFixture f, Settings sett)
-			throws IOException {
+			throws IOException, InterruptedException {
 
 		ArrayList<ExtendedFixture> one = new ArrayList<>();
 
@@ -1119,7 +1121,8 @@ public class XlSUtils {
 		float value = certainty * coeff;
 
 		float cot = score > sett.threshold ? (score - sett.threshold) : (sett.threshold - score);
-		if (Utils.oddsInRange(coeff, score, sett) && (value > sett.value) && (cot >= 0.15f)
+		if (Utils.oddsInRange(coeff, score, sett) && (value > sett.value)
+				&& (cot >= findCot(league.getSheetName(), 2015, 3, "realdouble24")) && (certainty >= 0.5f)
 				&& (score >= sett.upperBound || score <= sett.lowerBound) && !dont.contains(league.getSheetName())) {
 			String prediction = score > sett.threshold ? "over" : "under";
 			System.err.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
@@ -2378,6 +2381,69 @@ public class XlSUtils {
 		}
 		workbook.close();
 		file.close();
+	}
+
+	public static float findCot(String league, int year, int period, String description) throws InterruptedException {
+		ArrayList<ArrayList<FinalEntry>> byYear = new ArrayList<>();
+
+		int start = year - period;
+
+		for (int i = start; i < year; i++) {
+			byYear.add(SQLiteJDBC.selectFinals(league, i, description));
+		}
+
+		float bestProfit = 0f;
+		for (ArrayList<FinalEntry> i : byYear) {
+			bestProfit += Utils.getProfit(i);
+		}
+
+		float bestCot = 0f;
+
+		for (int j = 1; j <= 12; j++) {
+			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
+			float cot = j * 0.02f;
+			byYear.stream().forEach(list -> filtered.add(Utils.cotRestrict(list, cot)));
+
+			float currProfit = 0f;
+			for (ArrayList<FinalEntry> i : filtered)
+				currProfit += Utils.getProfit(i);
+
+			if (currProfit > bestProfit) {
+				bestProfit = currProfit;
+				bestCot = cot;
+			}
+
+		}
+
+		return 5 * bestCot / 6;
+
+	}
+
+	public static ArrayList<FinalEntry> bestCot(String league, int year, int period, String description)
+			throws InterruptedException {
+
+		float bestCot = findCot(league, year, period, description);
+
+		ArrayList<FinalEntry> result = SQLiteJDBC.selectFinals(league, year, description);
+		result = Utils.cotRestrict(result, bestCot);
+
+		ArrayList<FinalEntry> values = new ArrayList<>();
+		for (FinalEntry fe : result) {
+			float gain = fe.prediction > fe.threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			float value = certainty * gain;
+			if (certainty > 0.5f)
+				values.add(fe);
+		}
+
+		float profit = Utils.getProfit(values);
+
+		// System.out.println(" Last: " + period + " Best cot: " + bestCot + "
+		// best profit avg: " + bestProfit / period
+		// + " result: " + profit);
+
+		return values;
+
 	}
 
 }

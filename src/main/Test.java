@@ -45,12 +45,51 @@ public class Test {
 
 		// simplePredictions();
 
-//		 Results.eval("realdouble24");
+		// Results.eval("24+realdouble+cot(15)");
 
-//		 float total = 0f;
-//		 for (int year = 2010; year <= 2013; year++)
-//		 total += simulation(year);
-//		 System.out.println("Avg profit is " + (total / 11));
+//		int bestPeriod = 0;
+//		float bestProfit = Float.NEGATIVE_INFINITY;
+//
+//		int period = 3;
+//
+//		float total = 0f;
+//		int sizeTotal= 0;
+//
+//		for (int i = 2005 + period; i <= 2014; i++) {
+//			float curr = 0f;
+//			int size = 0;
+//			for (String league : Results.LEAGUES) {
+//				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
+//					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble24");
+//					// System.out.println("Profit for: " + league + " last: " +
+//					// i + " is: " + Results.format(pr));
+//
+//					curr += Utils.getProfit(list);
+//					size += list.size();
+//				}
+//			}
+//
+//			System.out.println(
+//					"For " + i + ": " + curr + "  yield: " + Results.format((curr / size) * 100) + " from: " + size);
+//			total += curr;
+//			sizeTotal+=size;
+
+			// if (curr > bestProfit) {
+			// bestProfit = curr;
+			// bestPeriod = i;
+			// }
+
+//		}
+
+//		System.out.println("Total avg: " + total / (10 - period) + " avg yield: " + Results.format(100*(total /sizeTotal)));
+
+		// System.out.println("Best period: " + bestPeriod + " with profit: " +
+		// bestProfit);
+
+		// float total = 0f;
+		// for (int year = 2010; year <= 2013; year++)
+		// total += simulation(year);
+		// System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -58,7 +97,7 @@ public class Test {
 		// for (int year = 2015; year <= 2015; year++)
 		// triples(year);
 
-		makePredictions();
+		 makePredictions();
 
 		// singleMethod();
 
@@ -451,7 +490,7 @@ public class Test {
 	// workbook.close();
 	// }
 
-	public static void makePredictions() throws IOException {
+	public static void makePredictions() throws IOException, InterruptedException {
 		String basePath = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(new File("C:\\Users\\Tereza\\Desktop\\fixtures.xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);

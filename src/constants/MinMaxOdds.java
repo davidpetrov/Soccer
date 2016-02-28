@@ -11,7 +11,7 @@ public class MinMaxOdds {
 	public static final Float[] SC2 = { 1f, 10f };
 	public static final Float[] SC3 = { 1.68f, 2.2f };
 
-	public static final String[] DONT = { /*"E0", "EC","E1","E2", "SC0"*/ "D1", "D2", "I1", "I2", "F1", "F2", };
+	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1","B1"};
 
 	public static float getMinOdds(String league) {
 		switch (league) {
