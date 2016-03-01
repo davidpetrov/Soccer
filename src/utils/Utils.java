@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import main.ExtendedFixture;
 import main.FinalEntry;
 import main.Result;
+import results.Results;
 import settings.Settings;
 
 public class Utils {
@@ -207,6 +208,18 @@ public class Utils {
 		totalUnder += home[0] * away[0] + home[0] * away[1] + home[0] * away[2] + home[1] * away[0] + home[2] * away[0]
 				+ home[1] * away[1];
 		return 1.0f - totalUnder;
+	}
+
+	public static float poissonDraw(float lambda, float mu) {
+		float home[] = new float[5];
+		float away[] = new float[5];
+		for (int i = 0; i < 5; i++) {
+			home[i] = poisson(lambda, i);
+			away[i] = poisson(mu, i);
+		}
+		float totalUnder = 0;
+		totalUnder += home[0] * away[0] + home[1] * away[1] + home[2] * away[2] + home[3] * away[3];
+		return totalUnder;
 	}
 
 	private static int factorial(int n) {
@@ -407,6 +420,15 @@ public class Utils {
 		return all.size() == 0 ? 0 : ((float) count / all.size());
 	}
 
+	public static float countDraws(ArrayList<ExtendedFixture> all) {
+		int count = 0;
+		for (ExtendedFixture i : all) {
+			if (i.result.goalsHomeTeam == i.result.goalsAwayTeam)
+				count++;
+		}
+		return all.size() == 0 ? 0 : ((float) count / all.size());
+	}
+
 	public static void byWeekDay(ArrayList<ExtendedFixture> all) {
 		int[] days = new int[8];
 		int[] overs = new int[8];
@@ -589,14 +611,16 @@ public class Utils {
 
 		// System.out.println(all);
 		for (FinalEntry fe : all) {
-//			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
-//			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
-//			float value = certainty * gain;
-//			if (value > fe.value)
-				if (fe.prediction >= fe.upper)
-					overs.add(fe);
-				else
-					unders.add(fe);
+			// float gain = fe.prediction > fe.upper ? fe.fixture.maxOver :
+			// fe.fixture.maxUnder;
+			// float certainty = fe.prediction > fe.threshold ? fe.prediction :
+			// (1f - fe.prediction);
+			// float value = certainty * gain;
+			// if (value > fe.value)
+			if (fe.prediction >= fe.upper)
+				overs.add(fe);
+			else
+				unders.add(fe);
 		}
 		System.err.println(year);
 		System.out.println(overs.size() + " overs with rate: " + Utils.getSuccessRate(overs) + " profit: "
@@ -920,6 +944,38 @@ public class Utils {
 		}
 
 		return result;
+	}
+
+	public static void drawAnalysis(ArrayList<FinalEntry> all) {
+		int drawUnder = 0;
+		int drawOver = 0;
+		int under = 0;
+		int over = 0;
+
+		float profitOver = 0f;
+		float profitUnder = 0f;
+
+		for (FinalEntry i : all) {
+			if (i.prediction <= i.lower) {
+				under++;
+				if (i.fixture.result.goalsHomeTeam == i.fixture.result.goalsAwayTeam) {
+					drawUnder++;
+					profitUnder += i.fixture.drawOdds;
+				}
+
+			} else {
+				over++;
+				if (i.fixture.result.goalsHomeTeam == i.fixture.result.goalsAwayTeam) {
+					drawOver++;
+					profitOver += i.fixture.drawOdds;
+				}
+			}
+		}
+
+		System.out.println("Draws when under pr: " + (profitUnder - under) + " from " + under + " "
+				+ Results.format((float) (profitUnder - under) * 100 / under) + "%");
+		System.out.println("Draws when over pr: " + (profitOver - over) + " from " + over + " "
+				+ Results.format((float) (profitOver - over) * 100 / over) + "%");
 	}
 
 }

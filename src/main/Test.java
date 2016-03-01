@@ -45,59 +45,21 @@ public class Test {
 
 		// simplePredictions();
 
-		// Results.eval("24+realdouble+cot(15)");
-
-//		int bestPeriod = 0;
-//		float bestProfit = Float.NEGATIVE_INFINITY;
-//
-//		int period = 3;
-//
-//		float total = 0f;
-//		int sizeTotal= 0;
-//
-//		for (int i = 2005 + period; i <= 2014; i++) {
-//			float curr = 0f;
-//			int size = 0;
-//			for (String league : Results.LEAGUES) {
-//				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
-//					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble24");
-//					// System.out.println("Profit for: " + league + " last: " +
-//					// i + " is: " + Results.format(pr));
-//
-//					curr += Utils.getProfit(list);
-//					size += list.size();
-//				}
-//			}
-//
-//			System.out.println(
-//					"For " + i + ": " + curr + "  yield: " + Results.format((curr / size) * 100) + " from: " + size);
-//			total += curr;
-//			sizeTotal+=size;
-
-			// if (curr > bestProfit) {
-			// bestProfit = curr;
-			// bestPeriod = i;
-			// }
-
-//		}
-
-//		System.out.println("Total avg: " + total / (10 - period) + " avg yield: " + Results.format(100*(total /sizeTotal)));
-
-		// System.out.println("Best period: " + bestPeriod + " with profit: " +
-		// bestProfit);
+		// Results.eval("realdouble+bestcot");
+//		 stored24();
 
 		// float total = 0f;
-		// for (int year = 2010; year <= 2013; year++)
+		// for (int year = 2010; year <= 2015; year++)
 		// total += simulation(year);
 		// System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-		// for (int year = 2015; year <= 2015; year++)
-		// triples(year);
+		for (int year = 2014; year <= 2014; year++)
+			triples(year);
 
-		 makePredictions();
+		// makePredictions();
 
 		// singleMethod();
 
@@ -138,6 +100,52 @@ public class Test {
 			totalTotal += total;
 		}
 		System.out.println("Avg is: " + totalTotal / 11);
+	}
+
+	public static void stored24() throws InterruptedException {
+		int bestPeriod = 0;
+		float bestProfit = Float.NEGATIVE_INFINITY;
+
+		int period = 3;
+
+		float total = 0f;
+		int sizeTotal = 0;
+
+		ArrayList<FinalEntry> all =  new ArrayList<>();
+		
+		for (int i = 2005 + period; i <= 2014; i++) {
+			float curr = 0f;
+			int size = 0;
+			for (String league : Results.LEAGUES) {
+				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
+					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble24");
+					// System.out.println("Profit for: " + league + " last: " +
+					// i + " is: " + Results.format(pr));
+
+					curr += Utils.getProfit(list);
+					size += list.size();
+					all.addAll(list);
+				}
+			}
+
+			System.out.println(
+					"For " + i + ": " + curr + "  yield: " + Results.format((curr / size) * 100) + " from: " + size);
+			total += curr;
+			sizeTotal += size;
+
+			if (curr > bestProfit) {
+				bestProfit = curr;
+				bestPeriod = i;
+			}
+
+		}
+
+		System.out.println(
+				"Total avg: " + total / (10 - period) + " avg yield: " + Results.format(100 * (total / sizeTotal)));
+		Utils.drawAnalysis(all);
+
+		// System.out.println("Best period: " + bestPeriod + " with profit: " +
+		// bestProfit);
 	}
 
 	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
@@ -283,8 +291,8 @@ public class Test {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (dont.contains(sh.getSheetName()))
 			// continue;
-
-			if (!sh.getSheetName().equals("E0"))
+//
+			if (!sh.getSheetName().equals("T1"))
 				continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
@@ -298,6 +306,7 @@ public class Test {
 		pool.shutdown();
 
 		Utils.analysys(all, year);
+		Utils.drawAnalysis(all);
 		// Utils.hyperReal(all, year, 1000f, 0.025f);
 
 		// System.out.println("3");
@@ -317,6 +326,7 @@ public class Test {
 		// Utils.bestNperWeek(all, 9);
 		// System.out.println("10");
 		// Utils.bestNperWeek(all, 10);
+
 	}
 
 	public static float simulationIntersect(int year) throws InterruptedException, ExecutionException, IOException {

@@ -187,6 +187,21 @@ public class XlSUtils {
 		return Utils.poissonOver(lambda, mu);
 	}
 
+	public static float poissonDraw(ExtendedFixture f, HSSFSheet sheet) {
+
+		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
+		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
+		float homeAvgFor = XlSUtils.selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
+		float homeAvgAgainst = XlSUtils.selectAvgHomeTeamAgainst(sheet, f.homeTeam, f.date);
+		float awayAvgFor = XlSUtils.selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
+		float awayAvgAgainst = XlSUtils.selectAvgAwayTeamAgainst(sheet, f.awayTeam, f.date);
+
+		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
+		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
+
+		return Utils.poissonDraw(lambda, mu);
+	}
+
 	private static float selectAvgAwayTeamAgainst(HSSFSheet sheet, String awayTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
@@ -1599,7 +1614,7 @@ public class XlSUtils {
 		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
 
 		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 24; i < maxMatchDay; i++) {
+		for (int i = 15; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
@@ -1626,9 +1641,10 @@ public class XlSUtils {
 
 			finals = runWithSettingsList(sheet, current, temp);
 
-			SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(), "realdouble24");
-			// finals = Utils.certaintyRestrict(finals, 0.6f);
-			// finals = Utils.cotRestrict(finals, 0.10f);
+			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
+			// "realdouble24");
+			finals = Utils.certaintyRestrict(finals, 0.5f);
+			finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(), year, 3, "realdouble24"));
 			played += finals.size();
 
 			float trprofit = Utils.getProfit(finals, temp);
@@ -1865,8 +1881,13 @@ public class XlSUtils {
 
 			finals = runWithSettingsList(sheet, current, temp);
 
-			finals = Utils.cotRestrict(finals, 0.15f);
-			toBet.addAll(finals);
+			float drawPercent = ((float) Utils.countDraws(data)) / data.size();
+			ArrayList<FinalEntry> draws = new ArrayList<>();
+			for (FinalEntry fe : finals)
+				if (poissonDraw(fe.fixture, sheet) >= drawPercent)
+					draws.add(fe);
+			// finals = Utils.cotRestrict(finals, 0.15f);
+			toBet.addAll(draws);
 		}
 		return toBet;
 	}
@@ -2425,6 +2446,15 @@ public class XlSUtils {
 		float bestCot = findCot(league, year, period, description);
 
 		ArrayList<FinalEntry> result = SQLiteJDBC.selectFinals(league, year, description);
+
+		ArrayList<FinalEntry> unders = Utils.onlyUnders(result);
+		ArrayList<FinalEntry> overs = Utils.onlyOvers(result);
+		ArrayList<FinalEntry> oddsList = new ArrayList<>();
+		Settings oddsSetts = bestOdds(league, year, period, description);
+
+		oddsList.addAll(Utils.filterByOdds(unders, oddsSetts.minUnder, oddsSetts.maxUnder, 1f));
+		oddsList.addAll(Utils.filterByOdds(overs, oddsSetts.minOver, oddsSetts.maxOver, 0f));
+
 		result = Utils.cotRestrict(result, bestCot);
 
 		ArrayList<FinalEntry> values = new ArrayList<>();
@@ -2443,6 +2473,121 @@ public class XlSUtils {
 		// + " result: " + profit);
 
 		return values;
+
+	}
+
+	public static Settings bestOdds(String league, int year, int period, String description)
+			throws InterruptedException {
+		ArrayList<ArrayList<FinalEntry>> byYear = new ArrayList<>();
+
+		int start = year - period;
+
+		for (int i = start; i < year; i++) {
+			byYear.add(SQLiteJDBC.selectFinals(league, i, description));
+		}
+
+		float bestProfitUnders = 0f;
+		float bestProfitOvers = 0f;
+		for (ArrayList<FinalEntry> i : byYear) {
+			bestProfitUnders += Utils.getProfit(Utils.onlyUnders(i));
+			bestProfitOvers += Utils.getProfit(Utils.onlyOvers(i));
+		}
+
+		Settings underSetts = new Settings(league, 0.5f, 0.5f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, bestProfitUnders);
+
+		ArrayList<ArrayList<FinalEntry>> unders = new ArrayList<>();
+		for (ArrayList<FinalEntry> yearly : byYear)
+			unders.add(Utils.onlyUnders(yearly));
+
+		int bestminx = 0;
+		for (int x = 0; x < 50; x++) {
+			float currentMin = 1.3f + x * 0.02f;
+
+			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
+			for (ArrayList<FinalEntry> under : unders) {
+				float th = 1f;
+				filtered.add(Utils.filterByOdds(under, currentMin, 10f, th));
+			}
+
+			float currentProfit = 0f;
+			for (ArrayList<FinalEntry> filter : filtered)
+				currentProfit += Utils.getProfit(filter);
+
+			if (currentProfit > bestProfitUnders) {
+				bestminx = x;
+				bestProfitUnders = currentProfit;
+				underSetts.minUnder = currentMin;
+				underSetts.profit = bestProfitUnders;
+			}
+		}
+
+		for (int x = bestminx; 1.3f + x * 0.02 < 2.5f; x++) {
+			float currentMax = 1.3f + x * 0.02f;
+			ArrayList<ArrayList<FinalEntry>> filteredMax = new ArrayList<>();
+			for (ArrayList<FinalEntry> under : unders) {
+				float th = 1f;
+				filteredMax.add(Utils.filterByOdds(under, underSetts.minUnder, currentMax, th));
+			}
+
+			float currentProfit = 0f;
+			for (ArrayList<FinalEntry> filter : filteredMax)
+				currentProfit += Utils.getProfit(filter);
+
+			if (currentProfit > bestProfitUnders) {
+				bestProfitUnders = currentProfit;
+				underSetts.maxUnder = currentMax;
+				underSetts.profit = bestProfitUnders;
+			}
+		}
+
+		Settings overSetts = new Settings(league, 0.5f, 0.5f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, bestProfitOvers);
+
+		ArrayList<ArrayList<FinalEntry>> overs = new ArrayList<>();
+		for (ArrayList<FinalEntry> yearly : byYear)
+			overs.add(Utils.onlyOvers(yearly));
+		int bestminy = 0;
+		for (int x = 0; x < 50; x++) {
+			float currentMin = 1.3f + x * 0.02f;
+
+			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
+			for (ArrayList<FinalEntry> over : overs) {
+				float th = 0f;
+				filtered.add(Utils.filterByOdds(over, currentMin, 10f, th));
+			}
+
+			float currentProfit = 0f;
+			for (ArrayList<FinalEntry> filter : filtered)
+				currentProfit += Utils.getProfit(filter);
+
+			if (currentProfit > bestProfitOvers) {
+				bestminy = x;
+				bestProfitOvers = currentProfit;
+				overSetts.minOver = currentMin;
+				overSetts.profit = bestProfitOvers;
+			}
+		}
+
+		for (int x = bestminy; 1.3f + x * 0.02 < 2.5f; x++) {
+			float currentMax = 1.3f + x * 0.02f;
+			ArrayList<ArrayList<FinalEntry>> filteredMax = new ArrayList<>();
+			for (ArrayList<FinalEntry> over : overs) {
+				float th = 0f;
+
+				filteredMax.add(Utils.filterByOdds(over, overSetts.minOver, currentMax, th));
+			}
+
+			float currentProfit = 0f;
+			for (ArrayList<FinalEntry> filter : filteredMax)
+				currentProfit += Utils.getProfit(filter);
+
+			if (currentProfit > bestProfitOvers) {
+				bestProfitOvers = currentProfit;
+				overSetts.maxOver = currentMax;
+				overSetts.profit = bestProfitOvers;
+			}
+		}
+
+		return underSetts.withMinMax(underSetts.minUnder, underSetts.maxUnder, overSetts.minOver, overSetts.maxOver);
 
 	}
 
