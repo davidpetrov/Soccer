@@ -951,6 +951,8 @@ public class Utils {
 		int drawOver = 0;
 		int under = 0;
 		int over = 0;
+		
+		
 
 		float profitOver = 0f;
 		float profitUnder = 0f;
@@ -963,7 +965,7 @@ public class Utils {
 					profitUnder += i.fixture.drawOdds;
 				}
 
-			} else {
+			} else if(i.prediction >= i.upper){
 				over++;
 				if (i.fixture.result.goalsHomeTeam == i.fixture.result.goalsAwayTeam) {
 					drawOver++;

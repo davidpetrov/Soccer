@@ -45,19 +45,19 @@ public class Test {
 
 		// simplePredictions();
 
-		// Results.eval("realdouble+bestcot");
+//		 Results.eval("realdouble+bestcotfull");
 //		 stored24();
 
-		// float total = 0f;
-		// for (int year = 2010; year <= 2015; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+		 float total = 0f;
+		 for (int year = 2015; year <= 2015; year++)
+		 total += simulation(year);
+		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-		for (int year = 2014; year <= 2014; year++)
-			triples(year);
+		// for (int year = 2010; year <= 2015; year++)
+		// triples(year);
 
 		// makePredictions();
 
@@ -111,14 +111,14 @@ public class Test {
 		float total = 0f;
 		int sizeTotal = 0;
 
-		ArrayList<FinalEntry> all =  new ArrayList<>();
-		
+		ArrayList<FinalEntry> all = new ArrayList<>();
+
 		for (int i = 2005 + period; i <= 2014; i++) {
 			float curr = 0f;
 			int size = 0;
 			for (String league : Results.LEAGUES) {
 				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
-					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble24");
+					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble15");
 					// System.out.println("Profit for: " + league + " last: " +
 					// i + " is: " + Results.format(pr));
 
@@ -278,6 +278,7 @@ public class Test {
 	public static void triples(int year) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		ArrayList<String> draw = new ArrayList<String>(Arrays.asList(MinMaxOdds.DRAW));
 
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -289,11 +290,11 @@ public class Test {
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (dont.contains(sh.getSheetName()))
+			// if (!draw.contains(sh.getSheetName()))
 			// continue;
-//
-			if (!sh.getSheetName().equals("T1"))
-				continue;
+			//
+			// if (!sh.getSheetName().equals("I1"))
+			// continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
 
