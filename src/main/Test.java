@@ -48,10 +48,10 @@ public class Test {
 //		 Results.eval("realdouble+bestcotfull");
 //		 stored24();
 
-		 float total = 0f;
-		 for (int year = 2015; year <= 2015; year++)
-		 total += simulation(year);
-		 System.out.println("Avg profit is " + (total / 11));
+//		 float total = 0f;
+//		 for (int year = 2015; year <= 2015; year++)
+//		 total += simulation(year);
+//		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -61,7 +61,7 @@ public class Test {
 
 		// makePredictions();
 
-		// singleMethod();
+		 singleMethod();
 
 		// aggregateInterval();
 
@@ -80,7 +80,7 @@ public class Test {
 	public static final void singleMethod() throws IOException {
 
 		float totalTotal = 0f;
-		for (int year = 2005; year <= 2015; year++) {
+		for (int year = 2006; year <= 2011; year++) {
 			float total = 0f;
 			String base = new File("").getAbsolutePath();
 			FileInputStream file = new FileInputStream(
@@ -89,6 +89,8 @@ public class Test {
 			Iterator<Sheet> sheet = workbook.sheetIterator();
 			while (sheet.hasNext()) {
 				HSSFSheet sh = (HSSFSheet) sheet.next();
+				if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+					continue;
 				float profit = XlSUtils.singleMethod(sh, XlSUtils.selectAll(sh), year);
 				// System.out.println(sh.getSheetName() + " " + year + " " +
 				// profit);
@@ -118,7 +120,7 @@ public class Test {
 			int size = 0;
 			for (String league : Results.LEAGUES) {
 				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
-					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble15");
+					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble24");
 					// System.out.println("Profit for: " + league + " last: " +
 					// i + " is: " + Results.format(pr));
 

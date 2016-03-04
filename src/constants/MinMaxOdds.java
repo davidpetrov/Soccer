@@ -13,6 +13,7 @@ public class MinMaxOdds {
 
 	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1","B1"};
 	public static final String[] DRAW = {  "I1", "I2", "F2", "P1","D1","D2","SP2"};
+	public static final String[] SHOTS = {"E0","E1","E2","E3","EC","SC0","D1","SP1","I1","F1"};
 
 	public static float getMinOdds(String league) {
 		switch (league) {

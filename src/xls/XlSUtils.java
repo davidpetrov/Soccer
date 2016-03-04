@@ -189,17 +189,176 @@ public class XlSUtils {
 
 	public static float poissonDraw(ExtendedFixture f, HSSFSheet sheet) {
 
-		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
-		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
-		float homeAvgFor = XlSUtils.selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
-		float homeAvgAgainst = XlSUtils.selectAvgHomeTeamAgainst(sheet, f.homeTeam, f.date);
-		float awayAvgFor = XlSUtils.selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
-		float awayAvgAgainst = XlSUtils.selectAvgAwayTeamAgainst(sheet, f.awayTeam, f.date);
+		float leagueAvgHome = selectAvgLeagueHome(sheet, f.date);
+		float leagueAvgAway = selectAvgLeagueAway(sheet, f.date);
+		float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
+		float homeAvgAgainst = selectAvgHomeTeamAgainst(sheet, f.homeTeam, f.date);
+		float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
+		float awayAvgAgainst = selectAvgAwayTeamAgainst(sheet, f.awayTeam, f.date);
 
 		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
 		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
 
 		return Utils.poissonDraw(lambda, mu);
+	}
+
+	public static float shots(ExtendedFixture f, HSSFSheet sheet) {
+		float avgTotal = selectAvgShotsTotal(sheet, f.date);
+		float avgHome = selectAvgShotsHome(sheet, f.date);
+		float avgAway = selectAvgShotsAway(sheet, f.date);
+		float homeShotsFor = selectAvgHomeShotsFor(sheet,f.homeTeam,f.date);
+		float homeShotsAgainst = selectAvgHomeShotsAgainst(sheet,f.homeTeam,f.date);
+		float awayShotsFor = selectAvgAwayShotsFor(sheet,f.awayTeam,f.date);
+		float awayShotsAgainst = selectAvgAwayShotsAgainst(sheet,f.awayTeam,f.date);
+		
+		
+		float lambda = avgAway == 0 ? 0 : homeShotsFor * awayShotsAgainst / avgAway;
+		float mu = avgHome == 0 ? 0 : awayShotsFor * homeShotsAgainst / avgHome;
+		
+		float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
+		float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
+		
+		float homeRatio = homeAvgFor/homeShotsFor;
+		float awayRatio = awayAvgFor/awayShotsFor;
+		
+		
+		return Utils.poissonOver(homeRatio*lambda, awayRatio*mu);
+	}
+
+	private static float selectAvgHomeShotsFor(HSSFSheet sheet, String homeTeam, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			String htname = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
+			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && htname.equals(homeTeam) && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				int homeShots = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
+				total += homeShots;
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
+	}
+	
+	private static float selectAvgHomeShotsAgainst(HSSFSheet sheet, String homeTeam, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			String htname = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
+			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && htname.equals(homeTeam) && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				int homeShots = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
+				total += homeShots;
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
+	}
+	
+	private static float selectAvgAwayShotsFor(HSSFSheet sheet, String awayTeam, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			String awayname = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
+			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && awayname.equals(awayTeam) && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				int homeShots = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
+				total += homeShots;
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
+	}
+	
+	private static float selectAvgAwayShotsAgainst(HSSFSheet sheet, String awayTeam, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			String awayname = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
+			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && awayname.equals(awayTeam) && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				int homeShots = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
+				total += homeShots;
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
+	}
+
+	private static float selectAvgShotsTotal(HSSFSheet sheet, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			if (getColumnIndex(sheet, "HST") != -1 && getColumnIndex(sheet, "AST") != -1 && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
+				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
+
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
+	}
+	
+	private static float selectAvgShotsHome(HSSFSheet sheet, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			if (getColumnIndex(sheet, "HST") != -1 && getColumnIndex(sheet, "AST") != -1 && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
+	}
+	
+	private static float selectAvgShotsAway(HSSFSheet sheet, Date date) {
+		int total = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			if (getColumnIndex(sheet, "HST") != -1 && getColumnIndex(sheet, "AST") != -1 && dateCell != null
+					&& dateCell.getDateCellValue().before(date)) {
+				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
+				count++;
+			}
+		}
+		return count == 0 ? 0 : total / count;
 	}
 
 	private static float selectAvgAwayTeamAgainst(HSSFSheet sheet, String awayTeamName, Date date) {
@@ -408,6 +567,12 @@ public class XlSUtils {
 			f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals), sheet.getSheetName())
 					.withStatus("FINISHED").withOdds(overOdds, underOdds, maxOver, maxUnder)
 					.withHTResult(new Result(halfTimeHome, halfTimeAway)).with1X2Odds(homeOdds, drawOdds, awayOdds);
+
+			// Shots on target
+			if (getColumnIndex(sheet, "HST") != -1 && getColumnIndex(sheet, "AST") != -1)
+				f = f.withShots((int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue(),
+						(int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue());
+
 		}
 		return f;
 	}
@@ -818,29 +983,19 @@ public class XlSUtils {
 
 	public static float singleMethod(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		// for (int i = 0; i < all.size(); i++) {
-		// ExtendedFixture f = all.get(i);
-		// float finalScore = halfTimeOnly(f, sheet, 2);
-		//
-		// FinalEntry fe = new FinalEntry(f, finalScore, "Basic1",
-		// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f,
-		// 0.55f, 0.55f);
-		// if (!fe.prediction.equals(Float.NaN))
-		// finals.add(fe);
-		// }
+		for (int i = 0; i < all.size(); i++) {
+			ExtendedFixture f = all.get(i);
+			float finalScore = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 
-		finals = intersectAllClassifier(sheet, all, year, 0f, 0f, 0f, 0f, 0f);
+			FinalEntry fe = new FinalEntry(f, finalScore,
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
+			if (!fe.prediction.equals(Float.NaN))
+				finals.add(fe);
+		}
 
-		// float current = Utils.getSuccessRate(finals);
-		// System.out.println(current);
-		float bestthold = finals.get(0).threshold;
-		Settings set = new Settings(sheet.getSheetName(), 1f, 0f, 0f, bestthold, bestthold, bestthold, 0, 0);
-		set = findIntervalReal(finals, year, set);
-		finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), set);
-		set = findThreshold(sheet, finals, set);
 
-		// set = trustInterval(sheet, finals, set);
-		float currentProfit = Utils.getProfit(finals, set);
+
+		float currentProfit = Utils.getProfit(finals);
 		return currentProfit;
 	}
 

@@ -18,6 +18,8 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public float homeOdds;
 	public float drawOdds;
 	public float awayOdds;
+	public int shotsHome;
+	public int shotsAway;
 
 	public ExtendedFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		this.date = date;
@@ -55,6 +57,16 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public ExtendedFixture withMatchday(int matchday) {
 		this.matchday = matchday;
 		return this;
+	}
+
+	public ExtendedFixture withShots(int shotsHome, int shotsAway) {
+		this.shotsHome = shotsHome;
+		this.shotsAway = shotsAway;
+		return this;
+	}
+
+	public int getShotsTotal() {
+		return shotsHome + shotsAway;
 	}
 
 	public int getTotalGoals() {
