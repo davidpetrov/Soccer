@@ -45,8 +45,12 @@ public class Test {
 
 		// simplePredictions();
 
+//		 Results.eval("runforshotsafter");
 //		 Results.eval("realdouble+bestcotfull");
+		
 //		 stored24();
+		
+//		 makePredictions();
 
 //		 float total = 0f;
 //		 for (int year = 2015; year <= 2015; year++)
@@ -61,7 +65,7 @@ public class Test {
 
 		// makePredictions();
 
-		 singleMethod();
+//		 singleMethod();
 
 		// aggregateInterval();
 
@@ -258,9 +262,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			//
-			// if (!sh.getSheetName().equals("E0"))
-			// continue;
+//			 if (!sh.getSheetName().equals("SC1"))
+//			 continue;
+//			if(Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+//				continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}

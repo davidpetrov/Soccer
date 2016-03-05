@@ -8,6 +8,7 @@ public class Settings {
 	public float poisson;
 	public float weightedPoisson;
 	public float htCombo;
+	public float shots;
 	public float halfTimeOverOne;
 	public float threshold;
 	public float upperBound;
@@ -65,6 +66,11 @@ public class Settings {
 	public Settings withHT(float overOne, float htCombo) {
 		this.halfTimeOverOne = overOne;
 		this.htCombo = htCombo;
+		return this;
+	}
+
+	public Settings withShots(float shots) {
+		this.shots = shots;
 		return this;
 	}
 
