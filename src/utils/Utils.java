@@ -222,14 +222,14 @@ public class Utils {
 		if (offset >= 0) {
 			for (int i = offset + 1; i < 10; i++) {
 				for (int j = 0; j < i - offset; j++) {
-//					System.out.println(i + " : " + j);
+					// System.out.println(i + " : " + j);
 					totalHome += home[i] * away[j];
 				}
 			}
 		} else {
 			for (int i = 0; i < 10 + offset; i++) {
 				for (int j = 0; j < i - offset; j++) {
-//					System.out.println(i + " : " + j);
+					// System.out.println(i + " : " + j);
 					totalHome += home[i] * away[j];
 				}
 			}
@@ -250,12 +250,12 @@ public class Utils {
 		if (offset <= 0) {
 			for (int i = 0; i < 10 + offset; i++) {
 				totalHome += home[i] * away[i - offset];
-//				System.out.println(i + " : " + (i - offset));
+				// System.out.println(i + " : " + (i - offset));
 			}
 		} else {
 			for (int i = offset; i < 10; i++) {
 				totalHome += home[i] * away[i - offset];
-//				System.out.println(i + " : " + (i - offset));
+				// System.out.println(i + " : " + (i - offset));
 			}
 		}
 
@@ -280,7 +280,7 @@ public class Utils {
 		return totalHome;
 	}
 
-	public static float poissonAsianHome(float lambda, float mu, float line, float asianHome) {
+	public static Pair poissonAsianHome(float lambda, float mu, float line, float asianHome, float asianAway) {
 
 		// System.out.println(poissonAway(lambda, mu, 0) + poissonDraw(lambda,
 		// mu) + poissonHome(lambda, mu, 0));
@@ -289,74 +289,91 @@ public class Utils {
 		int whole = (int) (line - fraction);
 
 		if (fraction == 0f) {
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
 
-//			System.out.println("draws");
+			// System.out.println("draws");
 			float drawChance = poissonExact(lambda, mu, -whole);
-			return winChance * asianHome + drawChance - (1f - winChance - drawChance);
+
+			float home = winChance * asianHome + drawChance - (1f - winChance - drawChance);
+			float away = (1f - winChance - drawChance) * asianAway + drawChance - winChance;
+			return Pair.of(home, away);
 
 		} else if (fraction == -0.5f) {
 			line = whole - 1;
 			whole = (int) (line - fraction);
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
-			return winChance * asianHome - (1f - winChance);
+
+			float home = winChance * asianHome - (1f - winChance);
+			float away = (1f - winChance) * asianAway - winChance;
+			return Pair.of(home, away);
 
 		} else if (fraction == 0.5f) {
 			line = (float) Math.ceil(line);
 			fraction = line % 1;
 			whole = (int) (line - fraction);
 
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
-			return winChance * asianHome - (1f - winChance);
+
+			float home = winChance * asianHome - (1f - winChance);
+			float away = (1f - winChance) * asianAway - winChance;
+			return Pair.of(home, away);
 
 		} else if (fraction == -0.25f) {
 			line = whole - 1;
 			whole = (int) (line - fraction);
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
-//			System.out.println("half loses");
+			// System.out.println("half loses");
 			float drawChance = poissonExact(lambda, mu, -whole);
 
-			return winChance * asianHome - drawChance / 2 - (1f - winChance - drawChance);
+			float home = winChance * asianHome - drawChance / 2 - (1f - winChance - drawChance);
+			float away = (1f - winChance - drawChance) * asianAway + drawChance * (1 + (asianAway - 1) / 2) - winChance;
+			return Pair.of(home, away);
 
 		} else if (fraction == 0.25f) {
 			line = (float) Math.floor(line);
 			fraction = line % 1;
 			whole = (int) (line - fraction);
 
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
-//			System.out.println("half wins");
+			// System.out.println("half wins");
 			float drawChance = poissonExact(lambda, mu, -whole);
 
-			return winChance * asianHome + drawChance * (1 + (asianHome - 1) / 2) - (1f - winChance - drawChance);
+			float home = winChance * asianHome + drawChance * (1 + (asianHome - 1) / 2) - (1f - winChance - drawChance);
+			float away = (1f - winChance - drawChance) * asianAway - drawChance / 2 - winChance;
+			return Pair.of(home, away);
 
 		} else if (fraction == -0.75f) {
 			line = whole - 1;
 			fraction = line % 1;
 			whole = (int) (line - fraction);
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
-//			System.out.println("half wins");
+			// System.out.println("half wins");
 			float drawChance = poissonExact(lambda, mu, -whole);
 
-			return winChance * asianHome + drawChance * (1 + (asianHome - 1) / 2) - (1f - winChance - drawChance);
+			float home = winChance * asianHome + drawChance * (1 + (asianHome - 1) / 2) - (1f - winChance - drawChance);
+			float away = (1f - winChance - drawChance) * asianAway - drawChance / 2 - winChance;
+			return Pair.of(home, away);
 
 		} else if (fraction == 0.75f) {
 			line = (float) Math.ceil(line);
 			fraction = line % 1;
 			whole = (int) (line - fraction);
-//			System.out.println("wins");
+			// System.out.println("wins");
 			float winChance = poissonHome(lambda, mu, -whole);
-//			System.out.println("half loss");
+			// System.out.println("half loss");
 			float drawChance = poissonExact(lambda, mu, -whole);
 
-			return winChance * asianHome - drawChance / 2 - (1f - winChance - drawChance);
+			float home = winChance * asianHome - drawChance / 2 - (1f - winChance - drawChance);
+			float away = (1f - winChance - drawChance) * asianAway + (1 + (asianAway - 1) / 2) * drawChance - winChance;
+			return Pair.of(home, away);
 		} else {
-			return 0f;
+			return Pair.of(-1, -1);
 		}
 
 	}

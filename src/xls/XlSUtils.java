@@ -199,7 +199,7 @@ public class XlSUtils {
 		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
 		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
 
-		return Utils.poissonDraw(lambda, mu,0);
+		return Utils.poissonDraw(lambda, mu, 0);
 	}
 
 	public static float shots(ExtendedFixture f, HSSFSheet sheet) {
@@ -625,14 +625,16 @@ public class XlSUtils {
 					.withHTResult(new Result(halfTimeHome, halfTimeAway)).with1X2Odds(homeOdds, drawOdds, awayOdds);
 
 			// Shots on target
-			if (row.getCell(getColumnIndex(sheet, "HST")) != null && row.getCell(getColumnIndex(sheet, "AST")) != null)
+			if (row.getCell(getColumnIndex(sheet, "HST")) != null && row.getCell(getColumnIndex(sheet, "AST")) != null
+					&& row.getCell(getColumnIndex(sheet, "HST")).getCellType() == 0)
 				f = f.withShots((int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue(),
 						(int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue());
 
 			// Asian handicap
 			if (row.getCell(getColumnIndex(sheet, "BbAHh")) != null
 					&& row.getCell(getColumnIndex(sheet, "BbMxAHH")) != null
-					&& row.getCell(getColumnIndex(sheet, "BbMxAHA")) != null) {
+					&& row.getCell(getColumnIndex(sheet, "BbMxAHA")) != null
+					&& row.getCell(getColumnIndex(sheet, "BbAHh")).getCellType() == 0) {
 				f = f.withAsian((float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue(),
 						(float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue(),
 						(float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue());

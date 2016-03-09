@@ -40,7 +40,7 @@ public class AsianEntry {
 				return "L";
 			}
 		} else {
-			if (diff > 0.5f)
+			if (diff >= 0.5f)
 				return "L";
 			else if (diff == 0.25f) {
 				return "HL";

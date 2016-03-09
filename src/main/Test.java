@@ -52,7 +52,7 @@ public class Test {
 //		 makePredictions();
 		
 		 float total = 0f;
-		 for (int year = 2010; year <= 2015; year++)
+		 for (int year = 2005; year <= 2015; year++)
 		 total += asian(year);
 		 System.out.println("Avg profit is " + (total / 11));
 		
@@ -98,7 +98,7 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			if (!sh.getSheetName().equals("E0"))
+//			if (!sh.getSheetName().equals("G1"))
 //				continue;
 			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
