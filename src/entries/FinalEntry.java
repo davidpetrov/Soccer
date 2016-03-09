@@ -1,4 +1,7 @@
-package main;
+package entries;
+
+import main.ExtendedFixture;
+import main.Result;
 
 public class FinalEntry implements Comparable<FinalEntry> {
 	public ExtendedFixture fixture;

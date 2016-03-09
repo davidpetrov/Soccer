@@ -12,6 +12,8 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import entries.FinalEntry;
 import settings.Settings;
 import utils.Utils;
 import xls.XlSUtils;

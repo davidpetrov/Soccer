@@ -34,8 +34,8 @@ import org.apache.poi.util.StringUtil;
 import org.sqlite.util.StringUtils;
 
 import constants.MinMaxOdds;
+import entries.FinalEntry;
 import main.ExtendedFixture;
-import main.FinalEntry;
 import main.Result;
 import main.SQLiteJDBC;
 import results.Results;
@@ -199,7 +199,7 @@ public class XlSUtils {
 		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
 		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
 
-		return Utils.poissonDraw(lambda, mu);
+		return Utils.poissonDraw(lambda, mu,0);
 	}
 
 	public static float shots(ExtendedFixture f, HSSFSheet sheet) {
@@ -417,7 +417,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	private static float selectAvgAwayTeamAgainst(HSSFSheet sheet, String awayTeamName, Date date) {
+	static float selectAvgAwayTeamAgainst(HSSFSheet sheet, String awayTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -437,7 +437,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	private static float selectAvgAwayTeamFor(HSSFSheet sheet, String awayTeamName, Date date) {
+	static float selectAvgAwayTeamFor(HSSFSheet sheet, String awayTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -457,7 +457,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	private static float selectAvgHomeTeamAgainst(HSSFSheet sheet, String homeTeamName, Date date) {
+	static float selectAvgHomeTeamAgainst(HSSFSheet sheet, String homeTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -477,7 +477,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	private static float selectAvgHomeTeamFor(HSSFSheet sheet, String homeTeamName, Date date) {
+	static float selectAvgHomeTeamFor(HSSFSheet sheet, String homeTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -497,7 +497,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	private static float selectAvgLeagueAway(HSSFSheet sheet, Date date) {
+	static float selectAvgLeagueAway(HSSFSheet sheet, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -516,7 +516,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	private static float selectAvgLeagueHome(HSSFSheet sheet, Date date) {
+	static float selectAvgLeagueHome(HSSFSheet sheet, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -629,6 +629,14 @@ public class XlSUtils {
 				f = f.withShots((int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue(),
 						(int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue());
 
+			// Asian handicap
+			if (row.getCell(getColumnIndex(sheet, "BbAHh")) != null
+					&& row.getCell(getColumnIndex(sheet, "BbMxAHH")) != null
+					&& row.getCell(getColumnIndex(sheet, "BbMxAHA")) != null) {
+				f = f.withAsian((float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue(),
+						(float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue(),
+						(float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue());
+			}
 		}
 		return f;
 	}
@@ -1829,6 +1837,11 @@ public class XlSUtils {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+
+			Settings odds = bestOdds(sheet.getSheetName(), year, 3, "realdouble15");
+			// data = Utils.filterByOdds(data, Math.min(temp.minUnder,
+			// temp.minOver), Math.max(temp.maxUnder, temp.maxOver))
+
 			Settings temp = runForLeagueWithOdds(sheet, data, year, basics, poissons, weighted, ht1, ht2, 0.55f)
 					.withValue(0.9f);
 
@@ -1879,10 +1892,11 @@ public class XlSUtils {
 				}
 				finals = shotBased;
 			}
-			
+
 			played += finals.size();
 
 			float trprofit = Utils.getProfit(finals, temp);
+			// trprofit = Utils.getScaledProfit(finals, 0f);
 
 			profit += trprofit;
 
@@ -2355,7 +2369,7 @@ public class XlSUtils {
 
 	}
 
-	private static int addMatchDay(HSSFSheet sheet, ArrayList<ExtendedFixture> all) {
+	static int addMatchDay(HSSFSheet sheet, ArrayList<ExtendedFixture> all) {
 		int max = -1;
 		for (ExtendedFixture f : all) {
 			if (f.matchday == -1 || f.matchday == 0) {

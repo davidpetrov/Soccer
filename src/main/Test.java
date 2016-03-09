@@ -1,19 +1,14 @@
 package main;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,12 +22,15 @@ import org.json.JSONException;
 import algorithms.Algorithm;
 import algorithms.Basic1;
 import constants.MinMaxOdds;
+import entries.Entry;
+import entries.FinalEntry;
 import results.Results;
 import runner.Runner;
 import runner.RunnerAggregateInterval;
+import runner.RunnerAsian;
+import runner.RunnerFinals;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
-import runner.RunnerFinals;
 import settings.Settings;
 import utils.Api;
 import utils.Utils;
@@ -45,13 +43,19 @@ public class Test {
 
 		// simplePredictions();
 
-//		 Results.eval("runforshotsafter");
-//		 Results.eval("realdouble+bestcotfull");
-		
-//		 stored24();
-		
-//		 makePredictions();
+		// Results.eval("runforshotsafter");
+		// Results.eval("realdouble+bestcotfull");
+		// Results.eval("odds");
 
+		// stored24();
+
+//		 makePredictions();
+		
+		 float total = 0f;
+		 for (int year = 2010; year <= 2015; year++)
+		 total += asian(year);
+		 System.out.println("Avg profit is " + (total / 11));
+		
 //		 float total = 0f;
 //		 for (int year = 2015; year <= 2015; year++)
 //		 total += simulation(year);
@@ -65,7 +69,7 @@ public class Test {
 
 		// makePredictions();
 
-//		 singleMethod();
+		// singleMethod();
 
 		// aggregateInterval();
 
@@ -81,6 +85,39 @@ public class Test {
 
 	}
 
+	public static float asian(int year) throws IOException, InterruptedException, ExecutionException {
+		String base = new File("").getAbsolutePath();
+
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		float totalProfit = 0.0f;
+
+		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+//			if (!sh.getSheetName().equals("E0"))
+//				continue;
+			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
+
+			threadArray.add(pool.submit(new RunnerAsian(sh, year)));
+		}
+
+		for (Future<Float> fd : threadArray) {
+			totalProfit += fd.get();
+			// System.out.println("Total profit: " + String.format("%.2f",
+			// totalProfit));
+		}
+		System.out.println("Total profit for season " + year + " is " + String.format("%.2f", totalProfit));
+		workbook.close();
+		file.close();
+		pool.shutdown();
+		return totalProfit;
+	}
+
 	public static final void singleMethod() throws IOException {
 
 		float totalTotal = 0f;
@@ -93,7 +130,7 @@ public class Test {
 			Iterator<Sheet> sheet = workbook.sheetIterator();
 			while (sheet.hasNext()) {
 				HSSFSheet sh = (HSSFSheet) sheet.next();
-				if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+				if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 					continue;
 				float profit = XlSUtils.singleMethod(sh, XlSUtils.selectAll(sh), year);
 				// System.out.println(sh.getSheetName() + " " + year + " " +
@@ -116,28 +153,32 @@ public class Test {
 
 		float total = 0f;
 		int sizeTotal = 0;
+		float totalStake = 0f;
 
 		ArrayList<FinalEntry> all = new ArrayList<>();
 
 		for (int i = 2005 + period; i <= 2014; i++) {
 			float curr = 0f;
 			int size = 0;
+			float staked = 0f;
 			for (String league : Results.LEAGUES) {
 				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
-					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble24");
+					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble15");
 					// System.out.println("Profit for: " + league + " last: " +
 					// i + " is: " + Results.format(pr));
 
-					curr += Utils.getProfit(list);
+					curr += Utils.getScaledProfit(list, 0f)[0];
 					size += list.size();
+					staked += Utils.getScaledProfit(list, 0f)[1];
 					all.addAll(list);
 				}
 			}
 
 			System.out.println(
-					"For " + i + ": " + curr + "  yield: " + Results.format((curr / size) * 100) + " from: " + size);
+					"For " + i + ": " + curr + "  yield: " + Results.format((curr / staked) * 100) + " from: " + size);
 			total += curr;
 			sizeTotal += size;
+			totalStake += staked;
 
 			if (curr > bestProfit) {
 				bestProfit = curr;
@@ -147,8 +188,8 @@ public class Test {
 		}
 
 		System.out.println(
-				"Total avg: " + total / (10 - period) + " avg yield: " + Results.format(100 * (total / sizeTotal)));
-		Utils.drawAnalysis(all);
+				"Total avg: " + total / (10 - period) + " avg yield: " + Results.format(100 * (total / totalStake)));
+				// Utils.drawAnalysis(all);
 
 		// System.out.println("Best period: " + bestPeriod + " with profit: " +
 		// bestProfit);
@@ -262,10 +303,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			 if (!sh.getSheetName().equals("SC1"))
-//			 continue;
-//			if(Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-//				continue;
+			// if (!sh.getSheetName().equals("SC1"))
+			// continue;
+			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}

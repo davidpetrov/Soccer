@@ -22,8 +22,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import entries.FinalEntry;
 import main.ExtendedFixture;
-import main.FinalEntry;
 import main.Result;
 import results.Results;
 import settings.Settings;
@@ -210,7 +210,158 @@ public class Utils {
 		return 1.0f - totalUnder;
 	}
 
-	public static float poissonDraw(float lambda, float mu) {
+	public static float poissonHome(float lambda, float mu, int offset) {
+		float home[] = new float[10];
+		float away[] = new float[10];
+		for (int i = 0; i < 10; i++) {
+			home[i] = poisson(lambda, i);
+			away[i] = poisson(mu, i);
+		}
+
+		float totalHome = 0f;
+		if (offset >= 0) {
+			for (int i = offset + 1; i < 10; i++) {
+				for (int j = 0; j < i - offset; j++) {
+//					System.out.println(i + " : " + j);
+					totalHome += home[i] * away[j];
+				}
+			}
+		} else {
+			for (int i = 0; i < 10 + offset; i++) {
+				for (int j = 0; j < i - offset; j++) {
+//					System.out.println(i + " : " + j);
+					totalHome += home[i] * away[j];
+				}
+			}
+		}
+
+		return totalHome;
+	}
+
+	public static float poissonExact(float lambda, float mu, int offset) {
+		float home[] = new float[10];
+		float away[] = new float[10];
+		for (int i = 0; i < 10; i++) {
+			home[i] = poisson(lambda, i);
+			away[i] = poisson(mu, i);
+		}
+
+		float totalHome = 0f;
+		if (offset <= 0) {
+			for (int i = 0; i < 10 + offset; i++) {
+				totalHome += home[i] * away[i - offset];
+//				System.out.println(i + " : " + (i - offset));
+			}
+		} else {
+			for (int i = offset; i < 10; i++) {
+				totalHome += home[i] * away[i - offset];
+//				System.out.println(i + " : " + (i - offset));
+			}
+		}
+
+		return totalHome;
+	}
+
+	public static float poissonAway(float lambda, float mu, int offset) {
+		float home[] = new float[10];
+		float away[] = new float[10];
+		for (int i = 0; i < 10; i++) {
+			home[i] = poisson(lambda, i);
+			away[i] = poisson(mu, i);
+		}
+
+		float totalHome = 0f;
+		for (int i = offset + 1; i < 10; i++) {
+			for (int j = 0; j < i - offset; j++) {
+				totalHome += home[j] * away[i];
+			}
+		}
+
+		return totalHome;
+	}
+
+	public static float poissonAsianHome(float lambda, float mu, float line, float asianHome) {
+
+		// System.out.println(poissonAway(lambda, mu, 0) + poissonDraw(lambda,
+		// mu) + poissonHome(lambda, mu, 0));
+
+		float fraction = line % 1;
+		int whole = (int) (line - fraction);
+
+		if (fraction == 0f) {
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+
+//			System.out.println("draws");
+			float drawChance = poissonExact(lambda, mu, -whole);
+			return winChance * asianHome + drawChance - (1f - winChance - drawChance);
+
+		} else if (fraction == -0.5f) {
+			line = whole - 1;
+			whole = (int) (line - fraction);
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+			return winChance * asianHome - (1f - winChance);
+
+		} else if (fraction == 0.5f) {
+			line = (float) Math.ceil(line);
+			fraction = line % 1;
+			whole = (int) (line - fraction);
+
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+			return winChance * asianHome - (1f - winChance);
+
+		} else if (fraction == -0.25f) {
+			line = whole - 1;
+			whole = (int) (line - fraction);
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+//			System.out.println("half loses");
+			float drawChance = poissonExact(lambda, mu, -whole);
+
+			return winChance * asianHome - drawChance / 2 - (1f - winChance - drawChance);
+
+		} else if (fraction == 0.25f) {
+			line = (float) Math.floor(line);
+			fraction = line % 1;
+			whole = (int) (line - fraction);
+
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+//			System.out.println("half wins");
+			float drawChance = poissonExact(lambda, mu, -whole);
+
+			return winChance * asianHome + drawChance * (1 + (asianHome - 1) / 2) - (1f - winChance - drawChance);
+
+		} else if (fraction == -0.75f) {
+			line = whole - 1;
+			fraction = line % 1;
+			whole = (int) (line - fraction);
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+//			System.out.println("half wins");
+			float drawChance = poissonExact(lambda, mu, -whole);
+
+			return winChance * asianHome + drawChance * (1 + (asianHome - 1) / 2) - (1f - winChance - drawChance);
+
+		} else if (fraction == 0.75f) {
+			line = (float) Math.ceil(line);
+			fraction = line % 1;
+			whole = (int) (line - fraction);
+//			System.out.println("wins");
+			float winChance = poissonHome(lambda, mu, -whole);
+//			System.out.println("half loss");
+			float drawChance = poissonExact(lambda, mu, -whole);
+
+			return winChance * asianHome - drawChance / 2 - (1f - winChance - drawChance);
+		} else {
+			return 0f;
+		}
+
+	}
+
+	public static float poissonDraw(float lambda, float mu, int offset) {
 		float home[] = new float[5];
 		float away[] = new float[5];
 		for (int i = 0; i < 5; i++) {
@@ -218,7 +369,8 @@ public class Utils {
 			away[i] = poisson(mu, i);
 		}
 		float totalUnder = 0;
-		totalUnder += home[0] * away[0] + home[1] * away[1] + home[2] * away[2] + home[3] * away[3];
+		totalUnder += home[0] * away[0 + offset] + home[1] * away[1 + offset] + home[2] * away[2 + offset]
+				+ home[3] * away[3 + offset] + home[4] * away[4 + offset];
 		return totalUnder;
 	}
 
@@ -328,6 +480,30 @@ public class Utils {
 			}
 		}
 		return profit - size;
+	}
+
+	public static float[] getScaledProfit(ArrayList<FinalEntry> finals, float f) {
+		float profit = 0.0f;
+		float staked = 0f;
+		for (FinalEntry fe : finals) {
+			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
+			float betsize = 1;
+			float value = certainty * gain;
+			if (value > fe.value) {
+				staked += betsize;
+				if (fe.success()) {
+					if (gain != -1.0d) {
+						profit += gain * betsize;
+					}
+				}
+			}
+		}
+		float[] result = new float[2];
+		result[0] = profit - staked;
+		result[1] = staked;
+		return result;
 	}
 
 	public static ArrayList<ExtendedFixture> onlyFixtures(ArrayList<FinalEntry> finals) {
@@ -951,8 +1127,6 @@ public class Utils {
 		int drawOver = 0;
 		int under = 0;
 		int over = 0;
-		
-		
 
 		float profitOver = 0f;
 		float profitUnder = 0f;
@@ -965,7 +1139,7 @@ public class Utils {
 					profitUnder += i.fixture.drawOdds;
 				}
 
-			} else if(i.prediction >= i.upper){
+			} else if (i.prediction >= i.upper) {
 				over++;
 				if (i.fixture.result.goalsHomeTeam == i.fixture.result.goalsAwayTeam) {
 					drawOver++;

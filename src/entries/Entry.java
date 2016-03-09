@@ -1,7 +1,9 @@
-package main;
+package entries;
+
+import main.ExtendedFixture;
 
 public class Entry implements Comparable<Entry> {
-	ExtendedFixture fixture;
+	public ExtendedFixture fixture;
 	Float result;
 	String alg;
 

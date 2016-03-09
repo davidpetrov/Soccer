@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 
-import main.FinalEntry;
+import entries.FinalEntry;
 import xls.XlSUtils;
 
 public class RunnerFinals implements Callable<ArrayList<FinalEntry>> {
