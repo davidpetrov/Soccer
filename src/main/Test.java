@@ -22,18 +22,21 @@ import org.json.JSONException;
 import algorithms.Algorithm;
 import algorithms.Basic1;
 import constants.MinMaxOdds;
+import entries.AsianEntry;
 import entries.Entry;
 import entries.FinalEntry;
 import results.Results;
 import runner.Runner;
 import runner.RunnerAggregateInterval;
 import runner.RunnerAsian;
+import runner.RunnerAsianFinals;
 import runner.RunnerFinals;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
 import settings.Settings;
 import utils.Api;
 import utils.Utils;
+import xls.AsianUtils;
 import xls.XlSUtils;
 
 public class Test {
@@ -45,21 +48,21 @@ public class Test {
 
 		// Results.eval("runforshotsafter");
 		// Results.eval("realdouble+bestcotfull");
-		// Results.eval("odds");
+		 Results.eval("asian");
 
 		// stored24();
 
-//		 makePredictions();
-		
-		 float total = 0f;
-		 for (int year = 2005; year <= 2015; year++)
-		 total += asian(year);
-		 System.out.println("Avg profit is " + (total / 11));
-		
-//		 float total = 0f;
-//		 for (int year = 2015; year <= 2015; year++)
-//		 total += simulation(year);
-//		 System.out.println("Avg profit is " + (total / 11));
+		// makePredictions();
+
+//		float total = 0f;
+//		for (int year = 2005; year <= 2015; year++)
+//			total += asian(year);
+//		System.out.println("Avg profit is " + (total / 11));
+
+		// float total = 0f;
+		// for (int year = 2015; year <= 2015; year++)
+		// total += simulation(year);
+		// System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -98,10 +101,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			if (!sh.getSheetName().equals("G1"))
+//			if (!sh.getSheetName().equals("E0"))
 //				continue;
-			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-			// continue;
+//			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+//				continue;
 
 			threadArray.add(pool.submit(new RunnerAsian(sh, year)));
 		}
@@ -112,6 +115,45 @@ public class Test {
 			// totalProfit));
 		}
 		System.out.println("Total profit for season " + year + " is " + String.format("%.2f", totalProfit));
+		workbook.close();
+		file.close();
+		pool.shutdown();
+		return totalProfit;
+	}
+
+	public static float asianFinals(int year) throws IOException, InterruptedException, ExecutionException {
+		String base = new File("").getAbsolutePath();
+
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		ArrayList<AsianEntry> all = new ArrayList<>();
+		float totalProfit = 0.0f;
+
+		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ArrayList<Future<ArrayList<AsianEntry>>> threadArray = new ArrayList<Future<ArrayList<AsianEntry>>>();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+			// if (!sh.getSheetName().equals("G1"))
+			// continue;
+			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
+
+			threadArray.add(pool.submit(new RunnerAsianFinals(sh, year)));
+		}
+
+		for (Future<ArrayList<AsianEntry>> fd : threadArray) {
+			// totalProfit += fd.get();
+			all.addAll(fd.get());
+			// System.out.println("Total profit: " + String.format("%.2f",
+			// totalProfit));
+		}
+
+		AsianUtils.analysis(all);
+
+		// System.out.println("Total profit for season " + year + " is " +
+		// String.format("%.2f", totalProfit));
 		workbook.close();
 		file.close();
 		pool.shutdown();
