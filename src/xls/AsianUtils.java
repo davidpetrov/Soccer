@@ -10,8 +10,10 @@ import entries.AsianEntry;
 import entries.FinalEntry;
 import main.ExtendedFixture;
 import main.Result;
+import main.SQLiteJDBC;
 import settings.Settings;
 import settings.SettingsAsian;
+import utils.Lines;
 import utils.Pair;
 import utils.Utils;
 
@@ -32,6 +34,21 @@ public class AsianUtils {
 		return Utils.poissonAsianHome(lambda, mu, f.line, f.asianHome, f.asianAway);
 	}
 
+	public static Pair poissonAsianLine(ExtendedFixture f, HSSFSheet sheet, float line, float home, float away) {
+
+		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
+		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
+		float homeAvgFor = XlSUtils.selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
+		float homeAvgAgainst = XlSUtils.selectAvgHomeTeamAgainst(sheet, f.homeTeam, f.date);
+		float awayAvgFor = XlSUtils.selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
+		float awayAvgAgainst = XlSUtils.selectAvgAwayTeamAgainst(sheet, f.awayTeam, f.date);
+
+		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
+		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
+
+		return Utils.poissonAsianHome(lambda, mu, line, home, away);
+	}
+
 	public static Pair basic(ExtendedFixture f, HSSFSheet sheet) {
 		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 50, f.date);
 		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 50, f.date);
@@ -49,7 +66,7 @@ public class AsianUtils {
 		ArrayList<String> results = new ArrayList<>();
 		for (ExtendedFixture i : lastHomeTeam) {
 			boolean prediction = i.homeTeam.equals(team);
-			AsianEntry ae = new AsianEntry(i, prediction, line, 0f);
+			AsianEntry ae = new AsianEntry(i, prediction, line, f.asianHome, f.asianAway, 0f);
 			results.add(ae.success());
 		}
 
@@ -90,7 +107,7 @@ public class AsianUtils {
 		ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay; i++) {
+		for (int i = 30; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 
@@ -117,24 +134,87 @@ public class AsianUtils {
 		return profit;
 	}
 
+	public static float realisticAllLines(HSSFSheet sheet, int year) throws IOException, InterruptedException {
+		float profit = 0.0f;
+		int played = 0;
+		ArrayList<AsianEntry> analysis = new ArrayList<>();
+		ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
+
+		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
+		for (int i = 30; i < maxMatchDay; i++) {
+			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+
+			ArrayList<AsianEntry> finals = runAllLines(sheet, data);
+
+			float bestExp = bestExpectancy(finals);
+
+			ArrayList<AsianEntry> bets = runAllLines(sheet, current);
+
+			bets = restrict(bets, bestExp);
+//			System.out.println(bets);
+
+			profit += getProfit(bets);
+			// System.out.println("Curr: "+ profit);
+			played += bets.size();
+			analysis.addAll(bets);
+
+		}
+
+		float yield = (profit / played) * 100f;
+		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
+				+ " yield is: " + String.format("%.2f%%", yield));
+		// analysis(analysis);
+		return profit;
+	}
+
+	private static ArrayList<AsianEntry> runAllLines(HSSFSheet sheet, ArrayList<ExtendedFixture> data) {
+		ArrayList<AsianEntry> result = new ArrayList<>();
+		for (ExtendedFixture f : data) {
+			// TO DO REMOVE this constraint
+			if (f.asianHome < 1.76 || f.asianHome > 2.17)
+				continue;
+			AsianEntry best = null;
+			float bestExp = Float.NEGATIVE_INFINITY;
+
+			Lines l = SQLiteJDBC.closestLine(f);
+			for (int i = 0; i < 5; i++) {
+				float line = l.getLine(i, f.line);
+				float home = l.getHome(i);
+				float away = l.getAway(i);
+				AsianEntry entry = better(f, poissonAsianLine(f, sheet, line, home, away), line, home, away);
+				if (entry.expectancy > bestExp) {
+					bestExp = entry.expectancy;
+					best = entry;
+				}
+			}
+
+			result.add(best);
+
+		}
+
+		return result;
+	}
+
 	private static ArrayList<AsianEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> data,
 			SettingsAsian temp) {
 		ArrayList<AsianEntry> result = new ArrayList<>();
 		for (ExtendedFixture f : data) {
-			AsianEntry basic = better(f, basic(f, sheet));
-			AsianEntry poisson = better(f, poissonAsianHome(f, sheet));
+			AsianEntry basic = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway);
+			AsianEntry poisson = better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway);
 			if (basic.prediction == poisson.prediction) {
-				float finalScore = temp.basic * better(f, basic(f, sheet)).expectancy
-						+ temp.poisson * better(f, poissonAsianHome(f, sheet)).expectancy;
-				result.add(new AsianEntry(f, basic.prediction, f.line, finalScore));
+				float finalScore = temp.basic * better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway).expectancy
+						+ temp.poisson
+								* better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway).expectancy;
+				result.add(new AsianEntry(f, basic.prediction, f.line, f.asianHome, f.asianAway, finalScore));
 			}
 		}
 		return result;
 	}
 
-	private static AsianEntry better(ExtendedFixture f, Pair pair) {
-		AsianEntry home = new AsianEntry(f, true, f.line, pair.home);
-		AsianEntry away = new AsianEntry(f, false, f.line, pair.away);
+	private static AsianEntry better(ExtendedFixture f, Pair pair, float line, float home2, float away2) {
+		AsianEntry home = new AsianEntry(f, true, line, home2, away2, pair.home);
+		AsianEntry away = new AsianEntry(f, false, line, home2, away2, pair.away);
 		if (home.expectancy >= away.expectancy)
 			return home;
 		else
@@ -152,11 +232,11 @@ public class AsianUtils {
 
 		for (int i = 0; i < all.size(); i++) {
 			ExtendedFixture f = all.get(i);
-			AsianEntry basic = better(f, basic(f, sheet));
-			AsianEntry poisson = better(f, poissonAsianHome(f, sheet));
+			AsianEntry basic = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway);
+			AsianEntry poisson = better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway);
 			if (basic.prediction == poisson.prediction) {
-				basics[i] = better(f, basic(f, sheet)).expectancy;
-				poissons[i] = better(f, poissonAsianHome(f, sheet)).expectancy;
+				basics[i] = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway).expectancy;
+				poissons[i] = better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway).expectancy;
 				predictions[i] = basic.prediction;
 			} else {
 				basics[i] = -1f;
@@ -171,7 +251,7 @@ public class AsianUtils {
 				ExtendedFixture f = all.get(i);
 				if (basics[i] != -1f) {
 					float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
-					AsianEntry ae = new AsianEntry(f, predictions[i], f.line, finalScore);
+					AsianEntry ae = new AsianEntry(f, predictions[i], f.line, f.asianHome, f.asianAway, finalScore);
 				}
 
 			}
@@ -212,7 +292,8 @@ public class AsianUtils {
 				homeWins++;
 				if (i.success().equals("W"))
 					homeSuccess++;
-				AsianEntry notLoss = new AsianEntry(i.fixture, i.prediction, 0f, 0f);
+				AsianEntry notLoss = new AsianEntry(i.fixture, i.prediction, 0f, i.fixture.asianHome,
+						i.fixture.asianAway, 0f);
 				if (notLoss.success().equals("W") || notLoss.success().equals("D"))
 					notLosses++;
 			}
@@ -290,8 +371,8 @@ public class AsianUtils {
 			ArrayList<AsianEntry> aways = new ArrayList<>();
 			for (ExtendedFixture f : data) {
 				Pair pair = poissonAsianHome(f, sheet);
-				AsianEntry home = new AsianEntry(f, true, f.line, pair.home);
-				AsianEntry away = new AsianEntry(f, false, f.line, pair.away);
+				AsianEntry home = new AsianEntry(f, true, f.line, f.asianHome, f.asianAway, pair.home);
+				AsianEntry away = new AsianEntry(f, false, f.line, f.asianHome, f.asianAway, pair.away);
 				if (home.expectancy >= away.expectancy) {
 					finals.add(home);
 					homes.add(home);
@@ -307,8 +388,8 @@ public class AsianUtils {
 			for (ExtendedFixture f : current) {
 
 				Pair pair = poissonAsianHome(f, sheet);
-				AsianEntry home = new AsianEntry(f, true, f.line, pair.home);
-				AsianEntry away = new AsianEntry(f, false, f.line, pair.away);
+				AsianEntry home = new AsianEntry(f, true, f.line, f.asianHome, f.asianAway, pair.home);
+				AsianEntry away = new AsianEntry(f, false, f.line, f.asianHome, f.asianAway, pair.away);
 				if (home.expectancy >= away.expectancy)
 					bets.add(home);
 				else

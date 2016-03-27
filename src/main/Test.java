@@ -48,21 +48,21 @@ public class Test {
 
 		// Results.eval("runforshotsafter");
 		// Results.eval("realdouble+bestcotfull");
-		 Results.eval("asian");
+		// Results.eval("overs");
 
 		// stored24();
 
 		// makePredictions();
 
-//		float total = 0f;
-//		for (int year = 2005; year <= 2015; year++)
-//			total += asian(year);
-//		System.out.println("Avg profit is " + (total / 11));
-
 		// float total = 0f;
-		// for (int year = 2015; year <= 2015; year++)
-		// total += simulation(year);
+		// for (int year = 2005; year <= 2015; year++)
+		// total += asian(year);
 		// System.out.println("Avg profit is " + (total / 11));
+
+		float total = 0f;
+		for (int year = 2014; year <= 2015; year++)
+			total += simulation(year);
+		System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -101,10 +101,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			if (!sh.getSheetName().equals("E0"))
-//				continue;
-//			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-//				continue;
+			// if (!sh.getSheetName().equals("E0"))
+			// continue;
+			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
 
 			threadArray.add(pool.submit(new RunnerAsian(sh, year)));
 		}
@@ -345,7 +345,7 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("SC1"))
+			// if (!sh.getSheetName().equals("D1"))
 			// continue;
 			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
@@ -539,7 +539,7 @@ public class Test {
 				ArrayList<Settings> setts = optimals.get(i.getSheetName());
 				Settings set = Utils.getSettings(setts, year - 1);
 				ArrayList<FinalEntry> fes = XlSUtils.runWithSettingsList(i, XlSUtils.selectAllAll(i), set);
-				float profit = Utils.getProfit(fes, set);
+				float profit = Utils.getProfit(fes, set, "all");
 				total += profit;
 				// System.out.println("Profit with best sets for " +
 				// i.getSheetName() + " : " + profit);

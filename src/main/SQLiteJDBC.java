@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 import entries.FinalEntry;
 import settings.Settings;
+import utils.Lines;
 import utils.Utils;
 import xls.XlSUtils;
 
@@ -795,8 +796,8 @@ public class SQLiteJDBC {
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
-			ResultSet rs = stmt.executeQuery("select * from finals" +  " where year=" + year + " AND competition="
-					+ addQuotes(competition) +" AND description=" +addQuotes(description)+ ";");
+			ResultSet rs = stmt.executeQuery("select * from finals" + " where year=" + year + " AND competition="
+					+ addQuotes(competition) + " AND description=" + addQuotes(description) + ";");
 			while (rs.next()) {
 				String date = rs.getString("date");
 				int matchday = rs.getInt("matchday");
@@ -811,12 +812,13 @@ public class SQLiteJDBC {
 				float lower = rs.getFloat("lower");
 				float upper = rs.getFloat("upper");
 				float value = rs.getFloat("value");
-				
+
 				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competition).withMatchday(matchday).withOdds(0f, 0f ,over, under);
+						new Result(homeGoals, awayGoals), competition).withMatchday(matchday).withOdds(0f, 0f, over,
+								under);
 				FinalEntry f = new FinalEntry(ef, score, new Result(homeGoals, awayGoals), thold, lower, upper);
 				f.value = value;
-				
+
 				result.add(f);
 			}
 			rs.close();
@@ -828,6 +830,49 @@ public class SQLiteJDBC {
 		}
 
 		return result;
+	}
+
+	public static Lines closestLine(ExtendedFixture f) {
+		ArrayList<Lines> result = new ArrayList<>();
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from line" + " where home=" + f.asianHome + ";");
+
+			while (rs.next()) {
+				String type = rs.getString("type");
+				float line = rs.getFloat("line");
+				float home = rs.getFloat("home");
+				float away = rs.getFloat("away");
+				float line1home = rs.getFloat("line1home");
+				float line1away = rs.getFloat("line1away");
+				float line2home = rs.getFloat("line2home");
+				float line2away = rs.getFloat("line2away");
+				float line3home = rs.getFloat("line3home");
+				float line3away = rs.getFloat("line3away");
+				float line4home = rs.getFloat("line4home");
+				float line4away = rs.getFloat("line4away");
+
+				Lines l = new Lines(type, line, home, away, line1home, line1away, line2home, line2away, line3home,
+						line3away, line4home, line4away);
+				result.add(l);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		if(result.isEmpty())
+			System.out.println("NO LINE FOUND for "+f.asianHome);
+		return result.get(0);
 	}
 
 }

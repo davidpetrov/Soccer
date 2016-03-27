@@ -6,21 +6,26 @@ public class AsianEntry {
 	public ExtendedFixture fixture;
 	public boolean prediction;
 	public float line;
+	public float home;
+	public float away;
 	public float expectancy;
 
-	public AsianEntry(ExtendedFixture fixture, boolean prediction, float line, float expectancy) {
+	public AsianEntry(ExtendedFixture fixture, boolean prediction, float line, float home, float away,
+			float expectancy) {
 		this.fixture = fixture;
 		this.prediction = prediction;
 		this.line = line;
 		this.expectancy = expectancy;
+		this.home = home;
+		this.away = away;
 	}
 
 	@Override
 	public String toString() {
 		String out = prediction ? "home" : "away";
-		float coeff = prediction ? fixture.asianHome : fixture.asianAway;
+		float coeff = prediction ? home : away;
 		return fixture.date + " " + fixture.homeTeam + " : " + fixture.awayTeam + " " + " " + out + " " + line + " "
-				+ coeff + "\n";
+				+ coeff + " " + success() + "\n";
 	}
 
 	public String success() {
@@ -55,7 +60,7 @@ public class AsianEntry {
 	}
 
 	public float getProfit() {
-		float coeff = prediction ? fixture.asianHome : fixture.asianAway;
+		float coeff = prediction ? home : away;
 		String success = success();
 		if (success.equals("W")) {
 			return coeff - 1;

@@ -457,7 +457,7 @@ public class Utils {
 		return filtered;
 	}
 
-	public static float getProfit(ArrayList<FinalEntry> finals, Settings set) {
+	public static float getProfit(ArrayList<FinalEntry> finals, Settings set, String type) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
@@ -469,10 +469,30 @@ public class Utils {
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > set.value) {
-				size++;
-				if (fe.success()) {
-					if (gain != -1.0d) {
-						profit += gain;
+				if (type.equals("unders")) {
+					if (fe.prediction <= fe.threshold) {
+						size++;
+						if (fe.success()) {
+							if (gain != -1.0d) {
+								profit += gain;
+							}
+						}
+					}
+				} else if (type.equals("overs")) {
+					if (fe.prediction > fe.threshold) {
+						size++;
+						if (fe.success()) {
+							if (gain != -1.0d) {
+								profit += gain;
+							}
+						}
+					}
+				} else {
+					size++;
+					if (fe.success()) {
+						if (gain != -1.0d) {
+							profit += gain;
+						}
 					}
 				}
 			}
@@ -480,7 +500,7 @@ public class Utils {
 		return profit - size;
 	}
 
-	public static float getProfit(ArrayList<FinalEntry> finals) {
+	public static float getProfit(ArrayList<FinalEntry> finals, String type) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
@@ -488,10 +508,30 @@ public class Utils {
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > fe.value) {
-				size++;
-				if (fe.success()) {
-					if (gain != -1.0d) {
-						profit += gain;
+				if (type.equals("unders")) {
+					if (fe.prediction <= fe.threshold) {
+						size++;
+						if (fe.success()) {
+							if (gain != -1.0d) {
+								profit += gain;
+							}
+						}
+					}
+				} else if (type.equals("overs")) {
+					if (fe.prediction > fe.threshold) {
+						size++;
+						if (fe.success()) {
+							if (gain != -1.0d) {
+								profit += gain;
+							}
+						}
+					}
+				} else {
+					size++;
+					if (fe.success()) {
+						if (gain != -1.0d) {
+							profit += gain;
+						}
 					}
 				}
 			}
@@ -817,9 +857,9 @@ public class Utils {
 		}
 		System.err.println(year);
 		System.out.println(overs.size() + " overs with rate: " + Utils.getSuccessRate(overs) + " profit: "
-				+ Utils.getProfit(overs));
+				+ Utils.getProfit(overs, "overs"));
 		System.out.println(unders.size() + " unders with rate: " + Utils.getSuccessRate(unders) + " profit: "
-				+ Utils.getProfit(unders));
+				+ Utils.getProfit(unders, "unders"));
 
 		ArrayList<FinalEntry> cot15 = new ArrayList<>();
 		ArrayList<FinalEntry> cot20 = new ArrayList<>();
@@ -854,23 +894,23 @@ public class Utils {
 
 		}
 
-		System.out.println(
-				cer80.size() + " 80s with rate: " + Utils.getSuccessRate(cer80) + "profit: " + Utils.getProfit(cer80));
-		System.out.println(
-				cer70.size() + " 70s with rate: " + Utils.getSuccessRate(cer70) + "profit: " + Utils.getProfit(cer70));
-		System.out.println(
-				cer60.size() + " 60s with rate: " + Utils.getSuccessRate(cer60) + "profit: " + Utils.getProfit(cer60));
-		System.out.println(
-				cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + "profit: " + Utils.getProfit(cer50));
+		System.out.println(cer80.size() + " 80s with rate: " + Utils.getSuccessRate(cer80) + "profit: "
+				+ Utils.getProfit(cer80, "all"));
+		System.out.println(cer70.size() + " 70s with rate: " + Utils.getSuccessRate(cer70) + "profit: "
+				+ Utils.getProfit(cer70, "all"));
+		System.out.println(cer60.size() + " 60s with rate: " + Utils.getSuccessRate(cer60) + "profit: "
+				+ Utils.getProfit(cer60, "all"));
+		System.out.println(cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + "profit: "
+				+ Utils.getProfit(cer50, "all"));
 		System.out.println(cer40.size() + " under50s with rate: " + Utils.getSuccessRate(cer40) + " profit: "
-				+ Utils.getProfit(cer40));
+				+ Utils.getProfit(cer40, "all"));
 
 		System.out.println(cot25.size() + " cot25s with rate: " + Utils.getSuccessRate(cot25) + "profit: "
-				+ Utils.getProfit(cot25));
+				+ Utils.getProfit(cot25, "all"));
 		System.out.println(cot20.size() + " cot20s with rate: " + Utils.getSuccessRate(cot20) + "profit: "
-				+ Utils.getProfit(cot20));
+				+ Utils.getProfit(cot20, "all"));
 		System.out.println(cot15.size() + " cot15s with rate: " + Utils.getSuccessRate(cot15) + "profit: "
-				+ Utils.getProfit(cot15));
+				+ Utils.getProfit(cot15, "all"));
 
 		int onlyOvers = 0;
 		float onlyOversProfit = 0f;
@@ -1047,7 +1087,8 @@ public class Utils {
 		return (float) (sumXY / (Math.sqrt(sumX2) * Math.sqrt(sumY2)));
 	}
 
-	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings set, float currentValue) {
+	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings set, float currentValue,
+			String type) {
 		float profit = 0.0f;
 		int size = 0;
 		for (FinalEntry fe : finals) {
@@ -1058,10 +1099,30 @@ public class Utils {
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > currentValue) {
-				size++;
-				if (fe.success()) {
-					if (gain != -1.0d) {
-						profit += gain;
+				if (type.equals("unders")) {
+					if (fe.prediction <= fe.threshold) {
+						size++;
+						if (fe.success()) {
+							if (gain != -1.0d) {
+								profit += gain;
+							}
+						}
+					}
+				} else if (type.equals("overs")) {
+					if (fe.prediction > fe.threshold) {
+						size++;
+						if (fe.success()) {
+							if (gain != -1.0d) {
+								profit += gain;
+							}
+						}
+					}
+				} else {
+					size++;
+					if (fe.success()) {
+						if (gain != -1.0d) {
+							profit += gain;
+						}
 					}
 				}
 			}

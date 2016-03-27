@@ -23,6 +23,8 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public float line;
 	public float asianHome;
 	public float asianAway;
+	public int redHome;
+	public int redAway;
 
 	public ExtendedFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		this.date = date;
@@ -72,6 +74,12 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		this.line = line;
 		this.asianHome = asianHome;
 		this.asianAway = asianAway;
+		return this;
+	}
+
+	public ExtendedFixture withCards(int redHome, int redAway) {
+		this.redHome = redHome;
+		this.redAway = redAway;
 		return this;
 	}
 

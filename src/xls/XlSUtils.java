@@ -639,6 +639,13 @@ public class XlSUtils {
 						(float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue(),
 						(float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue());
 			}
+
+			// Red cards
+			if (row.getCell(getColumnIndex(sheet, "HR")) != null && row.getCell(getColumnIndex(sheet, "AR")) != null) {
+				f = f.withCards((int) row.getCell(getColumnIndex(sheet, "HR")).getNumericCellValue(),
+						(int) row.getCell(getColumnIndex(sheet, "AR")).getNumericCellValue());
+			}
+
 		}
 		return f;
 	}
@@ -712,7 +719,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestBasic = x;
@@ -740,7 +747,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				flagw = true;
 				bestProfit = currentProfit;
@@ -769,7 +776,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				flagHT = true;
 				flagw = false;
@@ -866,7 +873,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestBasic = x;
@@ -894,7 +901,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				flagw = true;
 				bestProfit = currentProfit;
@@ -923,7 +930,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				flagHT = true;
 				flagw = false;
@@ -994,7 +1001,7 @@ public class XlSUtils {
 			for (int i = 0; i < size; i++) {
 				finals = runWithSettingsList(sheets.get(i), byYear.get(i), set);
 
-				profit += Utils.getProfit(finals, set);
+				profit += Utils.getProfit(finals, set, "all");
 			}
 
 			if (profit > bestProfit) {
@@ -1014,7 +1021,7 @@ public class XlSUtils {
 			for (int i = 0; i < size; i++) {
 				finals = runWithSettingsList(sheets.get(i), byYear.get(i), set);
 
-				profit += Utils.getProfit(finals, set);
+				profit += Utils.getProfit(finals, set, "all");
 			}
 
 			if (profit > bestProfit) {
@@ -1034,7 +1041,7 @@ public class XlSUtils {
 			for (int i = 0; i < size; i++) {
 				finals = runWithSettingsList(sheets.get(i), byYear.get(i), set);
 
-				profit += Utils.getProfit(finals, set);
+				profit += Utils.getProfit(finals, set, "all");
 			}
 
 			if (profit > bestProfit) {
@@ -1059,7 +1066,7 @@ public class XlSUtils {
 				finals.add(fe);
 		}
 
-		float currentProfit = Utils.getProfit(finals);
+		float currentProfit = Utils.getProfit(finals, "all");
 		return currentProfit;
 	}
 
@@ -1177,7 +1184,7 @@ public class XlSUtils {
 
 				Settings set = new Settings(sheet.getSheetName(), x * 0.05f, z * 0.05f, w * 0.05f, 0.55f, 0.55f, 0.55f,
 						bestWinPercent, bestProfit);
-				float currentProfit = Utils.getProfit(finals, set);
+				float currentProfit = Utils.getProfit(finals, set, "all");
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
 					bestBasic = x;
@@ -1221,7 +1228,7 @@ public class XlSUtils {
 			}
 			Settings set = new Settings(sheet.getSheetName(), 0, 0, 0, 0.55f, 0.55f, 0.55f, 0, bestProfit)
 					.withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				overOneValue = x * 0.5f;
@@ -1406,19 +1413,19 @@ public class XlSUtils {
 
 		ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
 
-		System.out.println("Run for? " + initpr + " == " + Utils.getProfit(finals, temp));
+		System.out.println("Run for? " + initpr + " == " + Utils.getProfit(finals, temp, "all"));
 
 		temp = findThreshold(sheet, finals, temp);
 		float th1 = temp.profit;
 		finals = restrict(finals, temp);
-		System.out.println("Th1: " + temp.profit + "==" + Utils.getProfit(finals, temp));
+		System.out.println("Th1: " + temp.profit + "==" + Utils.getProfit(finals, temp, "all"));
 
 		temp = findIntervalReal(finals, year, temp);
 		float pr = temp.profit;
 		finals = restrict(finals, temp);
-		System.out.println("Interval? " + pr + " == " + Utils.getProfit(finals, temp));
-		System.out.println("Under over breakdown? " + Utils.getProfit(finals, temp) + " == "
-				+ (Utils.getProfit(Utils.onlyOvers(finals)) + Utils.getProfit(Utils.onlyUnders(finals))));
+		System.out.println("Interval? " + pr + " == " + Utils.getProfit(finals, temp, "all"));
+		System.out.println("Under over breakdown? " + Utils.getProfit(finals, temp, "all") + " == "
+				+ (Utils.getProfit(Utils.onlyOvers(finals), "all") + Utils.getProfit(Utils.onlyUnders(finals), "all")));
 
 		temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year, temp.threshold);
 
@@ -1426,13 +1433,13 @@ public class XlSUtils {
 
 		finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), temp);
 
-		System.out.println("Run for2? " + initpr2 + " == " + Utils.getProfit(finals, temp));
+		System.out.println("Run for2? " + initpr2 + " == " + Utils.getProfit(finals, temp, "all"));
 
 		// System.out.println(temp);
 		temp = findThreshold(sheet, finals, temp);
 		finals = restrict(finals, temp);
 
-		System.out.println("Thold: " + temp.profit + "==" + Utils.getProfit(finals, temp));
+		System.out.println("Thold: " + temp.profit + "==" + Utils.getProfit(finals, temp, "all"));
 		// temp = trustInterval(sheet, finals, temp);
 		// System.out.println(temp);
 
@@ -1440,13 +1447,13 @@ public class XlSUtils {
 		float val = temp.profit;
 		finals = restrict(finals, temp);
 
-		System.out.println("value " + val + " == " + Utils.getProfit(finals, temp));
+		System.out.println("value " + val + " == " + Utils.getProfit(finals, temp, "all"));
 
 		temp = findIntervalReal(finals, year, temp);
 		float pr2 = temp.profit;
 		finals = restrict(finals, temp);
 
-		System.out.println("Interval? " + pr2 + " == " + Utils.getProfit(finals, temp));
+		System.out.println("Interval? " + pr2 + " == " + Utils.getProfit(finals, temp, "all"));
 		temp = findValue(finals, sheet, temp);
 
 		temp.successRate = Utils.getSuccessRate(finals);
@@ -1517,7 +1524,7 @@ public class XlSUtils {
 			for (int i = 11; i < maxMatchDay; i++) {
 				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
-				profit += Utils.getProfit(finals, set);
+				profit += Utils.getProfit(finals, set, "all");
 
 			}
 
@@ -1539,7 +1546,7 @@ public class XlSUtils {
 			for (int i = 11; i < maxMatchDay; i++) {
 				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
-				profit += Utils.getProfit(finals, set);
+				profit += Utils.getProfit(finals, set, "all");
 
 			}
 
@@ -1561,7 +1568,7 @@ public class XlSUtils {
 			for (int i = 11; i < maxMatchDay; i++) {
 				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
-				profit += Utils.getProfit(finals, set);
+				profit += Utils.getProfit(finals, set, "all");
 
 			}
 
@@ -1596,7 +1603,7 @@ public class XlSUtils {
 			for (int day = 11; day < maxDay; day++) {
 				ArrayList<ExtendedFixture> currentEntries = Utils.getByMatchday(Utils.onlyFixtures(finals), day);
 				ArrayList<FinalEntry> finalEntries = runWithSettingsList(sheet, currentEntries, trset);
-				profit += Utils.getProfit(finalEntries, trset);
+				profit += Utils.getProfit(finalEntries, trset, "all");
 
 			}
 
@@ -1654,7 +1661,7 @@ public class XlSUtils {
 			//
 			finals = runWithSettingsList(sheet, current, temp);
 
-			float trprofit = Utils.getProfit(finals, temp);
+			float trprofit = Utils.getProfit(finals, temp, "all");
 			profit += trprofit;
 		}
 		return profit;
@@ -1713,7 +1720,7 @@ public class XlSUtils {
 			// intersectAllClassifier(sheet, current, year));
 
 			// System.out.println(finals);
-			float trprofit = Utils.getProfit(finals, temp);
+			float trprofit = Utils.getProfit(finals, temp, "all");
 			profit += trprofit;
 		}
 
@@ -1806,7 +1813,7 @@ public class XlSUtils {
 			// intersectAllClassifier(sheet, current, year));
 
 			// System.out.println(finals);
-			float trprofit = Utils.getProfit(finals, temp);
+			float trprofit = Utils.getProfit(finals, temp, "all");
 			// System.out.println(i + " " + trprofit);
 			// System.out.println("--------------------------");
 			profit += trprofit;
@@ -1840,7 +1847,8 @@ public class XlSUtils {
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 
-			Settings odds = bestOdds(sheet.getSheetName(), year, 3, "realdouble15");
+			// Settings odds = bestOdds(sheet.getSheetName(), year, 3,
+			// "realdouble15");
 			// data = Utils.filterByOdds(data, Math.min(temp.minUnder,
 			// temp.minOver), Math.max(temp.maxUnder, temp.maxOver))
 
@@ -1895,9 +1903,11 @@ public class XlSUtils {
 				finals = shotBased;
 			}
 
+			// finals = utils.Utils.onlyOvers(finals);
 			played += finals.size();
 
-			float trprofit = Utils.getProfit(finals, temp);
+			// System.out.println(finals);
+			float trprofit = Utils.getProfit(finals, temp, "all");
 			// trprofit = Utils.getScaledProfit(finals, 0f);
 
 			profit += trprofit;
@@ -1950,7 +1960,7 @@ public class XlSUtils {
 			// intersectAllClassifier(sheet, current, year));
 
 			// System.out.println(finals);
-			float trprofit = Utils.getProfit(finals, temp);
+			float trprofit = Utils.getProfit(finals, temp, "all");
 			// System.out.println(i + " " + trprofit);
 			// System.out.println("--------------------------");
 			profit += trprofit;
@@ -2017,7 +2027,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				best = set;
@@ -2044,7 +2054,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH,
 					bestWinPercent, bestProfit).withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				best = set;
@@ -2071,7 +2081,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH, bestWinPercent,
 					bestProfit).withValue(0.9f).withHT(overOneHT, y * 0.05f);
-			float currentProfit = Utils.getProfit(finals, set);
+			float currentProfit = Utils.getProfit(finals, set, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				best = set;
@@ -2098,7 +2108,7 @@ public class XlSUtils {
 
 				Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH,
 						bestWinPercent, bestProfit).withValue(0.9f).withShots(y * 0.05f);
-				float currentProfit = Utils.getProfit(finals, set);
+				float currentProfit = Utils.getProfit(finals, set, "all");
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
 					best = set;
@@ -2234,7 +2244,7 @@ public class XlSUtils {
 			finals = intersectAllClassifier(sheet, current, year, basicThreshold.threshold, basicPoisson.threshold,
 					basicWeighted.threshold, basicHT2.threshold, basicDraw.threshold);
 			Settings temp = new Settings(sheet.getSheetName(), 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0, 0);
-			float trprofit = Utils.getProfit(finals, temp);
+			float trprofit = Utils.getProfit(finals, temp, "all");
 			profit += trprofit;
 		}
 		return profit;
@@ -2271,7 +2281,7 @@ public class XlSUtils {
 				sofar.add(fe);
 			} else {
 				set.upperBound = current;
-				float currentProfit = Utils.getProfit(sofar, set);
+				float currentProfit = Utils.getProfit(sofar, set, "all");
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
 					bestUpper = current;
@@ -2295,7 +2305,7 @@ public class XlSUtils {
 			} else {
 				set.lowerBound = current;
 				sofarLower = Utils.underPredictions(sofarLower, set);
-				float currentProfit = Utils.getProfit(sofarLower, set);
+				float currentProfit = Utils.getProfit(sofarLower, set, "all");
 				if (currentProfit > bestProfitLower) {
 					bestProfitLower = currentProfit;
 					bestLower = current;
@@ -2306,7 +2316,7 @@ public class XlSUtils {
 
 		trset.upperBound = bestUpper;
 		trset.lowerBound = bestLower;
-		float bestFinalProfit = Utils.getProfit(Utils.filterTrust(finals, trset), trset);
+		float bestFinalProfit = Utils.getProfit(Utils.filterTrust(finals, trset), trset, "all");
 		if (bestFinalProfit >= trset.profit) {
 			trset.profit = bestFinalProfit;
 		} else {
@@ -2342,7 +2352,7 @@ public class XlSUtils {
 			trset.lowerBound = current;
 			trset.upperBound = current;
 			ArrayList<FinalEntry> result = restrict(finals, trset);
-			float currentProfit = Utils.getProfit(result, trset);
+			float currentProfit = Utils.getProfit(result, trset, "all");
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				bestThreshold = current;
@@ -2386,14 +2396,14 @@ public class XlSUtils {
 	private static Settings findIntervalReal(ArrayList<FinalEntry> finals, int year, Settings initial) {
 		Settings underSetts = new Settings(initial);
 		ArrayList<FinalEntry> unders = Utils.onlyUnders(finals);
-		float profitUnders = Utils.getProfit(unders, underSetts);
+		float profitUnders = Utils.getProfit(unders, underSetts, "all");
 		underSetts.profit = profitUnders;
 
 		int bestminx = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filtered = Utils.filterByOdds(unders, currentMin, 10f, initial.threshold);
-			float currentProfit = Utils.getProfit(filtered, underSetts);
+			float currentProfit = Utils.getProfit(filtered, underSetts, "all");
 
 			if (currentProfit > profitUnders) {
 				bestminx = x;
@@ -2407,7 +2417,7 @@ public class XlSUtils {
 			float currentMax = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(unders, underSetts.minUnder, currentMax,
 					initial.threshold);
-			float currentProfit = Utils.getProfit(filteredMax, underSetts);
+			float currentProfit = Utils.getProfit(filteredMax, underSetts, "all");
 
 			if (currentProfit > profitUnders) {
 				profitUnders = currentProfit;
@@ -2419,14 +2429,14 @@ public class XlSUtils {
 
 		Settings overSetts = new Settings(initial);
 		ArrayList<FinalEntry> overs = Utils.onlyOvers(finals);
-		float profitOvers = Utils.getProfit(overs, overSetts);
+		float profitOvers = Utils.getProfit(overs, overSetts, "all");
 		overSetts.profit = profitOvers;
 
 		int bestminy = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filtered = Utils.filterByOdds(overs, currentMin, 10f, initial.threshold);
-			float currentProfit = Utils.getProfit(filtered, overSetts);
+			float currentProfit = Utils.getProfit(filtered, overSetts, "all");
 
 			if (currentProfit > profitOvers) {
 				bestminy = x;
@@ -2440,7 +2450,7 @@ public class XlSUtils {
 			float currentMax = 1.3f + x * 0.02f;
 			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(overs, overSetts.minOver, currentMax,
 					initial.threshold);
-			float currentProfit = Utils.getProfit(filteredMax, overSetts);
+			float currentProfit = Utils.getProfit(filteredMax, overSetts, "all");
 
 			if (currentProfit > profitOvers) {
 				profitOvers = currentProfit;
@@ -2477,7 +2487,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filtered)
-				currentProfit += Utils.getProfit(filter, newSetts);
+				currentProfit += Utils.getProfit(filter, newSetts, "all");
 
 			if (currentProfit > bestProfit) {
 				bestminx = x;
@@ -2495,7 +2505,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filteredMax)
-				currentProfit += Utils.getProfit(filter, newSetts);
+				currentProfit += Utils.getProfit(filter, newSetts, "all");
 
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2517,7 +2527,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filtered)
-				currentProfit += Utils.getProfit(filter, newSetts);
+				currentProfit += Utils.getProfit(filter, newSetts, "all");
 
 			if (currentProfit > bestProfit) {
 				bestminy = x;
@@ -2535,7 +2545,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filteredMax)
-				currentProfit += Utils.getProfit(filter, newSetts);
+				currentProfit += Utils.getProfit(filter, newSetts, "all");
 
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2555,7 +2565,7 @@ public class XlSUtils {
 
 		for (int x = 0; x <= 30; x++) {
 			float currentValue = 0.7f + x * 0.02f;
-			float currentProfit = Utils.getProfit(sheet, finals, newSetts, currentValue);
+			float currentProfit = Utils.getProfit(sheet, finals, newSetts, currentValue, "all");
 
 			if (currentProfit > profit) {
 				bestValue = currentValue;
@@ -2688,7 +2698,7 @@ public class XlSUtils {
 
 		float bestProfit = 0f;
 		for (ArrayList<FinalEntry> i : byYear) {
-			bestProfit += Utils.getProfit(i);
+			bestProfit += Utils.getProfit(i, "all");
 		}
 
 		float bestCot = 0f;
@@ -2700,7 +2710,7 @@ public class XlSUtils {
 
 			float currProfit = 0f;
 			for (ArrayList<FinalEntry> i : filtered)
-				currProfit += Utils.getProfit(i);
+				currProfit += Utils.getProfit(i, "all");
 
 			if (currProfit > bestProfit) {
 				bestProfit = currProfit;
@@ -2739,7 +2749,7 @@ public class XlSUtils {
 				values.add(fe);
 		}
 
-		float profit = Utils.getProfit(values);
+		float profit = Utils.getProfit(values, "all");
 
 		// System.out.println(" Last: " + period + " Best cot: " + bestCot + "
 		// best profit avg: " + bestProfit / period
@@ -2762,8 +2772,8 @@ public class XlSUtils {
 		float bestProfitUnders = 0f;
 		float bestProfitOvers = 0f;
 		for (ArrayList<FinalEntry> i : byYear) {
-			bestProfitUnders += Utils.getProfit(Utils.onlyUnders(i));
-			bestProfitOvers += Utils.getProfit(Utils.onlyOvers(i));
+			bestProfitUnders += Utils.getProfit(Utils.onlyUnders(i), "all");
+			bestProfitOvers += Utils.getProfit(Utils.onlyOvers(i), "all");
 		}
 
 		Settings underSetts = new Settings(league, 0.5f, 0.5f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, bestProfitUnders);
@@ -2784,7 +2794,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filtered)
-				currentProfit += Utils.getProfit(filter);
+				currentProfit += Utils.getProfit(filter, "all");
 
 			if (currentProfit > bestProfitUnders) {
 				bestminx = x;
@@ -2804,7 +2814,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filteredMax)
-				currentProfit += Utils.getProfit(filter);
+				currentProfit += Utils.getProfit(filter, "all");
 
 			if (currentProfit > bestProfitUnders) {
 				bestProfitUnders = currentProfit;
@@ -2830,7 +2840,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filtered)
-				currentProfit += Utils.getProfit(filter);
+				currentProfit += Utils.getProfit(filter, "all");
 
 			if (currentProfit > bestProfitOvers) {
 				bestminy = x;
@@ -2851,7 +2861,7 @@ public class XlSUtils {
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filteredMax)
-				currentProfit += Utils.getProfit(filter);
+				currentProfit += Utils.getProfit(filter, "all");
 
 			if (currentProfit > bestProfitOvers) {
 				bestProfitOvers = currentProfit;
