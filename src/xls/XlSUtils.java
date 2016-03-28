@@ -1962,23 +1962,6 @@ public class XlSUtils {
 			finals = runWithSettingsList(sheet, current, temp);
 
 			finals = Utils.certaintyRestrict(finals, 0.5f);
-			// finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(),
-			// year, 3, "realdouble15"));
-
-			// if
-			// (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()))
-			// {
-			// ArrayList<FinalEntry> shotBased = new ArrayList<>();
-			// for (FinalEntry fe : finals) {
-			// float shotsScore = shots(fe.fixture, sheet);
-			// if (fe.prediction >= fe.upper && shotsScore == 1f) {
-			// shotBased.add(fe);
-			// } else if (fe.prediction <= fe.lower && shotsScore == 0f) {
-			// shotBased.add(fe);
-			// }
-			// }
-			// finals = shotBased;
-			// }
 
 			Settings tempOvers = runForLeagueWithOdds(sheet, data, year, basics, poissons, weighted, ht1, ht2, 0.55f,
 					"overs").withValue(0.9f);
@@ -2007,10 +1990,8 @@ public class XlSUtils {
 			finalsOvers = Utils.certaintyRestrict(finalsOvers, 0.5f);
 
 			finals = utils.Utils.onlyUnders(finals);
-			played += finals.size();
 
 			finalsOvers = Utils.onlyOvers(finalsOvers);
-			played += finalsOvers.size();
 
 			// System.out.println(finals);
 			// System.out.println(finalsOvers);
@@ -2030,6 +2011,39 @@ public class XlSUtils {
 				finalsOvers.remove(d);
 			}
 
+			finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(), year, 3, "realdouble15"));
+
+			finalsOvers = Utils.cotRestrict(finalsOvers, findCot(sheet.getSheetName(), year, 3, "realdouble15"));
+
+			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
+				ArrayList<FinalEntry> shotBased = new ArrayList<>();
+				for (FinalEntry fe : finals) {
+					float shotsScore = shots(fe.fixture, sheet);
+					if (fe.prediction >= fe.upper && shotsScore == 1f) {
+						shotBased.add(fe);
+					} else if (fe.prediction <= fe.lower && shotsScore == 0f) {
+						shotBased.add(fe);
+					}
+				}
+				finals = shotBased;
+			}
+			
+			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
+				ArrayList<FinalEntry> shotBased = new ArrayList<>();
+				for (FinalEntry fe : finalsOvers) {
+					float shotsScore = shots(fe.fixture, sheet);
+					if (fe.prediction >= fe.upper && shotsScore == 1f) {
+						shotBased.add(fe);
+					} else if (fe.prediction <= fe.lower && shotsScore == 0f) {
+						shotBased.add(fe);
+					}
+				}
+				finalsOvers = shotBased;
+			}
+
+			played += finals.size();
+			played+=finalsOvers.size();
+			
 			float trprofit = Utils.getProfit(finals, temp, "unders") + Utils.getProfit(finalsOvers, tempOvers, "overs");
 
 			profit += trprofit;

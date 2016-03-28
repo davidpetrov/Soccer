@@ -23,6 +23,10 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		this.value = 0.9f;
 	}
 
+	public float getCertainty() {
+		return prediction > threshold ? prediction : (1f - prediction);
+	}
+
 	@Override
 	public String toString() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
