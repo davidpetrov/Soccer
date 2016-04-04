@@ -148,4 +148,16 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		return true;
 	}
 
+	public boolean isHomeWin() {
+		return result.goalsHomeTeam > result.goalsAwayTeam;
+	}
+
+	public boolean isAwayWin() {
+		return result.goalsHomeTeam < result.goalsAwayTeam;
+	}
+
+	public boolean isDraw() {
+		return result.goalsHomeTeam == result.goalsAwayTeam;
+	}
+
 }

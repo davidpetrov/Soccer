@@ -1,6 +1,7 @@
 package utils;
 
 import java.io.BufferedReader;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -16,7 +17,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.poi.hssf.record.ArrayRecord;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,6 +27,8 @@ import main.ExtendedFixture;
 import main.Result;
 import results.Results;
 import settings.Settings;
+import tables.Position;
+import tables.Table;
 
 public class Utils {
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -1062,7 +1064,7 @@ public class Utils {
 				+ "%");
 	}
 
-	public static float correlation(float[] arr1, float[] arr2) {
+	public static float correlation(Integer[] arr1, Integer[] arr2) {
 		if (arr1.length != arr2.length)
 			return -1;
 		float avg1 = 0f;
@@ -1230,6 +1232,105 @@ public class Utils {
 				+ Results.format((float) (profitUnder - under) * 100 / under) + "%");
 		System.out.println("Draws when over pr: " + (profitOver - over) + " from " + over + " "
 				+ Results.format((float) (profitOver - over) * 100 / over) + "%");
+	}
+
+	public static Table createTable(ArrayList<ExtendedFixture> data, String sheetName, int year, int i) {
+		HashMap<String, Position> teams = getTeams(data);
+
+		Table table = new Table(sheetName, year, i);
+
+		for (String team : teams.keySet()) {
+			ExtendedFixture f = new ExtendedFixture(null, team, team, null, null);
+			ArrayList<ExtendedFixture> all = Utils.getHomeFixtures(f, data);
+			all.addAll(Utils.getAwayFixtures(f, data));
+			Position pos = createPosition(team, all);
+			table.positions.add(pos);
+		}
+
+		table.sort();
+		return table;
+	}
+
+	private static Position createPosition(String team, ArrayList<ExtendedFixture> all) {
+		Position pos = new Position();
+		pos.team = team;
+
+		for (ExtendedFixture i : all) {
+			if (i.homeTeam.equals(team)) {
+				pos.played++;
+				pos.homeplayed++;
+
+				if (i.isHomeWin()) {
+					pos.wins++;
+					pos.homewins++;
+					pos.points += 3;
+					pos.homepoints += 3;
+				} else if (i.isAwayWin()) {
+					pos.losses++;
+					pos.homelosses++;
+				} else {
+					pos.draws++;
+					pos.homedraws++;
+					pos.points++;
+					pos.homepoints++;
+				}
+
+				pos.scored += i.result.goalsHomeTeam;
+				pos.conceded += i.result.goalsAwayTeam;
+
+				pos.homescored += i.result.goalsHomeTeam;
+				pos.homeconceded += i.result.goalsAwayTeam;
+			} else {
+				pos.played++;
+				pos.awayplayed++;
+
+				if (i.isHomeWin()) {
+					pos.losses++;
+					pos.awaylosses++;
+				} else if (i.isAwayWin()) {
+					pos.wins++;
+					pos.awaywins++;
+					pos.points += 3;
+					pos.awaypoints += 3;
+				} else {
+					pos.draws++;
+					pos.awaydraws++;
+					pos.points++;
+					pos.awaypoints++;
+				}
+
+				pos.scored += i.result.goalsAwayTeam;
+				pos.conceded += i.result.goalsHomeTeam;
+
+				pos.awayscored += i.result.goalsAwayTeam;
+				pos.awayconceded += i.result.goalsHomeTeam;
+			}
+		}
+
+		pos.diff = pos.scored - pos.conceded;
+		pos.homediff = pos.homescored - pos.homeconceded;
+		pos.awaydiff = pos.awayscored - pos.awayconceded;
+		pos.team = team;
+		return pos;
+	}
+
+	private static HashMap<String, Position> getTeams(ArrayList<ExtendedFixture> data) {
+		HashMap<String, Position> teams = new HashMap<>();
+
+		for (ExtendedFixture i : data) {
+			if (!teams.containsKey(i.homeTeam)) {
+				Position pos = new Position();
+				pos.team = i.homeTeam;
+				teams.put(i.homeTeam, pos);
+			}
+			if (!teams.containsKey(i.awayTeam)) {
+				Position pos = new Position();
+				pos.team = i.awayTeam;
+				teams.put(i.awayTeam, pos);
+			}
+		}
+
+		return teams;
 	}
 
 }

@@ -2,36 +2,21 @@ package xls;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.spi.CalendarDataProvider;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor.TEAL;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.util.StringUtil;
-import org.sqlite.util.StringUtils;
 
 import constants.MinMaxOdds;
 import entries.FinalEntry;
@@ -39,8 +24,8 @@ import main.ExtendedFixture;
 import main.Result;
 import main.SQLiteJDBC;
 import results.Results;
-import runner.Runner;
 import settings.Settings;
+import tables.Table;
 import utils.Utils;
 
 public class XlSUtils {
@@ -1841,11 +1826,20 @@ public class XlSUtils {
 		HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all, "HALFTIME1", year, sheet.getSheetName());
 		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
 
+		ArrayList<Integer> diffs = new ArrayList<>();
+		ArrayList<Integer> totals = new ArrayList<>();
+
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+
+			Table table = Utils.createTable(data, sheet.getSheetName(), year, i);
+			for (ExtendedFixture c : current) {
+				diffs.add(table.getPositionDiff(c));
+				totals.add(c.getTotalGoals());
+			}
 
 			// Settings odds = bestOdds(sheet.getSheetName(), year, 3,
 			// "realdouble15");
@@ -1907,7 +1901,7 @@ public class XlSUtils {
 			// finals = utils.Utils.onlyOvers(finals);
 			played += finals.size();
 
-			// System.out.println(finals);
+//			System.out.println(finals);
 			float trprofit = Utils.getProfit(finals, temp, "all");
 			// trprofit = Utils.getScaledProfit(finals, 0f);
 
@@ -1917,6 +1911,10 @@ public class XlSUtils {
 		float yield = (profit / played) * 100f;
 		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
 				+ " yield is: " + String.format("%.2f%%", yield));
+
+		Integer[] arr1 = diffs.toArray(new Integer[diffs.size()]);
+		Integer[] arr2 = totals.toArray(new Integer[totals.size()]);
+		System.out.println("Corelation: " + Utils.correlation(arr1, arr2));
 		return profit;
 	}
 
@@ -2027,7 +2025,7 @@ public class XlSUtils {
 				}
 				finals = shotBased;
 			}
-			
+
 			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
 				ArrayList<FinalEntry> shotBased = new ArrayList<>();
 				for (FinalEntry fe : finalsOvers) {
@@ -2042,8 +2040,8 @@ public class XlSUtils {
 			}
 
 			played += finals.size();
-			played+=finalsOvers.size();
-			
+			played += finalsOvers.size();
+
 			float trprofit = Utils.getProfit(finals, temp, "unders") + Utils.getProfit(finalsOvers, tempOvers, "overs");
 
 			profit += trprofit;
