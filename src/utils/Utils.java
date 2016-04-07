@@ -29,6 +29,7 @@ import results.Results;
 import settings.Settings;
 import tables.Position;
 import tables.Table;
+import xls.XlSUtils;
 
 public class Utils {
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -1331,6 +1332,66 @@ public class Utils {
 		}
 
 		return teams;
+	}
+
+	public static ArrayList<FinalEntry> shotsRestrict(ArrayList<FinalEntry> finals, HSSFSheet sheet) {
+		ArrayList<FinalEntry> shotBased = new ArrayList<>();
+		for (FinalEntry fe : finals) {
+			float shotsScore = XlSUtils.shots(fe.fixture, sheet);
+			if (fe.prediction >= fe.upper && shotsScore == 1f) {
+				shotBased.add(fe);
+			} else if (fe.prediction <= fe.lower && shotsScore == 0f) {
+				shotBased.add(fe);
+			}
+		}
+		return shotBased;
+	}
+
+	public static Pair positionLimits(ArrayList<FinalEntry> finals, Table table, String type) {
+
+		float bestProfit = getProfit(finals, type);
+		int bestLow = 0;
+		int bestHigh = 23;
+
+		for (int i = 1; i < 11; i++) {
+			ArrayList<FinalEntry> diffPos = positionRestrict(finals, table, i, 23, type);
+
+			float curr = Utils.getProfit(diffPos, type);
+			if (curr > bestProfit) {
+				bestProfit = curr;
+				bestLow = i;
+			}
+
+		}
+
+		for (int i = bestLow; i < 23; i++) {
+			ArrayList<FinalEntry> diffPos = positionRestrict(finals, table, bestLow, i, type);
+
+			float curr = Utils.getProfit(diffPos, type);
+			if (curr > bestProfit) {
+				bestProfit = curr;
+				bestHigh = i;
+			}
+		}
+
+		return Pair.of(bestLow, bestHigh);
+	}
+
+	public static ArrayList<FinalEntry> positionRestrict(ArrayList<FinalEntry> finals, Table table, int i, int j,
+			String type) {
+		ArrayList<FinalEntry> diffPos = new ArrayList<>();
+		for (FinalEntry fe : finals) {
+			int diff = Math.abs(table.getPositionDiff(fe.fixture));
+
+			if (diff <= i && fe.prediction <= fe.lower)
+				diffPos.add(fe);
+			else if (diff >= j && fe.prediction >= fe.upper)
+				diffPos.add(fe);
+			else if (diff > i && diff < j)
+				diffPos.add(fe);
+		}
+		return diffPos;
+
 	}
 
 }

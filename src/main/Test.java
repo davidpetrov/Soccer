@@ -46,13 +46,13 @@ public class Test {
 
 		// simplePredictions();
 
-		// Results.eval("runforshotsafter");
+//		 Results.eval("diffull");
 		// Results.eval("realdouble+bestcotfull");
-//		Results.eval("underoverfull");
+//		 Results.eval("runforshotsafter");
 
 		// stored24();
 
-//		 makePredictions();
+		// makePredictions();
 
 		// float total = 0f;
 		// for (int year = 2005; year <= 2015; year++)
@@ -60,7 +60,7 @@ public class Test {
 		// System.out.println("Avg profit is " + (total / 11));
 
 		float total = 0f;
-		for (int year = 2015; year <= 2015; year++)
+		for (int year = 2008; year <= 2015; year++)
 			total += simulation(year);
 		System.out.println("Avg profit is " + (total / 11));
 
@@ -345,8 +345,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			if (!sh.getSheetName().equals("D1"))
-//				continue;
+			// if (!sh.getSheetName().equals("E0"))
+			// continue;
 			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
 

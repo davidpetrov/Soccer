@@ -14,4 +14,8 @@ public class Pair {
 	public static Pair of(float home, float away) {
 		return new Pair(home, away);
 	}
+
+	public String toString() {
+		return home + " : " + away;
+	}
 }

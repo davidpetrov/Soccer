@@ -26,6 +26,7 @@ import main.SQLiteJDBC;
 import results.Results;
 import settings.Settings;
 import tables.Table;
+import utils.Pair;
 import utils.Utils;
 
 public class XlSUtils {
@@ -1868,16 +1869,9 @@ public class XlSUtils {
 
 			temp = findValue(finals, sheet, temp, "all");
 
-			// float drawPercent = ((float) Utils.countDraws(data)) /
-			// data.size();
-			// ArrayList<FinalEntry> draws = new ArrayList<>();
-			// for (FinalEntry fe : finals)
-			// if (poissonDraw(fe.fixture, sheet) >= drawPercent) {
-			// fe.prediction-=0.05f;
-			// }else{
-			// fe.prediction+=0.05f;
-			// }
-			//
+			Pair poslimit = Utils.positionLimits(finals, table, "all");
+//			System.out.println(poslimit);
+
 			finals = runWithSettingsList(sheet, current, temp);
 
 			finals = Utils.certaintyRestrict(finals, 0.5f);
@@ -1885,23 +1879,15 @@ public class XlSUtils {
 			// "realdouble15");
 			finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(), year, 3, "realdouble15"));
 
-			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
-				ArrayList<FinalEntry> shotBased = new ArrayList<>();
-				for (FinalEntry fe : finals) {
-					float shotsScore = shots(fe.fixture, sheet);
-					if (fe.prediction >= fe.upper && shotsScore == 1f) {
-						shotBased.add(fe);
-					} else if (fe.prediction <= fe.lower && shotsScore == 0f) {
-						shotBased.add(fe);
-					}
-				}
-				finals = shotBased;
-			}
+			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()))
+				finals = Utils.shotsRestrict(finals, sheet);
+
+			finals = Utils.positionRestrict(finals, table, (int) poslimit.home, (int) poslimit.away, "all");
 
 			// finals = utils.Utils.onlyOvers(finals);
 			played += finals.size();
 
-//			System.out.println(finals);
+			// System.out.println(finals);
 			float trprofit = Utils.getProfit(finals, temp, "all");
 			// trprofit = Utils.getScaledProfit(finals, 0f);
 
@@ -1914,7 +1900,7 @@ public class XlSUtils {
 
 		Integer[] arr1 = diffs.toArray(new Integer[diffs.size()]);
 		Integer[] arr2 = totals.toArray(new Integer[totals.size()]);
-		System.out.println("Corelation: " + Utils.correlation(arr1, arr2));
+		// System.out.println("Corelation: " + Utils.correlation(arr1, arr2));
 		return profit;
 	}
 
