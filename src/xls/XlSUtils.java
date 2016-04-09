@@ -1869,8 +1869,9 @@ public class XlSUtils {
 
 			temp = findValue(finals, sheet, temp, "all");
 
-			Pair poslimit = Utils.positionLimits(finals, table, "all");
-//			System.out.println(poslimit);
+//			boolean flagShots = Utils.getProfit(Utils.shotsRestrict(finals, sheet), "all") > temp.profit;
+			// Pair poslimit = Utils.positionLimits(finals, table, "all");
+			// System.out.println(poslimit);
 
 			finals = runWithSettingsList(sheet, current, temp);
 
@@ -1882,7 +1883,7 @@ public class XlSUtils {
 			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()))
 				finals = Utils.shotsRestrict(finals, sheet);
 
-			finals = Utils.positionRestrict(finals, table, (int) poslimit.home, (int) poslimit.away, "all");
+			// finals = Utils.positionRestrict(finals, table, 4, 10, "all");
 
 			// finals = utils.Utils.onlyOvers(finals);
 			played += finals.size();
