@@ -1842,6 +1842,14 @@ public class XlSUtils {
 				totals.add(c.getTotalGoals());
 			}
 
+			// System.out.println(table);
+			// System.out.println(table.getFirstQuartile());
+			// System.out.println(table.getMedian());
+			// System.out.println(table.getThirdQuartile());
+			// System.out.println(table.getTopTeams());
+			// System.out.println(table.getMiddleTeams());
+			// System.out.println(table.getBottomTeams());
+
 			// Settings odds = bestOdds(sheet.getSheetName(), year, 3,
 			// "realdouble15");
 			// data = Utils.filterByOdds(data, Math.min(temp.minUnder,
@@ -1869,7 +1877,8 @@ public class XlSUtils {
 
 			temp = findValue(finals, sheet, temp, "all");
 
-//			boolean flagShots = Utils.getProfit(Utils.shotsRestrict(finals, sheet), "all") > temp.profit;
+			// boolean flagShots = Utils.getProfit(Utils.shotsRestrict(finals,
+			// sheet), "all") > temp.profit;
 			// Pair poslimit = Utils.positionLimits(finals, table, "all");
 			// System.out.println(poslimit);
 
@@ -1884,6 +1893,8 @@ public class XlSUtils {
 				finals = Utils.shotsRestrict(finals, sheet);
 
 			// finals = Utils.positionRestrict(finals, table, 4, 10, "all");
+
+			finals = Utils.similarityRestrict(sheet, finals, table);
 
 			// finals = utils.Utils.onlyOvers(finals);
 			played += finals.size();

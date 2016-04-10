@@ -36,6 +36,67 @@ public class Table {
 		return getPosition(f.homeTeam) - getPosition(f.awayTeam);
 	}
 
+	public float getMedian() {
+		if (positions.size() % 2 == 1)
+			return positions.get((positions.size() - 1) / 2).points;
+		else
+			return (float) (positions.get(positions.size() / 2).points
+					+ +positions.get(positions.size() / 2 - 1).points) / 2;
+	}
+
+	public float getFirstQuartile() {
+		if ((positions.size() / 2) % 2 == 1)
+			return positions.get((positions.size() - 1) / 4).points;
+		else
+			return (float) (positions.get(positions.size() / 4).points
+					+ +positions.get(positions.size() / 4 - 1).points) / 2;
+	}
+
+	public float getThirdQuartile() {
+		if ((positions.size() / 2) % 2 == 1)
+			return positions.get((positions.size() / 2 + (positions.size() / 2 + 1) / 2) - 1).points;
+		else
+			return (float) (positions.get(3 * positions.size() / 4).points
+					+ positions.get(3 * positions.size() / 4 - 1).points) / 2;
+	}
+
+	public ArrayList<String> getTopTeams() {
+		ArrayList<String> result = new ArrayList<>();
+		for (Position i : positions) {
+			if (i.points < getFirstQuartile())
+				break;
+			result.add(i.team);
+		}
+		return result;
+	}
+
+	public ArrayList<String> getMiddleTeams() {
+		ArrayList<String> result = new ArrayList<>();
+		for (Position i : positions) {
+			if (i.points < getFirstQuartile() && i.points > getThirdQuartile())
+				result.add(i.team);
+		}
+		return result;
+	}
+
+	public ArrayList<String> getBottomTeams() {
+		ArrayList<String> result = new ArrayList<>();
+		for (Position i : positions) {
+			if (i.points <= getThirdQuartile())
+				result.add(i.team);
+		}
+		return result;
+	}
+
+	public ArrayList<String> getSimilarTeams(String team) {
+		if (getTopTeams().contains(team))
+			return getTopTeams();
+		else if (getMiddleTeams().contains(team))
+			return getMiddleTeams();
+		else
+			return getBottomTeams();
+	}
+
 	public String toString() {
 		int num = 1;
 		String result = "";

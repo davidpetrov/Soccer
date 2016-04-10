@@ -1394,4 +1394,55 @@ public class Utils {
 
 	}
 
+	public static ArrayList<FinalEntry> similarityRestrict(HSSFSheet sheet, ArrayList<FinalEntry> finals, Table table) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			float basicSimilar = Utils.basicSimilar(i, sheet, table);
+			if (i.prediction >= i.upper && basicSimilar >= i.threshold)
+				result.add(i);
+			else if (i.prediction <= i.lower && basicSimilar <= i.threshold)
+				result.add(i);
+//			else
+//				System.out.println(i + " " + i.prediction + " " + basicSimilar);
+		}
+
+		return result;
+	}
+
+	private static float basicSimilar(FinalEntry i, HSSFSheet sheet, Table table) {
+		ArrayList<String> filterHome = table.getSimilarTeams(i.fixture.awayTeam);
+		ArrayList<String> filterAway = table.getSimilarTeams(i.fixture.homeTeam);
+		ExtendedFixture f = i.fixture;
+
+		ArrayList<ExtendedFixture> lastHomeTeam = filter(f.homeTeam,
+				XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date), filterHome);
+		ArrayList<ExtendedFixture> lastAwayTeam = filter(f.awayTeam,
+				XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date), filterAway);
+
+		ArrayList<ExtendedFixture> lastHomeHomeTeam = filter(f.homeTeam,
+				XlSUtils.selectLastHome(sheet, f.homeTeam, 25, f.date), filterHome);
+		ArrayList<ExtendedFixture> lastAwayAwayTeam = filter(f.awayTeam,
+				XlSUtils.selectLastAway(sheet, f.awayTeam, 25, f.date), filterAway);
+
+		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
+		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
+				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
+		float BTSAVG = (Utils.countBTSPercent(lastHomeTeam) + Utils.countBTSPercent(lastAwayTeam)) / 2;
+
+		return 0.6f * allGamesAVG + 0.3f * homeAwayAVG + 0.1f * BTSAVG;
+	}
+
+	private static ArrayList<ExtendedFixture> filter(String team, ArrayList<ExtendedFixture> selectLastAll,
+			ArrayList<String> filterHome) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (ExtendedFixture i : selectLastAll) {
+			if (i.homeTeam.equals(team) && filterHome.contains(i.awayTeam))
+				result.add(i);
+			if (i.awayTeam.equals(team) && filterHome.contains(i.homeTeam))
+				result.add(i);
+
+		}
+		return result;
+	}
+
 }
