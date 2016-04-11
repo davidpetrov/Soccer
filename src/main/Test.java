@@ -46,13 +46,13 @@ public class Test {
 
 		// simplePredictions();
 
-//		 Results.eval("similarity10");
-		// Results.eval("realdouble+bestcotfull");
-		// Results.eval("runforshotsafter");
+//		 Results.eval("similaroptimal");
+//		 Results.eval("realdouble+bestcotfull");
+//		 Results.eval("runforshotsafter");
 
 		// stored24();
 
-		 makePredictions();
+//		 makePredictions();
 
 		// float total = 0f;
 		// for (int year = 2005; year <= 2015; year++)
@@ -60,7 +60,7 @@ public class Test {
 		// System.out.println("Avg profit is " + (total / 11));
 
 		float total = 0f;
-		for (int year = 2008; year <= 2015; year++)
+		for (int year = 2015; year <= 2015; year++)
 			total += simulation(year);
 		System.out.println("Avg profit is " + (total / 11));
 

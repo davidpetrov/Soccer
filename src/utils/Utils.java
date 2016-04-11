@@ -1397,22 +1397,21 @@ public class Utils {
 	public static ArrayList<FinalEntry> similarityRestrict(HSSFSheet sheet, ArrayList<FinalEntry> finals, Table table) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry i : finals) {
-			float basicSimilar = Utils.basicSimilar(i, sheet, table);
+			float basicSimilar = Utils.basicSimilar(i.fixture, sheet, table);
 			if (i.prediction >= i.upper && basicSimilar >= i.threshold)
 				result.add(i);
 			else if (i.prediction <= i.lower && basicSimilar <= i.threshold)
 				result.add(i);
-//			else
-//				System.out.println(i + " " + i.prediction + " " + basicSimilar);
+			// else
+			// System.out.println(i + " " + i.prediction + " " + basicSimilar);
 		}
 
 		return result;
 	}
 
-	private static float basicSimilar(FinalEntry i, HSSFSheet sheet, Table table) {
-		ArrayList<String> filterHome = table.getSimilarTeams(i.fixture.awayTeam);
-		ArrayList<String> filterAway = table.getSimilarTeams(i.fixture.homeTeam);
-		ExtendedFixture f = i.fixture;
+	public static float basicSimilar(ExtendedFixture f, HSSFSheet sheet, Table table) {
+		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
+		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
 
 		ArrayList<ExtendedFixture> lastHomeTeam = filter(f.homeTeam,
 				XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date), filterHome);
