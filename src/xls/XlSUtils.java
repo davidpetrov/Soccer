@@ -1186,26 +1186,52 @@ public class XlSUtils {
 
 	}
 
-	public static float checkHalfTimeOptimal(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, String type) {
+	// public static float checkHalfTimeOptimal(HSSFSheet sheet,
+	// ArrayList<ExtendedFixture> all, float[] ht1, float[] ht2,
+	// String type) {
+	// float bestProfit = Float.NEGATIVE_INFINITY;
+	// float overOneValue = 0f;
+	//
+	// for (int x = 0; x <= 2; x++) {
+	// int y = 2 - x;
+	// ArrayList<FinalEntry> finals = new ArrayList<>();
+	// for (int j = 0; j < all.size(); j++) {
+	// ExtendedFixture f = all.get(j);
+	// float finalScore = x * 0.5f * ht1[j] + y * 0.5f * ht2[j];
+	//
+	// FinalEntry fe = new FinalEntry(f, finalScore,
+	// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f,
+	// 0.55f);
+	// if (!fe.prediction.equals(Float.NaN))
+	// finals.add(fe);
+	// }
+	// Settings set = new Settings(sheet.getSheetName(), 0, 0, 0, 0.55f, 0.55f,
+	// 0.55f, 0, bestProfit)
+	// .withValue(0.9f);
+	// float currentProfit = Utils.getProfit(finals, set, type);
+	// if (currentProfit > bestProfit) {
+	// bestProfit = currentProfit;
+	// overOneValue = x * 0.5f;
+	// }
+	//
+	// }
+	//
+	// return overOneValue;
+	// }
+
+	private static float checkOptimal(HSSFSheet sheet, ArrayList<ExtendedFixture> all, float[] basics, float[] similars,
+			float step, String type) {
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		float overOneValue = 0f;
 
-		float[] overOnes = new float[all.size()];
-		float[] overTwos = new float[all.size()];
+		int n = Math.round(1f / step);
 
-		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
-
-			overOnes[i] = halfTimeOnly(f, sheet, 1);
-			overTwos[i] = halfTimeOnly(f, sheet, 2);
-		}
-
-		for (int x = 0; x <= 2; x++) {
-			int y = 2 - x;
+		for (int x = 0; x <= n; x++) {
+			int y = n - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int j = 0; j < all.size(); j++) {
 				ExtendedFixture f = all.get(j);
-				float finalScore = x * 0.5f * overOnes[j] + y * 0.5f * overTwos[j];
+				float finalScore = x * step * basics[j] + y * step * similars[j];
 
 				FinalEntry fe = new FinalEntry(f, finalScore,
 						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
@@ -1217,47 +1243,7 @@ public class XlSUtils {
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
-				overOneValue = x * 0.5f;
-			}
-
-		}
-
-		return overOneValue;
-	}
-
-	private static float chechBasicOptimal(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, Table table,
-			String type) {
-		float bestProfit = Float.NEGATIVE_INFINITY;
-		float overOneValue = 0f;
-
-		float[] overOnes = new float[all.size()];
-		float[] overTwos = new float[all.size()];
-
-		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
-
-			overOnes[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
-			overTwos[i] = Utils.basicSimilar(f, sheet, table);
-		}
-
-		for (int x = 0; x <= 20; x++) {
-			int y = 20 - x;
-			ArrayList<FinalEntry> finals = new ArrayList<>();
-			for (int j = 0; j < all.size(); j++) {
-				ExtendedFixture f = all.get(j);
-				float finalScore = x * 0.05f * overOnes[j] + y * 0.05f * overTwos[j];
-
-				FinalEntry fe = new FinalEntry(f, finalScore,
-						new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f, 0.55f, 0.55f);
-				if (!fe.prediction.equals(Float.NaN))
-					finals.add(fe);
-			}
-			Settings set = new Settings(sheet.getSheetName(), 0, 0, 0, 0.55f, 0.55f, 0.55f, 0, bestProfit)
-					.withValue(0.9f);
-			float currentProfit = Utils.getProfit(finals, set, type);
-			if (currentProfit > bestProfit) {
-				bestProfit = currentProfit;
-				overOneValue = x * 0.05f;
+				overOneValue = x * step;
 			}
 
 		}
@@ -2133,16 +2119,13 @@ public class XlSUtils {
 							 * getSheetName())
 							 */false;
 
-		float bestWinPercent = 0;
 		float bestProfit = Float.NEGATIVE_INFINITY;
-		Settings best = null;
-
-		float overOneHT = checkHalfTimeOptimal(sheet, all, year, type);
-		float basicPart = chechBasicOptimal(sheet, all, year, table, type);
 
 		float[] basics = new float[all.size()];
 		float[] poissons = new float[all.size()];
 		float[] weightedPoissons = new float[all.size()];
+		float[] ht1s = new float[all.size()];
+		float[] ht2s = new float[all.size()];
 		float[] htCombos = new float[all.size()];
 		float[] shots = new float[all.size()];
 		float[] similars = new float[all.size()];
@@ -2154,17 +2137,24 @@ public class XlSUtils {
 
 			ExtendedFixture key = new ExtendedFixture(f.date, homeTeam, awayTeam, new Result(-1, -1), f.competition);
 
-			basics[i] = basicPart * (basicMap.get(key) == null ? Float.NaN : basicMap.get(key))
-					+ (1f - basicPart) * Utils.basicSimilar(f, sheet, table);
+			basics[i] = basicMap.get(key) == null ? Float.NaN : basicMap.get(key);
 			poissons[i] = poissonsMap.get(key) == null ? Float.NaN : poissonsMap.get(key);
 			weightedPoissons[i] = weightedMap.get(key) == null ? Float.NaN : weightedMap.get(key);
-			float ht1 = ht1Map.get(key) == null ? Float.NaN : ht1Map.get(key);
-			float ht2 = ht2Map.get(key) == null ? Float.NaN : ht2Map.get(key);
-			htCombos[i] = (overOneHT * ht1 + (1f - overOneHT) * ht2);
-			// similars[i] = Utils.basicSimilar(f, sheet, table);
-			// if (flagShots)
-			// shots[i] = shots(f, sheet);
+			ht1s[i] = ht1Map.get(key) == null ? Float.NaN : ht1Map.get(key);
+			ht2s[i] = ht2Map.get(key) == null ? Float.NaN : ht2Map.get(key);
+			similars[i] = Utils.basicSimilar(f, sheet, table);
 		}
+
+		float overOneHT = checkOptimal(sheet, all, ht1s, ht2s, 0.5f, type);
+		float basicPart = checkOptimal(sheet, all, basics, similars, 0.5f, type);
+
+		for (int i = 0; i < all.size(); i++) {
+			htCombos[i] = (overOneHT * ht1s[i] + (1f - overOneHT) * ht2s[i]);
+			basics[i] = basicPart * basics[i] + (1f - basicPart) * similars[i];
+		}
+
+		Settings best = new Settings(sheet.getSheetName(), 0f, 0f, 0f, initTH, initTH, initTH, 0f, bestProfit)
+				.withSimilars(1f - basicPart).withValue(0.9f);
 
 		for (int x = 0; x <= 20; x++) {
 			int y = 20 - x;
@@ -2183,10 +2173,9 @@ public class XlSUtils {
 					finals.add(fe);
 			}
 
-			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH,
-					bestWinPercent, bestProfit).withValue(0.9f);
-			if (x != 0)
-				set = set.withSimilars(1f - basicPart);
+			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH, 0.5f,
+					bestProfit).withValue(0.9f);
+			set = set.withSimilars(1f - basicPart);
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2212,10 +2201,9 @@ public class XlSUtils {
 					finals.add(fe);
 			}
 
-			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH,
-					bestWinPercent, bestProfit).withValue(0.9f);
-			if (x != 0)
-				set = set.withSimilars(1f - basicPart);
+			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH, 0.5f,
+					bestProfit).withValue(0.9f);
+			set = set.withSimilars(1f - basicPart);
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2241,10 +2229,9 @@ public class XlSUtils {
 					finals.add(fe);
 			}
 
-			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH, bestWinPercent,
+			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f).withHT(overOneHT, y * 0.05f);
-			if (x != 0)
-				set = set.withSimilars(1f - basicPart);
+			set = set.withSimilars(1f - basicPart);
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2300,8 +2287,8 @@ public class XlSUtils {
 						finals.add(fe);
 				}
 
-				Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH,
-						bestWinPercent, bestProfit).withValue(0.9f).withShots(y * 0.05f);
+				Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH, 0.5f,
+						bestProfit).withValue(0.9f).withShots(y * 0.05f);
 				float currentProfit = Utils.getProfit(finals, set, type);
 				if (currentProfit > bestProfit) {
 					bestProfit = currentProfit;
