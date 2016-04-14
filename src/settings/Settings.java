@@ -10,6 +10,7 @@ public class Settings {
 	public float htCombo;
 	public float shots;
 	public float similars;
+	public float similarsPoisson;
 	public float halfTimeOverOne;
 	public float threshold;
 	public float upperBound;
@@ -74,9 +75,14 @@ public class Settings {
 		this.shots = shots;
 		return this;
 	}
-	
-	public Settings withSimilars(float similars){
+
+	public Settings withSimilars(float similars) {
 		this.similars = similars;
+		return this;
+	}
+
+	public Settings withSimilarPoissons(float similars) {
+		this.similarsPoisson = similars;
 		return this;
 	}
 

@@ -1430,6 +1430,20 @@ public class Utils {
 
 		return 0.6f * allGamesAVG + 0.3f * homeAwayAVG + 0.1f * BTSAVG;
 	}
+	
+	public static float similarPoisson(ExtendedFixture f, HSSFSheet sheet,Table table) {
+		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
+		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
+
+		ArrayList<ExtendedFixture> lastHomeTeam = filter(f.homeTeam,
+				XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date), filterHome);
+		ArrayList<ExtendedFixture> lastAwayTeam = filter(f.awayTeam,
+				XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date), filterAway);
+
+		float lambda = Utils.avgFor(f.homeTeam, lastHomeTeam);
+		float mu = Utils.avgFor(f.awayTeam, lastAwayTeam);
+		return Utils.poissonOver(lambda, mu);
+	}
 
 	private static ArrayList<ExtendedFixture> filter(String team, ArrayList<ExtendedFixture> selectLastAll,
 			ArrayList<String> filterHome) {

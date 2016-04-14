@@ -403,7 +403,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	static float selectAvgAwayTeamAgainst(HSSFSheet sheet, String awayTeamName, Date date) {
+	public static float selectAvgAwayTeamAgainst(HSSFSheet sheet, String awayTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -423,7 +423,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	static float selectAvgAwayTeamFor(HSSFSheet sheet, String awayTeamName, Date date) {
+	public static float selectAvgAwayTeamFor(HSSFSheet sheet, String awayTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -443,7 +443,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	static float selectAvgHomeTeamAgainst(HSSFSheet sheet, String homeTeamName, Date date) {
+	public static float selectAvgHomeTeamAgainst(HSSFSheet sheet, String homeTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -463,7 +463,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	static float selectAvgHomeTeamFor(HSSFSheet sheet, String homeTeamName, Date date) {
+	public static float selectAvgHomeTeamFor(HSSFSheet sheet, String homeTeamName, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -483,7 +483,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	static float selectAvgLeagueAway(HSSFSheet sheet, Date date) {
+	public static float selectAvgLeagueAway(HSSFSheet sheet, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -502,7 +502,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : total / count;
 	}
 
-	static float selectAvgLeagueHome(HSSFSheet sheet, Date date) {
+	public static float selectAvgLeagueHome(HSSFSheet sheet, Date date) {
 		float total = 0f;
 		int count = 0;
 		Iterator<Row> rowIterator = sheet.iterator();
@@ -1308,7 +1308,10 @@ public class XlSUtils {
 			float finalScore = settings.basic
 					* ((1 - settings.similars) * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
 							+ settings.similars * Utils.basicSimilar(f, sheet, table))
-					+ settings.poisson * poisson(f, sheet) + settings.weightedPoisson * poissonWeighted(f, sheet)
+					+ settings.poisson * ((1 - settings.similarsPoisson) * poisson(f, sheet)
+							+ settings.similarsPoisson * Utils.similarPoisson(f, sheet, table))
+
+					+ settings.weightedPoisson * poissonWeighted(f, sheet)
 					+ settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
 							+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
 			if (settings.shots != 0f)
@@ -2129,6 +2132,7 @@ public class XlSUtils {
 		float[] htCombos = new float[all.size()];
 		float[] shots = new float[all.size()];
 		float[] similars = new float[all.size()];
+		float[] similarPoissons = new float[all.size()];
 
 		for (int i = 0; i < all.size(); i++) {
 			ExtendedFixture f = all.get(i);
@@ -2143,14 +2147,17 @@ public class XlSUtils {
 			ht1s[i] = ht1Map.get(key) == null ? Float.NaN : ht1Map.get(key);
 			ht2s[i] = ht2Map.get(key) == null ? Float.NaN : ht2Map.get(key);
 			similars[i] = Utils.basicSimilar(f, sheet, table);
+			similarPoissons[i] = Utils.similarPoisson(f, sheet, table);
 		}
 
 		float overOneHT = checkOptimal(sheet, all, ht1s, ht2s, 0.5f, type);
 		float basicPart = checkOptimal(sheet, all, basics, similars, 0.5f, type);
+		float poissonPart = checkOptimal(sheet, all, poissons, similarPoissons, 0.5f, type);
 
 		for (int i = 0; i < all.size(); i++) {
 			htCombos[i] = (overOneHT * ht1s[i] + (1f - overOneHT) * ht2s[i]);
 			basics[i] = basicPart * basics[i] + (1f - basicPart) * similars[i];
+			poissons[i] = poissonPart * poissons[i] + (1f - poissonPart) * similarPoissons[i];
 		}
 
 		Settings best = new Settings(sheet.getSheetName(), 0f, 0f, 0f, initTH, initTH, initTH, 0f, bestProfit)
@@ -2175,7 +2182,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f);
-			set = set.withSimilars(1f - basicPart);
+			set = set.withSimilars(1f - basicPart).withSimilarPoissons(1f - poissonPart);
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2203,7 +2210,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f);
-			set = set.withSimilars(1f - basicPart);
+			set = set.withSimilars(1f - basicPart).withSimilarPoissons(1f - poissonPart);
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -2231,7 +2238,7 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f).withHT(overOneHT, y * 0.05f);
-			set = set.withSimilars(1f - basicPart);
+			set = set.withSimilars(1f - basicPart).withSimilarPoissons(1f - poissonPart);
 			float currentProfit = Utils.getProfit(finals, set, type);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
@@ -3053,6 +3060,28 @@ public class XlSUtils {
 
 		return underSetts.withMinMax(underSetts.minUnder, underSetts.maxUnder, overSetts.minOver, overSetts.maxOver);
 
+	}
+
+	public static float selectAvgLeagueHome(HSSFSheet sheet, Date date, ArrayList<String> filterHome) {
+		float total = 0f;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && dateCell != null
+					&& dateCell.getDateCellValue() != null && dateCell.getDateCellValue().before(date)) {
+				String homeTeam = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
+				if (filterHome.contains(homeTeam)) {
+					int homegoal = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
+					total += homegoal;
+					count++;
+				}
+			}
+		}
+		return count == 0 ? 0 : total / count;
 	}
 
 }
