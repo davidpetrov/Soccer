@@ -173,21 +173,6 @@ public class XlSUtils {
 		return Utils.poissonOver(lambda, mu);
 	}
 
-	public static float poissonDraw(ExtendedFixture f, HSSFSheet sheet) {
-
-		float leagueAvgHome = selectAvgLeagueHome(sheet, f.date);
-		float leagueAvgAway = selectAvgLeagueAway(sheet, f.date);
-		float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
-		float homeAvgAgainst = selectAvgHomeTeamAgainst(sheet, f.homeTeam, f.date);
-		float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
-		float awayAvgAgainst = selectAvgAwayTeamAgainst(sheet, f.awayTeam, f.date);
-
-		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
-		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
-
-		return Utils.poissonDraw(lambda, mu, 0);
-	}
-
 	public static float shots(ExtendedFixture f, HSSFSheet sheet) {
 		float avgTotal = selectAvgShotsTotal(sheet, f.date);
 
@@ -670,11 +655,11 @@ public class XlSUtils {
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		float bestBasic = 0;
 
-		float overOneHT = checkHalfTimeOptimal(sheet, all, year, "all");
-
 		float[] basics = new float[all.size()];
 		float[] poissons = new float[all.size()];
 		float[] weightedPoissons = new float[all.size()];
+		float[] ht1s = new float[all.size()];
+		float[] ht2s = new float[all.size()];
 		float[] htCombos = new float[all.size()];
 
 		for (int i = 0; i < all.size(); i++) {
@@ -683,6 +668,14 @@ public class XlSUtils {
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet);
 			weightedPoissons[i] = poissonWeighted(f, sheet);
+			ht1s[i] = halfTimeOnly(f, sheet, 1);
+			ht2s[i] = halfTimeOnly(f, sheet, 2);
+		}
+
+		float overOneHT = checkOptimal(sheet, all, ht1s, ht2s, 0.5f, "all");
+
+		for (int i = 0; i < all.size(); i++) {
+			ExtendedFixture f = all.get(i);
 			htCombos[i] = (overOneHT * halfTimeOnly(f, sheet, 1) + (1f - overOneHT) * halfTimeOnly(f, sheet, 2));
 		}
 
@@ -1300,6 +1293,13 @@ public class XlSUtils {
 		return restrict(finals, settings);
 	}
 
+	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+			Settings settings) {
+		ArrayList<FinalEntry> finals = calculateScores(sheet, all, settings);
+
+		return restrict(finals, settings);
+	}
+
 	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
 			Settings settings, Table table) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
@@ -1312,6 +1312,29 @@ public class XlSUtils {
 							+ settings.similarsPoisson * Utils.similarPoisson(f, sheet, table))
 
 					+ settings.weightedPoisson * poissonWeighted(f, sheet)
+					+ settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
+							+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+			if (settings.shots != 0f)
+				finalScore += settings.shots * shots(f, sheet);
+
+			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
+					settings.threshold, settings.lowerBound, settings.upperBound);
+			// if (!fe.prediction.equals(Float.NaN))
+			finals.add(fe);
+		}
+		return finals;
+	}
+
+	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+			Settings settings) {
+		ArrayList<FinalEntry> finals = new ArrayList<>();
+		for (ExtendedFixture f : all) {
+
+			float finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
+
+					+ settings.poisson * poisson(f, sheet) +
+
+			+settings.weightedPoisson * poissonWeighted(f, sheet)
 					+ settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
 							+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
 			if (settings.shots != 0f)

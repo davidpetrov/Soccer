@@ -30,6 +30,7 @@ import runner.Runner;
 import runner.RunnerAggregateInterval;
 import runner.RunnerAsian;
 import runner.RunnerAsianFinals;
+import runner.RunnerDraws;
 import runner.RunnerFinals;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
@@ -46,23 +47,23 @@ public class Test {
 
 		// simplePredictions();
 
-//		 Results.eval("similaroptimal2");
-//		 Results.eval("realdouble+bestcotfull");
-//		 Results.eval("runforshotsafter");
+//		 Results.eval("drawsintersect");
+		// Results.eval("realdouble+bestcotfull");
+		// Results.eval("runforshotsafter");
 
 		// stored24();
 
-//		 makePredictions();
+		 makePredictions();
+
+//		float total = 0f;
+//		for (int year = 2005; year <= 2015; year++)
+//			total += draws(year);
+//		System.out.println("Avg profit is " + (total / 11));
 
 		// float total = 0f;
-		// for (int year = 2005; year <= 2015; year++)
-		// total += asian(year);
+		// for (int year = 2009; year <= 2009; year++)
+		// total += simulation(year);
 		// System.out.println("Avg profit is " + (total / 11));
-
-		float total = 0f;
-		for (int year = 2009; year <= 2009; year++)
-			total += simulation(year);
-		System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2015; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -107,6 +108,39 @@ public class Test {
 			// continue;
 
 			threadArray.add(pool.submit(new RunnerAsian(sh, year)));
+		}
+
+		for (Future<Float> fd : threadArray) {
+			totalProfit += fd.get();
+			// System.out.println("Total profit: " + String.format("%.2f",
+			// totalProfit));
+		}
+		System.out.println("Total profit for season " + year + " is " + String.format("%.2f", totalProfit));
+		workbook.close();
+		file.close();
+		pool.shutdown();
+		return totalProfit;
+	}
+
+	public static float draws(int year) throws IOException, InterruptedException, ExecutionException {
+		String base = new File("").getAbsolutePath();
+
+		FileInputStream file = new FileInputStream(
+				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		Iterator<Sheet> sheet = workbook.sheetIterator();
+		float totalProfit = 0.0f;
+
+		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
+		while (sheet.hasNext()) {
+			HSSFSheet sh = (HSSFSheet) sheet.next();
+//			if (!sh.getSheetName().equals("E0"))
+//				continue;
+			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
+
+			threadArray.add(pool.submit(new RunnerDraws(sh, year)));
 		}
 
 		for (Future<Float> fd : threadArray) {
@@ -345,8 +379,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			if (!sh.getSheetName().equals("E0"))
-//				continue;
+			// if (!sh.getSheetName().equals("E0"))
+			// continue;
 			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
 
