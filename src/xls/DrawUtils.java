@@ -62,7 +62,8 @@ public class DrawUtils {
 				finals.add(d);
 			}
 
-			float bestExp = bestValue(finals);
+			float bestExp = bestValue(finals) * 0.8f;
+			// bestExp = bestPredictiveValue(finals, i);
 
 			finals = new ArrayList<>();
 			for (int j = 0; j < current.size(); j++) {
@@ -79,37 +80,40 @@ public class DrawUtils {
 					bets.add(j);
 			}
 
-			finals = new ArrayList<>();
-			for (int j = 0; j < data.size(); j++) {
-				ExtendedFixture f = data.get(j);
-				float score = poissonDraw(f, sheet);
-				float value = score * f.drawOdds;
-				DrawEntry d = new DrawEntry(f, true, value);
-				finals.add(d);
-			}
+			// finals = new ArrayList<>();
+			// for (int j = 0; j < data.size(); j++) {
+			// ExtendedFixture f = data.get(j);
+			// float score = poissonDraw(f, sheet);
+			// float value = score * f.drawOdds;
+			// DrawEntry d = new DrawEntry(f, true, value);
+			// finals.add(d);
+			// }
+			//
+			// float bestExpPoisson = bestValue(finals);
+			//
+			// finals = new ArrayList<>();
+			// for (int j = 0; j < current.size(); j++) {
+			// ExtendedFixture f = current.get(j);
+			// float score = poissonDraw(f, sheet);
+			// float value = score * f.drawOdds;
+			// DrawEntry d = new DrawEntry(f, true, value);
+			// finals.add(d);
+			// }
+			//
+			// ArrayList<DrawEntry> betsPoissons = new ArrayList<>();
+			// for (DrawEntry j : finals) {
+			// if (j.expectancy > bestExp)
+			// betsPoissons.add(j);
+			// }
 
-			float bestExpPoisson = bestValue(finals);
+			ArrayList<DrawEntry> inter = bets;/*
+												 * intersect(bets,
+												 * betsPoissons);
+												 */
 
-			finals = new ArrayList<>();
-			for (int j = 0; j < current.size(); j++) {
-				ExtendedFixture f = current.get(j);
-				float score = poissonDraw(f, sheet);
-				float value = score * f.drawOdds;
-				DrawEntry d = new DrawEntry(f, true, value);
-				finals.add(d);
-			}
-
-			ArrayList<DrawEntry> betsPoissons = new ArrayList<>();
-			for (DrawEntry j : finals) {
-				if (j.expectancy > bestExp)
-					betsPoissons.add(j);
-			}
-
-			ArrayList<DrawEntry> inter = intersect(bets, betsPoissons);
-
-			profit += getProfit(inter);
+			profit += getProfit(bets);
 			// System.out.println("Curr: "+ profit);
-			played += inter.size();
+			played += bets.size();
 
 		}
 
@@ -199,6 +203,31 @@ public class DrawUtils {
 			if (profit > bestProfit) {
 				bestProfit = profit;
 				best = current;
+			}
+
+		}
+		// System.out.println(bestProfit);
+		return best;
+	}
+
+	private static float bestPredictiveValue(ArrayList<DrawEntry> finals, int matchaday) {
+		float bestProfit = Float.NEGATIVE_INFINITY;
+		float best = 0;
+
+		for (int i = 0; i <= 20; i++) {
+			float current = 0.85f + i * 0.02f;
+
+			for (int day = 11; day < matchaday; day++) {
+				float profit = 0f;
+				for (DrawEntry f : finals) {
+					if (f.expectancy > current)
+						profit += f.getProfit();
+				}
+
+				if (profit > bestProfit) {
+					bestProfit = profit;
+					best = current;
+				}
 			}
 
 		}

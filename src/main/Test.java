@@ -35,6 +35,7 @@ import runner.RunnerFinals;
 import runner.RunnerIntersect;
 import runner.RunnerOptimals;
 import settings.Settings;
+import settings.SettingsAsian;
 import utils.Api;
 import utils.Utils;
 import xls.AsianUtils;
@@ -47,23 +48,24 @@ public class Test {
 
 		// simplePredictions();
 
-//		 Results.eval("drawsintersect");
+		// Results.eval("drawshots");
 		// Results.eval("realdouble+bestcotfull");
-		// Results.eval("runforshotsafter");
+		// Results.eval("drawsintersect");
 
 		// stored24();
 
-		 makePredictions();
+		// makePredictions();
+		// asianPredictions();
 
-//		float total = 0f;
-//		for (int year = 2005; year <= 2015; year++)
-//			total += draws(year);
-//		System.out.println("Avg profit is " + (total / 11));
-
-		// float total = 0f;
-		// for (int year = 2009; year <= 2009; year++)
-		// total += simulation(year);
-		// System.out.println("Avg profit is " + (total / 11));
+		float total = 0f;
+		for (int year = 2014; year <= 2014; year++)
+			total += asian(year);
+		System.out.println("Avg profit is " + (total / 11));
+//
+//		 float total = 0f;
+//		 for (int year = 2015; year <= 2015; year++)
+//		 total += simulation(year);
+//		 System.out.println("Avg profit is " + (total / 11));
 
 		// for (int i = 2015; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -71,7 +73,7 @@ public class Test {
 		// for (int year = 2010; year <= 2015; year++)
 		// triples(year);
 
-		// makePredictions();
+//		 makePredictions();
 
 		// singleMethod();
 
@@ -135,8 +137,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-//			if (!sh.getSheetName().equals("E0"))
-//				continue;
+			// if (!sh.getSheetName().equals("E0"))
+			// continue;
 			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
 
@@ -647,6 +649,43 @@ public class Test {
 			HSSFSheet league = workbookdata.getSheet(f.competition);
 			XlSUtils.makePrediction(sheet, league, f, optimal.get(league.getSheetName()));
 		}
+		workbook.close();
+		workbookdata.close();
+	}
+
+	public static void asianPredictions() throws IOException, InterruptedException {
+		String basePath = new File("").getAbsolutePath();
+		FileInputStream file = new FileInputStream(new File("C:\\Users\\Tereza\\Desktop\\fixtures.xls"));
+		HSSFWorkbook workbook = new HSSFWorkbook(file);
+		HSSFSheet sheet = workbook.getSheetAt(0);
+		ArrayList<ExtendedFixture> fixtures = XlSUtils.selectForPrediction(sheet);
+
+		FileInputStream filedata = new FileInputStream(
+				new File("C:\\Users\\Tereza\\Desktop\\all-euro-data-2015-2016.xls"));
+		HSSFWorkbook workbookdata = new HSSFWorkbook(filedata);
+
+		ArrayList<AsianEntry> all = new ArrayList<>();
+		HashMap<String, SettingsAsian> optimal = new HashMap<>();
+		Iterator<Sheet> sh = workbookdata.sheetIterator();
+		while (sh.hasNext()) {
+			HSSFSheet i = (HSSFSheet) sh.next();
+			optimal.put(i.getSheetName(), XlSUtils.asianPredictionSettings(i, 2015));
+		}
+
+		for (ExtendedFixture f : fixtures) {
+			HSSFSheet league = workbookdata.getSheet(f.competition);
+			all.addAll(AsianUtils.makePrediction(sheet, league, f, optimal.get(league.getSheetName())));
+		}
+
+		all.sort(new Comparator<AsianEntry>() {
+
+			@Override
+			public int compare(AsianEntry o1, AsianEntry o2) {
+				return ((Float) o2.expectancy).compareTo((Float) o1.expectancy);
+			}
+		});
+
+		System.out.println(all);
 		workbook.close();
 		workbookdata.close();
 	}

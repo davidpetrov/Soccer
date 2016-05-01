@@ -25,7 +25,7 @@ public class AsianEntry {
 		String out = prediction ? "home" : "away";
 		float coeff = prediction ? home : away;
 		return fixture.date + " " + fixture.homeTeam + " : " + fixture.awayTeam + " " + " " + out + " " + line + " "
-				+ coeff + " " + success() + "\n";
+				+ coeff + " " + " exp " + expectancy + "\n";
 	}
 
 	public String success() {

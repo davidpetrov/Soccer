@@ -1430,8 +1430,8 @@ public class Utils {
 
 		return 0.6f * allGamesAVG + 0.3f * homeAwayAVG + 0.1f * BTSAVG;
 	}
-	
-	public static float similarPoisson(ExtendedFixture f, HSSFSheet sheet,Table table) {
+
+	public static float similarPoisson(ExtendedFixture f, HSSFSheet sheet, Table table) {
 		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
 		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
 
@@ -1457,5 +1457,6 @@ public class Utils {
 		}
 		return result;
 	}
+
 
 }

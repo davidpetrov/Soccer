@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="lib/poi-3.13/poi-3.13-20150929.jar"/>
 	<classpathentry kind="lib" path="lib/java-json.jar"/>
 	<classpathentry kind="lib" path="lib/sqlite-jdbc-3.8.11.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Tereza/workspace/Soccer/lib/jsoup-1.9.1.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
