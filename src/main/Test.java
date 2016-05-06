@@ -48,34 +48,36 @@ public class Test {
 
 		// simplePredictions();
 
-		// Results.eval("drawshots");
+//		 Results.eval("smooth");
 		// Results.eval("realdouble+bestcotfull");
 		// Results.eval("drawsintersect");
 
 		// stored24();
 
-		// makePredictions();
+//		 makePredictions();
 		// asianPredictions();
 
-		float total = 0f;
-		for (int year = 2014; year <= 2014; year++)
-			total += asian(year);
-		System.out.println("Avg profit is " + (total / 11));
+//		float total = 0f;
+//		for (int year = 2014; year <= 2014; year++)
+//			total += asian(year);
+//		System.out.println("Avg profit is " + (total / 11));
+		
+//		 makePredictions();
 //
-//		 float total = 0f;
-//		 for (int year = 2015; year <= 2015; year++)
-//		 total += simulation(year);
-//		 System.out.println("Avg profit is " + (total / 11));
+		 float total = 0f;
+		 for (int year = 2005; year <= 2015; year++)
+		 total += simulation(year);
+		 System.out.println("Avg profit is " + (total / 11));
 
-		// for (int i = 2015; i <= 2015; i++)
-		// XlSUtils.populateScores(i);
+//		 for (int i = 2005; i <= 2015; i++)
+//		 XlSUtils.populateScores(i);
 
 		// for (int year = 2010; year <= 2015; year++)
 		// triples(year);
 
 //		 makePredictions();
 
-		// singleMethod();
+//		 singleMethod();
 
 		// aggregateInterval();
 
@@ -199,7 +201,7 @@ public class Test {
 	public static final void singleMethod() throws IOException {
 
 		float totalTotal = 0f;
-		for (int year = 2006; year <= 2011; year++) {
+		for (int year = 2005; year <= 2015; year++) {
 			float total = 0f;
 			String base = new File("").getAbsolutePath();
 			FileInputStream file = new FileInputStream(
@@ -381,10 +383,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("E0"))
-			// continue;
-			// if(!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-			// continue;
+//			 if (!sh.getSheetName().equals("E2"))
+//			 continue;
+			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+				continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}

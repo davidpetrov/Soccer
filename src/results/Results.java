@@ -50,7 +50,7 @@ public class Results {
 
 		br.close();
 		
-//		System.out.println("Count: "+count);
+		System.out.println("Count: "+count);
 		stats(results);
 
 		avgByLeague(results);
@@ -137,7 +137,7 @@ public class Results {
 	}
 
 	public static void dontRestric(HashMap<Integer, Map<String, Float>> results) {
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.SHOTSDONT));
 		HashMap<Integer, Float> byYear = new HashMap<>();
 		for (Entry<Integer, Map<String, Float>> entry : results.entrySet()) {
 			int year = entry.getKey();

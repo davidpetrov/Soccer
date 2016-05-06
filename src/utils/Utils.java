@@ -25,6 +25,7 @@ import org.json.JSONObject;
 import entries.FinalEntry;
 import main.ExtendedFixture;
 import main.Result;
+import main.SQLiteJDBC;
 import results.Results;
 import settings.Settings;
 import tables.Position;
@@ -1458,5 +1459,28 @@ public class Utils {
 		return result;
 	}
 
+	public static float bestCot(ArrayList<FinalEntry> finals) {
+		ArrayList<ArrayList<FinalEntry>> byYear = new ArrayList<>();
+
+		float bestCot = 0f;
+		float bestProfit = getProfit(finals, "all");
+
+		for (int j = 1; j <= 12; j++) {
+			ArrayList<FinalEntry> filtered = new ArrayList<>();
+			float cot = j * 0.02f;
+			filtered.addAll(Utils.cotRestrict(finals, cot));
+
+			float currProfit = 0f;
+			currProfit += Utils.getProfit(filtered, "all");
+
+			if (currProfit > bestProfit) {
+				bestProfit = currProfit;
+				bestCot = cot;
+			}
+
+		}
+
+		return 5 * bestCot / 6;
+	}
 
 }

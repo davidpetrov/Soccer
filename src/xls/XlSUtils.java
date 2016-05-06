@@ -199,11 +199,19 @@ public class XlSUtils {
 		float avgShotsOver = AvgShotsWhenOver(sheet, f.date);
 		float expected = lambda + mu;
 
-		if (expected >= avgShotsOver && expected > avgShotsUnder)
-			return 1f;
-		else if (expected <= avgShotsUnder && expected < avgShotsOver)
-			return 0f;
-		else {
+		float dist = avgShotsOver - avgShotsUnder;
+		// System.out.println(dist);
+
+		if (avgShotsUnder > avgShotsOver) {
+			return 0.5f;
+		}
+		if (expected >= avgShotsOver && expected > avgShotsUnder) {
+			float score = 0.5f + 0.5f * (expected - avgShotsOver) / dist;
+			return (score >= 0 && score <= 1f) ? score : 1f;
+		} else if (expected <= avgShotsUnder && expected < avgShotsOver) {
+			float score = 0.5f - 0.5f * (-expected + avgShotsUnder) / dist;
+			return (score >= 0 && score <= 1f) ? score : 0f;
+		} else {
 			// System.out.println(f);
 			return 0.5f;
 		}
@@ -317,7 +325,7 @@ public class XlSUtils {
 				count++;
 			}
 		}
-		return count == 0 ? 0 : total / count;
+		return count == 0 ? 0 : (float) total / count;
 	}
 
 	private static float AvgShotsWhenUnder(HSSFSheet sheet, Date date) {
@@ -332,14 +340,16 @@ public class XlSUtils {
 			int homegoal = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 			int awaygoal = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 			if (row.getCell(getColumnIndex(sheet, "HST")) != null && row.getCell(getColumnIndex(sheet, "AST")) != null
-					&& dateCell != null && dateCell.getDateCellValue().before(date) && homegoal + awaygoal < 2.5f) {
+					&& dateCell != null && dateCell.getDateCellValue().before(date)
+					&& row.getCell(getColumnIndex(sheet, "HST")).getCellType() == 0
+					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && homegoal + awaygoal < 2.5f) {
 				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 
 				count++;
 			}
 		}
-		return count == 0 ? 0 : total / count;
+		return count == 0 ? 0 : (float) total / count;
 	}
 
 	private static float AvgShotsWhenOver(HSSFSheet sheet, Date date) {
@@ -354,14 +364,16 @@ public class XlSUtils {
 			int homegoal = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 			int awaygoal = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 			if (row.getCell(getColumnIndex(sheet, "HST")) != null && row.getCell(getColumnIndex(sheet, "AST")) != null
-					&& dateCell != null && dateCell.getDateCellValue().before(date) && homegoal + awaygoal > 2.5f) {
+					&& dateCell != null && dateCell.getDateCellValue().before(date)
+					&& row.getCell(getColumnIndex(sheet, "HST")).getCellType() == 0
+					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && homegoal + awaygoal > 2.5f) {
 				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 
 				count++;
 			}
 		}
-		return count == 0 ? 0 : total / count;
+		return count == 0 ? 0 : (float) total / count;
 	}
 
 	static float selectAvgShotsHome(HSSFSheet sheet, Date date) {
@@ -459,7 +471,7 @@ public class XlSUtils {
 				count++;
 			}
 		}
-		return count == 0 ? 0 : total / count;
+		return count == 0 ? 0 : (float) total / count;
 	}
 
 	public static float selectAvgHomeTeamFor(HSSFSheet sheet, String homeTeamName, Date date) {
@@ -479,7 +491,7 @@ public class XlSUtils {
 				count++;
 			}
 		}
-		return count == 0 ? 0 : total / count;
+		return count == 0 ? 0 : (float) total / count;
 	}
 
 	public static float selectAvgLeagueAway(HSSFSheet sheet, Date date) {
@@ -1066,17 +1078,29 @@ public class XlSUtils {
 
 	public static float singleMethod(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
+		ArrayList<FinalEntry> basics = new ArrayList<>();
 		for (int i = 0; i < all.size(); i++) {
 			ExtendedFixture f = all.get(i);
-			float finalScore = poissonWeighted(f, sheet) - shots(f, sheet);
-			System.out.println(Results.format(finalScore));
+			float finalScore = shots(f, sheet);
+			float basicScore = 0f;
+			// System.out.println(Results.format(finalScore));
 			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
-					0.55f, 0.55f, 0.55f);
-			if (!fe.prediction.equals(Float.NaN))
+					0.51f, 0.51f, 0.51f);
+			if (!fe.prediction.equals(Float.NaN) && finalScore != 0.5f)
 				finals.add(fe);
+
+			FinalEntry fbasic = new FinalEntry(f, basicScore,
+					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.51f, 0.51f, 0.51f);
+			if (!fbasic.prediction.equals(Float.NaN))
+				basics.add(fe);
 		}
 
+		// finals = utils.Utils.intersect(finals, basics);
+
 		float currentProfit = Utils.getProfit(finals, "all");
+		float yield = (currentProfit / finals.size()) * 100f;
+		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: "
+				+ String.format("%.2f", currentProfit) + " yield is: " + String.format("%.2f%%", yield));
 		return currentProfit;
 	}
 
@@ -1336,22 +1360,30 @@ public class XlSUtils {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
 		for (ExtendedFixture f : all) {
 
-			float finalScore = settings.basic
-					* ((1 - settings.similars) * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
-							+ settings.similars * Utils.basicSimilar(f, sheet, table))
-					+ settings.poisson * ((1 - settings.similarsPoisson) * poisson(f, sheet)
-							+ settings.similarsPoisson * Utils.similarPoisson(f, sheet, table))
+			float finalScore = 0f;
 
-					+ settings.weightedPoisson * poissonWeighted(f, sheet)
-					+ settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
-							+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+			if (settings.basic != 0f)
+				finalScore += settings.basic * ((1 - settings.similars) * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
+						+ settings.similars * Utils.basicSimilar(f, sheet, table));
+
+			if (settings.poisson != 0f)
+				finalScore += settings.poisson * ((1 - settings.similarsPoisson) * poisson(f, sheet)
+						+ settings.similarsPoisson * Utils.similarPoisson(f, sheet, table));
+
+			if (settings.weightedPoisson != 0f)
+				finalScore += settings.weightedPoisson * poissonWeighted(f, sheet);
+
+			if (settings.htCombo != 0f)
+				finalScore += settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
+						+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+
 			if (settings.shots != 0f)
 				finalScore += settings.shots * shots(f, sheet);
 
 			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
 					settings.threshold, settings.lowerBound, settings.upperBound);
-			// if (!fe.prediction.equals(Float.NaN))
-			finals.add(fe);
+			if (!fe.prediction.equals(Float.NaN))
+				finals.add(fe);
 		}
 		return finals;
 	}
@@ -1361,13 +1393,21 @@ public class XlSUtils {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
 		for (ExtendedFixture f : all) {
 
-			float finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
+			float finalScore = 0f;
 
-					+ settings.poisson * poisson(f, sheet) +
+			if (settings.basic != 0f)
+				finalScore += settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 
-			+settings.weightedPoisson * poissonWeighted(f, sheet)
-					+ settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
-							+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+			if (settings.poisson != 0f)
+				finalScore += settings.poisson * poisson(f, sheet);
+
+			if (settings.weightedPoisson != 0f)
+				finalScore += settings.weightedPoisson * poissonWeighted(f, sheet);
+
+			if (settings.htCombo != 0f)
+				finalScore += settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
+						+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+
 			if (settings.shots != 0f)
 				finalScore += settings.shots * shots(f, sheet);
 
@@ -1429,10 +1469,12 @@ public class XlSUtils {
 				&& (cot >= findCot(league.getSheetName(), 2015, 3, "realdouble24")) && (certainty >= 0.5f)
 				&& (score >= sett.upperBound || score <= sett.lowerBound) && !dont.contains(league.getSheetName())) {
 			String prediction = score > sett.threshold ? "over" : "under";
+			// System.out.println(sett);
 			System.err.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
 					+ prediction + " " + coeff);
 		} else {
 			String prediction = score > sett.threshold ? "over" : "under";
+			// System.out.println(sett);
 			System.out.println(league.getSheetName() + " " + f.homeTeam + " : " + f.awayTeam + " " + score + " "
 					+ prediction + " " + coeff);
 		}
@@ -1913,37 +1955,35 @@ public class XlSUtils {
 		HashMap<ExtendedFixture, Float> weighted = SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
 		HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all, "HALFTIME1", year, sheet.getSheetName());
 		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
+		HashMap<ExtendedFixture, Float> shots = SQLiteJDBC.selectScores(all, "SHOTS", year, sheet.getSheetName());
 
 		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay; i++) {
+		for (int i = 14; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 
 			Table table = Utils.createTable(data, sheet.getSheetName(), year, i);
+			ArrayList<FinalEntry> finals = new ArrayList<>();
 
-			// System.out.println(table);
-			// System.out.println(table.getFirstQuartile());
-			// System.out.println(table.getMedian());
-			// System.out.println(table.getThirdQuartile());
-			// System.out.println(table.getTopTeams());
-			// System.out.println(table.getMiddleTeams());
-			// System.out.println(table.getBottomTeams());
+			Settings temp = runForLeagueWithOdds(sheet, data, year, table, basics, poissons, weighted, ht1, ht2, shots,
+					0.55f, "all").withValue(0.9f);
+					// Settings temp = new Settings(sheet.getSheetName(), 0f,
+					// 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(1f);
 
-			// Settings odds = bestOdds(sheet.getSheetName(), year, 3,
-			// "realdouble15");
-			// data = Utils.filterByOdds(data, Math.min(temp.minUnder,
-			// temp.minOver), Math.max(temp.maxUnder, temp.maxOver))
+			//
+			// ArrayList<Settings> list = runForBest(sheet, data, year,
+			// table,
+			// basics, poissons, weighted, ht1, ht2, 0.55f,
+			// "all");
+			//
+			// finals = runWithSettingsList(sheet, data, temp, table);
 
-			Settings temp = predictiveFromDB(sheet, data, year, table, basics, poissons, weighted, ht1, ht2, 0.55f,
-					"all", i).withValue(0.9f);
-
-			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp, table);
-			temp = findThreshold(sheet, finals, temp, "all");
-			finals = restrict(finals, temp);
-
-			temp = findIntervalReal(finals, year, temp, "all");
-			finals = restrict(finals, temp);
+			// temp = findThreshold(sheet, finals, temp, "all");
+			// finals = restrict(finals, temp);
+			//
+			// temp = findIntervalReal(finals, year, temp, "all");
+			// finals = restrict(finals, temp);
 
 			// temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals),
 			// year, table, basics, poissons, weighted, ht1,
@@ -1957,8 +1997,9 @@ public class XlSUtils {
 			// temp = findIntervalReal(finals, year, temp, "all");
 			// finals = restrict(finals, temp);
 
-			temp = findValue(finals, sheet, temp, "all");
+			// temp = findValue(finals, sheet, temp, "all");
 
+			// float bestCot = Utils.bestCot(finals);
 			// boolean flagShots = Utils.getProfit(Utils.shotsRestrict(finals,
 			// sheet), "all") > temp.profit;
 			// Pair poslimit = Utils.positionLimits(finals, table, "all");
@@ -1966,13 +2007,21 @@ public class XlSUtils {
 
 			finals = runWithSettingsList(sheet, current, temp, table);
 
-			finals = Utils.certaintyRestrict(finals, 0.5f);
+			// finals = restrict(finals, temp);
+			//
+			// finals = Utils.certaintyRestrict(finals, 0.5f);
 			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
 			// "realdouble15");
-			finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(), year, 3, "realdouble15"));
 
-			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()))
-				finals = Utils.shotsRestrict(finals, sheet);
+			// finals = Utils.cotRestrict(finals,
+			// bestCot /*
+			// * findCot(sheet.getSheetName(), year, 3,
+			// * "realdouble15")
+			// */);
+
+			// if
+			// (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()))
+			// finals = Utils.shotsRestrict(finals, sheet);
 
 			// finals = Utils.positionRestrict(finals, table, 4, 10, "all");
 
@@ -1983,11 +2032,11 @@ public class XlSUtils {
 
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(finals, temp, "all");
-			// trprofit = Utils.getScaledProfit(finals, 0f);
 
 			profit += trprofit;
 
 		}
+
 		float yield = (profit / played) * 100f;
 		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
 				+ " yield is: " + String.format("%.2f%%", yield));
@@ -1997,136 +2046,153 @@ public class XlSUtils {
 
 	public static float realisticUnderOver(HSSFSheet sheet, int year) throws IOException, InterruptedException {
 		float profit = 0.0f;
-		int played = 0;
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		// int played = 0;
+		// ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		//
+		// HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all,
+		// "BASICS", year, sheet.getSheetName());
+		// HashMap<ExtendedFixture, Float> poissons =
+		// SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
+		// HashMap<ExtendedFixture, Float> weighted =
+		// SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
+		// HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all,
+		// "HALFTIME1", year, sheet.getSheetName());
+		// HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all,
+		// "HALFTIME2", year, sheet.getSheetName());
+		//
+		// int maxMatchDay = addMatchDay(sheet, all);
+		// for (int i = 15; i < maxMatchDay; i++) {
+		// ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+		//
+		// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+		//
+		// Settings temp = runForLeagueWithOdds(sheet, data, year, null, basics,
+		// poissons, weighted, ht1, ht2, 0.55f,
+		// "unders").withValue(0.9f);
+		//
+		// ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data,
+		// temp);
+		// temp = findThreshold(sheet, finals, temp, "unders");
+		// finals = restrict(finals, temp);
+		//
+		// temp = findIntervalReal(finals, year, temp, "unders");
+		// finals = restrict(finals, temp);
+		//
+		// temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year,
+		// null, basics, poissons, weighted, ht1,
+		// ht2, temp.threshold, "unders");
+		// finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals),
+		// temp);
+		//
+		// temp = findThreshold(sheet, finals, temp, "unders");
+		// finals = restrict(finals, temp);
+		//
+		// temp = findIntervalReal(finals, year, temp, "unders");
+		// finals = restrict(finals, temp);
+		//
+		// temp = findValue(finals, sheet, temp, "unders");
+		//
+		// finals = runWithSettingsList(sheet, current, temp);
+		//
+		// finals = Utils.certaintyRestrict(finals, 0.5f);
+		//
+		// Settings tempOvers = runForLeagueWithOdds(sheet, data, year, null,
+		// basics, poissons, weighted, ht1, ht2,
+		// 0.55f, "overs").withValue(0.9f);
+		//
+		// ArrayList<FinalEntry> finalsOvers = runWithSettingsList(sheet, data,
+		// tempOvers);
+		// tempOvers = findThreshold(sheet, finalsOvers, tempOvers, "overs");
+		// finalsOvers = restrict(finalsOvers, tempOvers);
+		//
+		// tempOvers = findIntervalReal(finalsOvers, year, tempOvers, "overs");
+		// finalsOvers = restrict(finalsOvers, tempOvers);
+		//
+		// tempOvers = runForLeagueWithOdds(sheet,
+		// Utils.onlyFixtures(finalsOvers), year, null, basics, poissons,
+		// weighted, ht1, ht2, tempOvers.threshold, "overs");
+		// finalsOvers = runWithSettingsList(sheet,
+		// Utils.onlyFixtures(finalsOvers), tempOvers);
+		//
+		// tempOvers = findThreshold(sheet, finalsOvers, tempOvers, "overs");
+		// finalsOvers = restrict(finalsOvers, tempOvers);
+		//
+		// tempOvers = findIntervalReal(finalsOvers, year, tempOvers, "overs");
+		// finalsOvers = restrict(finalsOvers, tempOvers);
+		//
+		// tempOvers = findValue(finalsOvers, sheet, tempOvers, "overs");
+		//
+		// finalsOvers = runWithSettingsList(sheet, current, tempOvers);
+		//
+		// finalsOvers = Utils.certaintyRestrict(finalsOvers, 0.5f);
+		//
+		// finals = utils.Utils.onlyUnders(finals);
+		//
+		// finalsOvers = Utils.onlyOvers(finalsOvers);
+		//
+		// // System.out.println(finals);
+		// // System.out.println(finalsOvers);
+		//
+		// ArrayList<FinalEntry> duplicates = new ArrayList<>();
+		//
+		// for (FinalEntry u : finals) {
+		// for (FinalEntry o : finalsOvers) {
+		// if (u.fixture.equals(o.fixture)) {
+		// duplicates.add(o);
+		// duplicates.add(u);
+		// }
+		// }
+		// }
+		// for (FinalEntry d : duplicates) {
+		// finals.remove(d);
+		// finalsOvers.remove(d);
+		// }
+		//
+		// finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(),
+		// year, 3, "realdouble15"));
+		//
+		// finalsOvers = Utils.cotRestrict(finalsOvers,
+		// findCot(sheet.getSheetName(), year, 3, "realdouble15"));
+		//
+		// if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
+		// ArrayList<FinalEntry> shotBased = new ArrayList<>();
+		// for (FinalEntry fe : finals) {
+		// float shotsScore = shots(fe.fixture, sheet);
+		// if (fe.prediction >= fe.upper && shotsScore == 1f) {
+		// shotBased.add(fe);
+		// } else if (fe.prediction <= fe.lower && shotsScore == 0f) {
+		// shotBased.add(fe);
+		// }
+		// }
+		// finals = shotBased;
+		// }
+		//
+		// if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
+		// ArrayList<FinalEntry> shotBased = new ArrayList<>();
+		// for (FinalEntry fe : finalsOvers) {
+		// float shotsScore = shots(fe.fixture, sheet);
+		// if (fe.prediction >= fe.upper && shotsScore == 1f) {
+		// shotBased.add(fe);
+		// } else if (fe.prediction <= fe.lower && shotsScore == 0f) {
+		// shotBased.add(fe);
+		// }
+		// }
+		// finalsOvers = shotBased;
+		// }
 
-		HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all, "BASICS", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> poissons = SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> weighted = SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all, "HALFTIME1", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
+		// played += finals.size();
+		// played += finalsOvers.size();
 
-		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+		// float trprofit = Utils.getProfit(finals, temp, "unders") +
+		// Utils.getProfit(finalsOvers, tempOvers, "overs");
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
-
-			Settings temp = runForLeagueWithOdds(sheet, data, year, null, basics, poissons, weighted, ht1, ht2, 0.55f,
-					"unders").withValue(0.9f);
-
-			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
-			temp = findThreshold(sheet, finals, temp, "unders");
-			finals = restrict(finals, temp);
-
-			temp = findIntervalReal(finals, year, temp, "unders");
-			finals = restrict(finals, temp);
-
-			temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year, null, basics, poissons, weighted, ht1,
-					ht2, temp.threshold, "unders");
-			finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals), temp);
-
-			temp = findThreshold(sheet, finals, temp, "unders");
-			finals = restrict(finals, temp);
-
-			temp = findIntervalReal(finals, year, temp, "unders");
-			finals = restrict(finals, temp);
-
-			temp = findValue(finals, sheet, temp, "unders");
-
-			finals = runWithSettingsList(sheet, current, temp);
-
-			finals = Utils.certaintyRestrict(finals, 0.5f);
-
-			Settings tempOvers = runForLeagueWithOdds(sheet, data, year, null, basics, poissons, weighted, ht1, ht2,
-					0.55f, "overs").withValue(0.9f);
-
-			ArrayList<FinalEntry> finalsOvers = runWithSettingsList(sheet, data, tempOvers);
-			tempOvers = findThreshold(sheet, finalsOvers, tempOvers, "overs");
-			finalsOvers = restrict(finalsOvers, tempOvers);
-
-			tempOvers = findIntervalReal(finalsOvers, year, tempOvers, "overs");
-			finalsOvers = restrict(finalsOvers, tempOvers);
-
-			tempOvers = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finalsOvers), year, null, basics, poissons,
-					weighted, ht1, ht2, tempOvers.threshold, "overs");
-			finalsOvers = runWithSettingsList(sheet, Utils.onlyFixtures(finalsOvers), tempOvers);
-
-			tempOvers = findThreshold(sheet, finalsOvers, tempOvers, "overs");
-			finalsOvers = restrict(finalsOvers, tempOvers);
-
-			tempOvers = findIntervalReal(finalsOvers, year, tempOvers, "overs");
-			finalsOvers = restrict(finalsOvers, tempOvers);
-
-			tempOvers = findValue(finalsOvers, sheet, tempOvers, "overs");
-
-			finalsOvers = runWithSettingsList(sheet, current, tempOvers);
-
-			finalsOvers = Utils.certaintyRestrict(finalsOvers, 0.5f);
-
-			finals = utils.Utils.onlyUnders(finals);
-
-			finalsOvers = Utils.onlyOvers(finalsOvers);
-
-			// System.out.println(finals);
-			// System.out.println(finalsOvers);
-
-			ArrayList<FinalEntry> duplicates = new ArrayList<>();
-
-			for (FinalEntry u : finals) {
-				for (FinalEntry o : finalsOvers) {
-					if (u.fixture.equals(o.fixture)) {
-						duplicates.add(o);
-						duplicates.add(u);
-					}
-				}
-			}
-			for (FinalEntry d : duplicates) {
-				finals.remove(d);
-				finalsOvers.remove(d);
-			}
-
-			finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(), year, 3, "realdouble15"));
-
-			finalsOvers = Utils.cotRestrict(finalsOvers, findCot(sheet.getSheetName(), year, 3, "realdouble15"));
-
-			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
-				ArrayList<FinalEntry> shotBased = new ArrayList<>();
-				for (FinalEntry fe : finals) {
-					float shotsScore = shots(fe.fixture, sheet);
-					if (fe.prediction >= fe.upper && shotsScore == 1f) {
-						shotBased.add(fe);
-					} else if (fe.prediction <= fe.lower && shotsScore == 0f) {
-						shotBased.add(fe);
-					}
-				}
-				finals = shotBased;
-			}
-
-			if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
-				ArrayList<FinalEntry> shotBased = new ArrayList<>();
-				for (FinalEntry fe : finalsOvers) {
-					float shotsScore = shots(fe.fixture, sheet);
-					if (fe.prediction >= fe.upper && shotsScore == 1f) {
-						shotBased.add(fe);
-					} else if (fe.prediction <= fe.lower && shotsScore == 0f) {
-						shotBased.add(fe);
-					}
-				}
-				finalsOvers = shotBased;
-			}
-
-			played += finals.size();
-			played += finalsOvers.size();
-
-			float trprofit = Utils.getProfit(finals, temp, "unders") + Utils.getProfit(finalsOvers, tempOvers, "overs");
-
-			profit += trprofit;
-
-		}
-		float yield = (profit / played) * 100f;
-		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
-				+ " yield is: " + String.format("%.2f%%", yield));
+		// profit += trprofit;
+		//
+		// }
+		// float yield = (profit / played) * 100f;
+		// System.out.println("Profit for " + sheet.getSheetName() + " " + year
+		// + " is: " + String.format("%.2f", profit)
+		// + " yield is: " + String.format("%.2f%%", yield));
 		return profit;
 	}
 
@@ -2182,13 +2248,11 @@ public class XlSUtils {
 	private static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, Table table,
 			HashMap<ExtendedFixture, Float> basicMap, HashMap<ExtendedFixture, Float> poissonsMap,
 			HashMap<ExtendedFixture, Float> weightedMap, HashMap<ExtendedFixture, Float> ht1Map,
-			HashMap<ExtendedFixture, Float> ht2Map, float initTH, String type) {
+			HashMap<ExtendedFixture, Float> ht2Map, HashMap<ExtendedFixture, Float> shotsMap, float initTH,
+			String type) {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
-		boolean flagShots = /*
-							 * Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.
-							 * getSheetName())
-							 */false;
+		boolean flagShots = Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName());
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
 
@@ -2214,22 +2278,241 @@ public class XlSUtils {
 			weightedPoissons[i] = weightedMap.get(key) == null ? Float.NaN : weightedMap.get(key);
 			ht1s[i] = ht1Map.get(key) == null ? Float.NaN : ht1Map.get(key);
 			ht2s[i] = ht2Map.get(key) == null ? Float.NaN : ht2Map.get(key);
-			similars[i] = Utils.basicSimilar(f, sheet, table);
-			similarPoissons[i] = Utils.similarPoisson(f, sheet, table);
+			// similars[i] = Utils.basicSimilar(f, sheet, table);
+			// similarPoissons[i] = Utils.similarPoisson(f, sheet, table);
+			if (flagShots)
+				shots[i] = shotsMap.get(key) == null ? Float.NaN : shotsMap.get(key);
+		}
+
+		// float overOneHT = checkOptimal(sheet, all, ht1s, ht2s, 0.5f, type);
+		// float basicPart = checkOptimal(sheet, all, basics, similars, 0.5f,
+		// type);
+		// float poissonPart = checkOptimal(sheet, all, poissons,
+		// similarPoissons, 0.5f, type);
+
+		// for (int i = 0; i < all.size(); i++) {
+		// htCombos[i] = (overOneHT * ht1s[i] + (1f - overOneHT) * ht2s[i]);
+		// basics[i] = basicPart * basics[i] + (1f - basicPart) *
+		// similars[i];
+		// poissons[i] = poissonPart * poissons[i] + (1f - poissonPart) *
+		// similarPoissons[i];
+		// }
+
+		Settings best = new Settings(sheet.getSheetName(), 0f, 0f, 0f, initTH, initTH, initTH, 0f, bestProfit)
+				.withSimilars(0).withValue(0.9f);
+
+		// for (int x = 0; x <= 20; x++) {
+		// int y = 20 - x;
+		// ArrayList<FinalEntry> finals = new ArrayList<>();
+		// for (int i = 0; i < all.size(); i++) {
+		// ExtendedFixture f = all.get(i);
+		// float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
+		//
+		// float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+		// float certainty = finalScore > initTH ? finalScore : (1f -
+		// finalScore);
+		// float value = certainty * gain;
+		//
+		// FinalEntry fe = new FinalEntry(f, finalScore,
+		// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), initTH,
+		// initTH, initTH);
+		// if (!fe.prediction.equals(Float.NaN) && value > 0.9f)
+		// finals.add(fe);
+		// }
+		//
+		// Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y *
+		// 0.05f, 0.0f, initTH, initTH, initTH, 0.5f,
+		// bestProfit).withValue(0.9f);
+		// set = set.withSimilars(0).withSimilarPoissons(0);
+		// float currentProfit = Utils.getProfit(finals, set, type);
+		// if (currentProfit > bestProfit) {
+		// bestProfit = currentProfit;
+		// best = set;
+		// }
+		//
+		// }
+		//
+		// for (int x = 0; x <= 20; x++) {
+		// int y = 20 - x;
+		// ArrayList<FinalEntry> finals = new ArrayList<>();
+		// for (int i = 0; i < all.size(); i++) {
+		// ExtendedFixture f = all.get(i);
+		// float finalScore = x * 0.05f * basics[i] + y * 0.05f *
+		// weightedPoissons[i];
+		//
+		// float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+		// float certainty = finalScore > initTH ? finalScore : (1f -
+		// finalScore);
+		// float value = certainty * gain;
+		//
+		// FinalEntry fe = new FinalEntry(f, finalScore,
+		// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), initTH,
+		// initTH, initTH);
+		// if (!fe.prediction.equals(Float.NaN) && value > 0.9f)
+		// finals.add(fe);
+		// }
+		//
+		// Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y *
+		// 0.05f, initTH, initTH, initTH, 0.5f,
+		// bestProfit).withValue(0.9f);
+		// set = set.withSimilars(0).withSimilarPoissons(0);
+		// float currentProfit = Utils.getProfit(finals, set, type);
+		// if (currentProfit > bestProfit) {
+		// bestProfit = currentProfit;
+		// best = set;
+		// }
+		//
+		// }
+		//
+		// for (int x = 0; x <= 20; x++) {
+		// int y = 20 - x;
+		// ArrayList<FinalEntry> finals = new ArrayList<>();
+		// for (int i = 0; i < all.size(); i++) {
+		// ExtendedFixture f = all.get(i);
+		// float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
+		//
+		// float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+		// float certainty = finalScore > initTH ? finalScore : (1f -
+		// finalScore);
+		// float value = certainty * gain;
+		//
+		// FinalEntry fe = new FinalEntry(f, finalScore,
+		// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), initTH,
+		// initTH, initTH);
+		// if (!fe.prediction.equals(Float.NaN) && value > 0.9f)
+		// finals.add(fe);
+		// }
+		//
+		// Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f,
+		// initTH, initTH, initTH, 0.5f,
+		// bestProfit).withValue(0.9f).withHT(overOneHT, y * 0.05f);
+		// set = set.withSimilars(0).withSimilarPoissons(0);
+		// float currentProfit = Utils.getProfit(finals, set, type);
+		// if (currentProfit > bestProfit) {
+		// bestProfit = currentProfit;
+		// best = set;
+		// }
+		// }
+
+		// for (int x = 0; x <= 20; x++) {
+		// int y = 20 - x;
+		// ArrayList<FinalEntry> finals = new ArrayList<>();
+		// for (int i = 0; i < all.size(); i++) {
+		// ExtendedFixture f = all.get(i);
+		// float finalScore = x * 0.05f * poissons[i] + y * 0.05f * similars[i];
+		//
+		// float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+		// float certainty = finalScore > initTH ? finalScore : (1f -
+		// finalScore);
+		// float value = certainty * gain;
+		//
+		// FinalEntry fe = new FinalEntry(f, finalScore,
+		// new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), initTH,
+		// initTH, initTH);
+		// if (!fe.prediction.equals(Float.NaN) && value > 0.9f)
+		// finals.add(fe);
+		// }
+		//
+		// Settings set = new Settings(sheet.getSheetName(), 0f, x * 0.05f, 0f,
+		// initTH, initTH, initTH, bestWinPercent,
+		// bestProfit).withSimilars(y * 0.05f).withValue(0.9f);
+		// float currentProfit = Utils.getProfit(finals, set, type);
+		// if (currentProfit > bestProfit) {
+		// bestProfit = currentProfit;
+		// best = set;
+		// }
+		//
+		// }
+
+		if (flagShots)
+			for (int x = 0; x <= 20; x++) {
+				int y = 20 - x;
+				ArrayList<FinalEntry> finals = new ArrayList<>();
+				for (int i = 0; i < all.size(); i++) {
+					ExtendedFixture f = all.get(i);
+					float finalScore = x * 0.05f * weightedPoissons[i] + y * 0.05f * shots[i];
+
+					float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+					float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
+					float value = certainty * gain;
+
+					FinalEntry fe = new FinalEntry(f, finalScore,
+							new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), initTH, initTH, initTH);
+					if (!fe.prediction.equals(Float.NaN) && value > 0.9f)
+						finals.add(fe);
+				}
+
+				Settings set = new Settings(sheet.getSheetName(), 0f, 0f, x * 0.05f, initTH, initTH, initTH, 0.5f,
+						bestProfit).withValue(0.9f).withShots(y * 0.05f);
+				float currentProfit = Utils.getProfit(finals, set, type);
+				if (currentProfit > bestProfit) {
+					bestProfit = currentProfit;
+					best = set;
+				}
+			}
+
+		best.profit = bestProfit;
+		return best.withYear(year);
+
+	}
+
+	private static ArrayList<Settings> runForBest(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year,
+			Table table, HashMap<ExtendedFixture, Float> basicMap, HashMap<ExtendedFixture, Float> poissonsMap,
+			HashMap<ExtendedFixture, Float> weightedMap, HashMap<ExtendedFixture, Float> ht1Map,
+			HashMap<ExtendedFixture, Float> ht2Map, float initTH, String type) {
+
+		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
+		boolean flagShots = /*
+							 * Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.
+							 * getSheetName())
+							 */false;
+
+		float bestProfit = Float.NEGATIVE_INFINITY;
+
+		ArrayList<Settings> list = new ArrayList<>();
+
+		float[] basics = new float[all.size()];
+		float[] poissons = new float[all.size()];
+		float[] weightedPoissons = new float[all.size()];
+		float[] ht1s = new float[all.size()];
+		float[] ht2s = new float[all.size()];
+		float[] htCombos = new float[all.size()];
+		float[] shots = new float[all.size()];
+		float[] similars = new float[all.size()];
+		float[] similarPoissons = new float[all.size()];
+
+		for (int i = 0; i < all.size(); i++) {
+			ExtendedFixture f = all.get(i);
+			String homeTeam = escapeFlag && f.homeTeam.contains("\'") ? f.homeTeam.replace("\'", "\\") : f.homeTeam;
+			String awayTeam = escapeFlag && f.awayTeam.contains("\'") ? f.awayTeam.replace("\'", "\\") : f.awayTeam;
+
+			ExtendedFixture key = new ExtendedFixture(f.date, homeTeam, awayTeam, new Result(-1, -1), f.competition);
+
+			basics[i] = basicMap.get(key) == null ? Float.NaN : basicMap.get(key);
+			poissons[i] = poissonsMap.get(key) == null ? Float.NaN : poissonsMap.get(key);
+			weightedPoissons[i] = weightedMap.get(key) == null ? Float.NaN : weightedMap.get(key);
+			ht1s[i] = ht1Map.get(key) == null ? Float.NaN : ht1Map.get(key);
+			ht2s[i] = ht2Map.get(key) == null ? Float.NaN : ht2Map.get(key);
+			// similars[i] = Utils.basicSimilar(f, sheet, table);
+			// similarPoissons[i] = Utils.similarPoisson(f, sheet, table);
 		}
 
 		float overOneHT = checkOptimal(sheet, all, ht1s, ht2s, 0.5f, type);
-		float basicPart = checkOptimal(sheet, all, basics, similars, 0.5f, type);
-		float poissonPart = checkOptimal(sheet, all, poissons, similarPoissons, 0.5f, type);
+		// float basicPart = checkOptimal(sheet, all, basics, similars, 0.5f,
+		// type);
+		// float poissonPart = checkOptimal(sheet, all, poissons,
+		// similarPoissons, 0.5f, type);
 
 		for (int i = 0; i < all.size(); i++) {
 			htCombos[i] = (overOneHT * ht1s[i] + (1f - overOneHT) * ht2s[i]);
-			basics[i] = basicPart * basics[i] + (1f - basicPart) * similars[i];
-			poissons[i] = poissonPart * poissons[i] + (1f - poissonPart) * similarPoissons[i];
+			// basics[i] = basicPart * basics[i] + (1f - basicPart) *
+			// similars[i];
+			// poissons[i] = poissonPart * poissons[i] + (1f - poissonPart) *
+			// similarPoissons[i];
 		}
 
 		Settings best = new Settings(sheet.getSheetName(), 0f, 0f, 0f, initTH, initTH, initTH, 0f, bestProfit)
-				.withSimilars(1f - basicPart).withValue(0.9f);
+				.withSimilars(0).withValue(0.9f);
 
 		for (int x = 0; x <= 20; x++) {
 			int y = 20 - x;
@@ -2250,8 +2533,10 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, y * 0.05f, 0.0f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f);
-			set = set.withSimilars(1f - basicPart).withSimilarPoissons(1f - poissonPart);
+			set = set.withSimilars(0).withSimilarPoissons(0);
 			float currentProfit = Utils.getProfit(finals, set, type);
+			set.profit = currentProfit;
+			list.add(set);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				best = set;
@@ -2278,8 +2563,10 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, y * 0.05f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f);
-			set = set.withSimilars(1f - basicPart).withSimilarPoissons(1f - poissonPart);
+			set = set.withSimilars(0).withSimilarPoissons(0);
 			float currentProfit = Utils.getProfit(finals, set, type);
+			set.profit = currentProfit;
+			list.add(set);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				best = set;
@@ -2306,8 +2593,10 @@ public class XlSUtils {
 
 			Settings set = new Settings(sheet.getSheetName(), x * 0.05f, 0f, 0f, initTH, initTH, initTH, 0.5f,
 					bestProfit).withValue(0.9f).withHT(overOneHT, y * 0.05f);
-			set = set.withSimilars(1f - basicPart).withSimilarPoissons(1f - poissonPart);
+			set = set.withSimilars(0).withSimilarPoissons(0);
 			float currentProfit = Utils.getProfit(finals, set, type);
+			set.profit = currentProfit;
+			list.add(set);
 			if (currentProfit > bestProfit) {
 				bestProfit = currentProfit;
 				best = set;
@@ -2372,7 +2661,16 @@ public class XlSUtils {
 			}
 
 		best.profit = bestProfit;
-		return best.withYear(year);
+		list.sort(new Comparator<Settings>() {
+
+			@Override
+			public int compare(Settings o1, Settings o2) {
+
+				return ((Float) (o1.profit)).compareTo((Float) (o2.profit));
+			}
+		});
+
+		return list;
 
 	}
 
@@ -2549,11 +2847,12 @@ public class XlSUtils {
 
 			finals = runWithSettingsList(sheet, current, temp);
 
-//			float drawPercent = ((float) Utils.countDraws(data)) / data.size();
-//			ArrayList<FinalEntry> draws = new ArrayList<>();
-//			for (FinalEntry fe : finals)
-//				if (poissonDraw(fe.fixture, sheet) >= drawPercent)
-//					draws.add(fe);
+			// float drawPercent = ((float) Utils.countDraws(data)) /
+			// data.size();
+			// ArrayList<FinalEntry> draws = new ArrayList<>();
+			// for (FinalEntry fe : finals)
+			// if (poissonDraw(fe.fixture, sheet) >= drawPercent)
+			// draws.add(fe);
 			// finals = Utils.cotRestrict(finals, 0.15f);
 			toBet.addAll(finals);
 		}
@@ -3060,13 +3359,16 @@ public class XlSUtils {
 
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
+			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+				continue;
 			ArrayList<ExtendedFixture> all = selectAllAll(sh);
 
-			SQLiteJDBC.insertBasic(sh, all, year, "BASICS");
-			SQLiteJDBC.insertBasic(sh, all, year, "POISSON");
-			SQLiteJDBC.insertBasic(sh, all, year, "WEIGHTED");
-			SQLiteJDBC.insertBasic(sh, all, year, "HALFTIME1");
-			SQLiteJDBC.insertBasic(sh, all, year, "HALFTIME2");
+			SQLiteJDBC.insertBasic(sh, all, year, "SHOTS");
+			// SQLiteJDBC.insertBasic(sh, all, year, "BASICS");
+			// SQLiteJDBC.insertBasic(sh, all, year, "POISSON");
+			// SQLiteJDBC.insertBasic(sh, all, year, "WEIGHTED");
+			// SQLiteJDBC.insertBasic(sh, all, year, "HALFTIME1");
+			// SQLiteJDBC.insertBasic(sh, all, year, "HALFTIME2");
 		}
 		workbook.close();
 		file.close();

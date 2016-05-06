@@ -712,6 +712,8 @@ public class SQLiteJDBC {
 					score = XlSUtils.halfTimeOnly(f, sheet, 1);
 				} else if (tableName.equals("HALFTIME2")) {
 					score = XlSUtils.halfTimeOnly(f, sheet, 2);
+				} else if (tableName.equals("SHOTS")) {
+					score = XlSUtils.shots(f, sheet);
 				}
 
 				String sql = "INSERT INTO " + tableName + " (DATE,HOMETEAMNAME,AWAYTEAMNAME,YEAR,COMPETITION,SCORE)"
