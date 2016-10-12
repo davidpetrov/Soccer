@@ -11,10 +11,13 @@ public class MinMaxOdds {
 	public static final Float[] SC2 = { 1f, 10f };
 	public static final Float[] SC3 = { 1.68f, 2.2f };
 
-	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1","B1"};
-	public static final String[] DRAW = {  "I1", "I2", "F2", "P1","D1","D2","SP2"};
-	public static final String[] SHOTS = {"E0","E1","E2","E3","EC","SC0","D1","SP1","I1","F1"};
-	public static final String[] SHOTSDONT = {"E3","I1","F1"};
+	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1", "B1" };
+	public static final String[] DRAW = { "I1", "I2", "F2", "P1", "D1", "D2", "SP2" };
+	public static final String[] SHOTS = { "E0", "E1", "E2", "E3", "EC", "SC0", "D1", "SP1", "I1", "F1" };
+	public static final String[] SHOTSDONT = { "I1", "F1", "E1", "E3" };
+	public static final String[] MANUAL = { /* "ARG", */ "ARG2", "BRA", "BRB", "SWE", "NOR", "USA", "ICE", "FIN", "JP",
+			"SP2", "SWI", "DEN", "AUS", "CZE", "RUS", "NED", "POR", "BEL", "FR2", "TUR", "GRE", "HUN", "D2", "IT2",
+			"POL", "ENG", "SPA" };
 
 	public static float getMinOdds(String league) {
 		switch (league) {

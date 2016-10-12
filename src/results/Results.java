@@ -22,8 +22,8 @@ public class Results {
 
 		BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Tereza\\Desktop\\" + name + ".txt"));
 		String line = br.readLine();
-		float count = 0;
-		
+		int count = 0;
+
 		while (line != null) {
 			if (line.startsWith("Profit")) {
 				String[] split = line.split(" ");
@@ -31,9 +31,9 @@ public class Results {
 				int year = Integer.parseInt(split[4]);
 				float profit = Float.parseFloat(split[6].replace(",", "."));
 				float yield = Float.NaN;
-				if (split.length > 7){
-					yield = Float.parseFloat(split[9].replace(",", ".").substring(0, split[9].length()-1)) / 100;
-					count += Math.round((profit/yield));
+				if (split.length > 7) {
+					yield = Float.parseFloat(split[9].replace(",", ".").substring(0, split[9].length() - 1)) / 100;
+					count += Math.round((profit / yield));
 				}
 
 				if (results.containsKey(year)) {
@@ -45,12 +45,10 @@ public class Results {
 			}
 			line = br.readLine();
 		}
-		
-		
 
 		br.close();
-		
-		System.out.println("Count: "+count);
+
+		System.out.println("Count: " + count);
 		stats(results);
 
 		avgByLeague(results);
@@ -103,7 +101,7 @@ public class Results {
 
 		float fgnRestrict = leagues.values().stream().filter(v -> v >= 0).collect(Collectors.toList()).stream()
 				.reduce(0f, (a, b) -> a + b) / results.size();
-		// System.out.println("Full negative restrict avg: " + fgnRestrict);
+		 System.out.println("Full negative restrict avg: " + format(fgnRestrict));
 
 		return leagues;
 	}

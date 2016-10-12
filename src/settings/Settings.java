@@ -34,9 +34,9 @@ public class Settings {
 		this.lowerBound = lowerBound;
 		this.successRate = successRate;
 		this.profit = profit;
-		this.minUnder = 1f;
+		this.minUnder = 1.3f;
 		this.maxUnder = 10f;
-		this.minOver = 1f;
+		this.minOver = 1.3f;
 		this.maxOver = 10f;
 	}
 

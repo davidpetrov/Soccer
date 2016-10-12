@@ -7,7 +7,7 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public String homeTeam;
 	public String awayTeam;
 	public Result result;
-	Result HTresult;
+	public Result HTresult;
 	public String status;
 	public String competition;
 	public int matchday;

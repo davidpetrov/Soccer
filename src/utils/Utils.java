@@ -7,26 +7,37 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
+import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
+import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import entries.FinalEntry;
+import entries.FullEntry;
 import main.ExtendedFixture;
+import main.FullFixture;
+import main.Line;
 import main.Result;
 import main.SQLiteJDBC;
 import results.Results;
+import scraper.Scraper;
 import settings.Settings;
 import tables.Position;
 import tables.Table;
@@ -461,88 +472,6 @@ public class Utils {
 		return filtered;
 	}
 
-	public static float getProfit(ArrayList<FinalEntry> finals, Settings set, String type) {
-		float profit = 0.0f;
-		int size = 0;
-		for (FinalEntry fe : finals) {
-			fe.threshold = set.threshold;
-			fe.lower = set.lowerBound;
-			fe.upper = set.upperBound;
-			fe.value = set.value;
-			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
-			float value = certainty * gain;
-			if (value > set.value) {
-				if (type.equals("unders")) {
-					if (fe.prediction <= fe.threshold) {
-						size++;
-						if (fe.success()) {
-							if (gain != -1.0d) {
-								profit += gain;
-							}
-						}
-					}
-				} else if (type.equals("overs")) {
-					if (fe.prediction > fe.threshold) {
-						size++;
-						if (fe.success()) {
-							if (gain != -1.0d) {
-								profit += gain;
-							}
-						}
-					}
-				} else {
-					size++;
-					if (fe.success()) {
-						if (gain != -1.0d) {
-							profit += gain;
-						}
-					}
-				}
-			}
-		}
-		return profit - size;
-	}
-
-	public static float getProfit(ArrayList<FinalEntry> finals, String type) {
-		float profit = 0.0f;
-		int size = 0;
-		for (FinalEntry fe : finals) {
-			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
-			float value = certainty * gain;
-			if (value > fe.value) {
-				if (type.equals("unders")) {
-					if (fe.prediction <= fe.threshold) {
-						size++;
-						if (fe.success()) {
-							if (gain != -1.0d) {
-								profit += gain;
-							}
-						}
-					}
-				} else if (type.equals("overs")) {
-					if (fe.prediction > fe.threshold) {
-						size++;
-						if (fe.success()) {
-							if (gain != -1.0d) {
-								profit += gain;
-							}
-						}
-					}
-				} else {
-					size++;
-					if (fe.success()) {
-						if (gain != -1.0d) {
-							profit += gain;
-						}
-					}
-				}
-			}
-		}
-		return profit - size;
-	}
-
 	public static float[] getScaledProfit(ArrayList<FinalEntry> finals, float f) {
 		float profit = 0.0f;
 		float staked = 0f;
@@ -786,6 +715,7 @@ public class Utils {
 
 		});
 
+		float profit = 0f;
 		ArrayList<FinalEntry> curr = new ArrayList<>();
 		Date currDate = filtered.get(0).fixture.date;
 		for (int i = 0; i < filtered.size(); i++) {
@@ -804,8 +734,8 @@ public class Utils {
 
 						@Override
 						public int compare(FinalEntry o1, FinalEntry o2) {
-							Float certainty1 = o1.prediction > o1.threshold ? o1.prediction : (1f - o1.prediction);
-							Float certainty2 = o2.prediction > o2.threshold ? o2.prediction : (1f - o2.prediction);
+							Float certainty1 = o1.getCOT();
+							Float certainty2 = o2.getCOT();
 							return certainty2.compareTo(certainty1);
 						}
 					});
@@ -826,12 +756,16 @@ public class Utils {
 									|| (curr.get(j).prediction <= curr.get(j).lower
 											&& curr.get(j).fixture.getTotalGoals() == 3)) {
 								notlosses++;
+								coeff = -1f;
+								break;
 							} else {
 								coeff = -1f;
+								break;
 							}
 						}
 						System.out.println(curr.get(0).fixture.date + " " + " " + successes + " not loss: " + notlosses
-								+ " pr: " + (successes * 1.35f - 10 + (notlosses - successes)));
+								+ " pr: " + (coeff != -1f ? (coeff - 1f) : coeff));
+						profit += (coeff != -1f ? (coeff - 1f) : coeff);
 					}
 					curr = new ArrayList<>();
 				} else {
@@ -839,6 +773,7 @@ public class Utils {
 				}
 			}
 		}
+		System.out.println("Total from " + n + "s: " + profit);
 
 	}
 
@@ -848,23 +783,21 @@ public class Utils {
 
 		// System.out.println(all);
 		for (FinalEntry fe : all) {
-			// float gain = fe.prediction > fe.upper ? fe.fixture.maxOver :
-			// fe.fixture.maxUnder;
-			// float certainty = fe.prediction > fe.threshold ? fe.prediction :
-			// (1f - fe.prediction);
-			// float value = certainty * gain;
-			// if (value > fe.value)
-			if (fe.prediction >= fe.upper)
+
+			if (fe.isOver())
 				overs.add(fe);
 			else
 				unders.add(fe);
 		}
 		System.err.println(year);
-		System.out.println(overs.size() + " overs with rate: " + Utils.getSuccessRate(overs) + " profit: "
-				+ Utils.getProfit(overs, "overs"));
-		System.out.println(unders.size() + " unders with rate: " + Utils.getSuccessRate(unders) + " profit: "
-				+ Utils.getProfit(unders, "unders"));
+		System.out.println(overs.size() + " overs with rate: " + format(100 * Utils.getSuccessRate(overs)) + " profit: "
+				+ format(Utils.getProfit(overs)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(overs) / overs.size()));
+		System.out.println(unders.size() + " unders with rate: " + format(100 * Utils.getSuccessRate(unders))
+				+ " profit: " + format(Utils.getProfit(unders)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(unders) / unders.size()));
 
+		ArrayList<FinalEntry> cot10 = new ArrayList<>();
 		ArrayList<FinalEntry> cot15 = new ArrayList<>();
 		ArrayList<FinalEntry> cot20 = new ArrayList<>();
 		ArrayList<FinalEntry> cot25 = new ArrayList<>();
@@ -874,7 +807,7 @@ public class Utils {
 		ArrayList<FinalEntry> cer50 = new ArrayList<>();
 		ArrayList<FinalEntry> cer40 = new ArrayList<>();
 		for (FinalEntry fe : all) {
-			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+			float certainty = fe.getCertainty();
 			if (certainty >= 0.8f)
 				cer80.add(fe);
 			else if (certainty >= 0.7f) {
@@ -894,27 +827,42 @@ public class Utils {
 				cot20.add(fe);
 			} else if (cot >= 0.15f) {
 				cot15.add(fe);
+			} else if (cot >= 0.10f) {
+				cot10.add(fe);
 			}
 
 		}
 
-		System.out.println(cer80.size() + " 80s with rate: " + Utils.getSuccessRate(cer80) + "profit: "
-				+ Utils.getProfit(cer80, "all"));
-		System.out.println(cer70.size() + " 70s with rate: " + Utils.getSuccessRate(cer70) + "profit: "
-				+ Utils.getProfit(cer70, "all"));
-		System.out.println(cer60.size() + " 60s with rate: " + Utils.getSuccessRate(cer60) + "profit: "
-				+ Utils.getProfit(cer60, "all"));
-		System.out.println(cer50.size() + " 50s with rate: " + Utils.getSuccessRate(cer50) + "profit: "
-				+ Utils.getProfit(cer50, "all"));
-		System.out.println(cer40.size() + " under50s with rate: " + Utils.getSuccessRate(cer40) + " profit: "
-				+ Utils.getProfit(cer40, "all"));
+		System.out.println(cer80.size() + " 80s with rate: " + format(100 * Utils.getSuccessRate(cer80)) + " profit: "
+				+ format(Utils.getProfit(cer80)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cer80) / cer80.size()));
+		System.out.println(cer70.size() + " 70s with rate: " + format(100 * Utils.getSuccessRate(cer70)) + " profit: "
+				+ format(Utils.getProfit(cer70)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cer70) / cer70.size()));
+		System.out.println(cer60.size() + " 60s with rate: " + format(100 * Utils.getSuccessRate(cer60)) + " profit: "
+				+ format(Utils.getProfit(cer60)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cer60) / cer60.size()));
+		System.out.println(cer50.size() + " 50s with rate: " + format(100 * Utils.getSuccessRate(cer50)) + " profit: "
+				+ format(Utils.getProfit(cer50)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cer50) / cer50.size()));
+		System.out.println(cer40.size() + " under50s with rate: " + format(100 * Utils.getSuccessRate(cer40))
+				+ " profit: " + format(Utils.getProfit(cer40)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cer40) / cer40.size()));
 
-		System.out.println(cot25.size() + " cot25s with rate: " + Utils.getSuccessRate(cot25) + "profit: "
-				+ Utils.getProfit(cot25, "all"));
-		System.out.println(cot20.size() + " cot20s with rate: " + Utils.getSuccessRate(cot20) + "profit: "
-				+ Utils.getProfit(cot20, "all"));
-		System.out.println(cot15.size() + " cot15s with rate: " + Utils.getSuccessRate(cot15) + "profit: "
-				+ Utils.getProfit(cot15, "all"));
+		System.out.println(cot25.size() + " cot25s with rate: " + format(100 * Utils.getSuccessRate(cot25))
+				+ " profit: " + format(Utils.getProfit(cot25)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cot25) / cot25.size()));
+		System.out.println(cot20.size() + " cot20s with rate: " + format(100 * Utils.getSuccessRate(cot20))
+				+ " profit: " + format(Utils.getProfit(cot20)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cot20) / cot20.size()));
+		System.out.println(cot15.size() + " cot15s with rate: " + format(100 * Utils.getSuccessRate(cot15))
+				+ " profit: " + format(Utils.getProfit(cot15)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cot15) / cot15.size()));
+		System.out.println(cot10.size() + " cot10s with rate: " + format(100 * Utils.getSuccessRate(cot10))
+				+ " profit: " + format(Utils.getProfit(cot10)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(cot10) / cot10.size()));
+
+		// byOdds(all);
 
 		int onlyOvers = 0;
 		float onlyOversProfit = 0f;
@@ -925,8 +873,8 @@ public class Utils {
 			}
 		}
 
-		System.out.println(
-				"Only overs: " + (float) onlyOvers / all.size() + " profit: " + (onlyOversProfit - all.size()));
+		System.out.println("Only overs: " + format((float) onlyOvers / all.size()) + " profit: "
+				+ format((onlyOversProfit - all.size())));
 
 		int onlyUnders = 0;
 		float onlyUndersProfit = 0f;
@@ -937,8 +885,8 @@ public class Utils {
 			}
 		}
 
-		System.out.println(
-				"Only unders: " + (float) onlyUnders / all.size() + " profit: " + (onlyUndersProfit - all.size()));
+		System.out.println("Only unders: " + format((float) onlyUnders / all.size()) + " profit: "
+				+ format((onlyUndersProfit - all.size())));
 
 		int betterOdds = 0;
 		float betterOddsProfit = 0f;
@@ -951,8 +899,8 @@ public class Utils {
 			}
 		}
 
-		System.out.println("Better odds choice: " + (float) betterOdds / all.size() + " profit: "
-				+ (betterOddsProfit - all.size()));
+		System.out.println("Better odds choice: " + format((float) betterOdds / all.size()) + " profit: "
+				+ format((betterOddsProfit - all.size())));
 
 		int wins = 0;
 		float draws = 0f;
@@ -970,8 +918,74 @@ public class Utils {
 			}
 		}
 
-		System.out.println("Soft lines wins: " + (float) wins / certs + "draws: " + (float) draws / certs
-				+ " not losses: " + (float) (wins + draws) / certs);
+		System.out.println("Soft lines wins: " + format((float) wins / certs) + " draws: "
+				+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
+	}
+
+	private static void byOdds(ArrayList<FinalEntry> all) {
+
+		ArrayList<FinalEntry> under13 = new ArrayList();
+		ArrayList<FinalEntry> under14 = new ArrayList();
+		ArrayList<FinalEntry> under15 = new ArrayList();
+		ArrayList<FinalEntry> under16 = new ArrayList();
+		ArrayList<FinalEntry> under17 = new ArrayList();
+		ArrayList<FinalEntry> under18 = new ArrayList();
+		ArrayList<FinalEntry> under19 = new ArrayList();
+		ArrayList<FinalEntry> under20 = new ArrayList();
+		ArrayList<FinalEntry> under21 = new ArrayList();
+		ArrayList<FinalEntry> under22 = new ArrayList();
+		ArrayList<FinalEntry> over22 = new ArrayList();
+
+		for (FinalEntry i : all) {
+			float odds = i.isOver() ? i.fixture.maxOver : i.fixture.maxUnder;
+			if (odds < 1.3) {
+				under13.add(i);
+			} else if (odds < 1.4) {
+				under14.add(i);
+			} else if (odds < 1.5) {
+				under15.add(i);
+			} else if (odds < 1.6) {
+				under16.add(i);
+			} else if (odds < 1.7) {
+				under17.add(i);
+			} else if (odds < 1.8) {
+				under18.add(i);
+			} else if (odds < 1.9) {
+				under19.add(i);
+			} else if (odds < 2) {
+				under20.add(i);
+			} else if (odds < 21) {
+				under21.add(i);
+			} else if (odds < 22) {
+				under22.add(i);
+			} else {
+				over22.add(i);
+			}
+
+		}
+		info("under13", under13);
+		info("under14", under14);
+		info("under15", under15);
+		info("under16", under16);
+		info("under17", under17);
+		info("under18", under18);
+		info("under19", under19);
+		info("under20", under20);
+		info("under21", under21);
+		info("under22", under22);
+		info("over22", over22);
+
+	}
+
+	private static void info(String string, ArrayList<FinalEntry> all) {
+		System.out.println(all.size() + " " + string + " with rate: " + format(100 * Utils.getSuccessRate(all))
+				+ " profit: " + format(Utils.getProfit(all)) + " yield: "
+				+ String.format("%.2f%%", 100 * Utils.getProfit(all) / all.size()));
+
+	}
+
+	private static String format(float d) {
+		return String.format("%.2f", d);
 	}
 
 	public static void triples(ArrayList<FinalEntry> all, int year) {
@@ -1053,7 +1067,7 @@ public class Utils {
 						+ " profit: " + (bank - previous) + " in units: " + (bank - previous) / betSize + " rate: "
 						+ (float) succ / alls + "%");
 				previous = bank;
-				// betSize = bank * percent;
+				betSize = bank * percent;
 				month = cal.get(Calendar.MONTH);
 				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
@@ -1091,49 +1105,6 @@ public class Utils {
 		return (float) (sumXY / (Math.sqrt(sumX2) * Math.sqrt(sumY2)));
 	}
 
-	public static float getProfit(HSSFSheet sheet, ArrayList<FinalEntry> finals, Settings set, float currentValue,
-			String type) {
-		float profit = 0.0f;
-		int size = 0;
-		for (FinalEntry fe : finals) {
-			fe.threshold = set.threshold;
-			fe.lower = set.lowerBound;
-			fe.upper = set.upperBound;
-			float gain = fe.prediction > fe.threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
-			float value = certainty * gain;
-			if (value > currentValue) {
-				if (type.equals("unders")) {
-					if (fe.prediction <= fe.threshold) {
-						size++;
-						if (fe.success()) {
-							if (gain != -1.0d) {
-								profit += gain;
-							}
-						}
-					}
-				} else if (type.equals("overs")) {
-					if (fe.prediction > fe.threshold) {
-						size++;
-						if (fe.success()) {
-							if (gain != -1.0d) {
-								profit += gain;
-							}
-						}
-					}
-				} else {
-					size++;
-					if (fe.success()) {
-						if (gain != -1.0d) {
-							profit += gain;
-						}
-					}
-				}
-			}
-		}
-		return profit - size;
-	}
-
 	public static boolean oddsInRange(float gain, float finalScore, Settings settings) {
 		boolean over = finalScore > settings.threshold;
 
@@ -1146,7 +1117,7 @@ public class Utils {
 	public static ArrayList<FinalEntry> onlyUnders(ArrayList<FinalEntry> finals) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry i : finals) {
-			if (i.prediction <= i.threshold)
+			if (i.prediction < i.threshold)
 				result.add(i);
 		}
 		return result;
@@ -1155,7 +1126,7 @@ public class Utils {
 	public static ArrayList<FinalEntry> onlyOvers(ArrayList<FinalEntry> finals) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry i : finals) {
-			if (i.prediction > i.threshold)
+			if (i.prediction >= i.threshold)
 				result.add(i);
 		}
 		return result;
@@ -1198,6 +1169,24 @@ public class Utils {
 		for (FinalEntry fe : finals) {
 			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
 			if (cot >= f)
+				result.add(fe);
+		}
+
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> cotRestrictOU(ArrayList<FinalEntry> finals, Pair pair) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+
+		for (FinalEntry fe : Utils.onlyOvers(finals)) {
+			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
+			if (cot >= pair.home)
+				result.add(fe);
+		}
+
+		for (FinalEntry fe : Utils.onlyUnders(finals)) {
+			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
+			if (cot >= pair.away)
 				result.add(fe);
 		}
 
@@ -1335,7 +1324,8 @@ public class Utils {
 		return teams;
 	}
 
-	public static ArrayList<FinalEntry> shotsRestrict(ArrayList<FinalEntry> finals, HSSFSheet sheet) {
+	public static ArrayList<FinalEntry> shotsRestrict(ArrayList<FinalEntry> finals, HSSFSheet sheet)
+			throws ParseException {
 		ArrayList<FinalEntry> shotBased = new ArrayList<>();
 		for (FinalEntry fe : finals) {
 			float shotsScore = XlSUtils.shots(fe.fixture, sheet);
@@ -1350,14 +1340,14 @@ public class Utils {
 
 	public static Pair positionLimits(ArrayList<FinalEntry> finals, Table table, String type) {
 
-		float bestProfit = getProfit(finals, type);
+		float bestProfit = getProfit(finals);
 		int bestLow = 0;
 		int bestHigh = 23;
 
 		for (int i = 1; i < 11; i++) {
 			ArrayList<FinalEntry> diffPos = positionRestrict(finals, table, i, 23, type);
 
-			float curr = Utils.getProfit(diffPos, type);
+			float curr = Utils.getProfit(diffPos);
 			if (curr > bestProfit) {
 				bestProfit = curr;
 				bestLow = i;
@@ -1368,7 +1358,7 @@ public class Utils {
 		for (int i = bestLow; i < 23; i++) {
 			ArrayList<FinalEntry> diffPos = positionRestrict(finals, table, bestLow, i, type);
 
-			float curr = Utils.getProfit(diffPos, type);
+			float curr = Utils.getProfit(diffPos);
 			if (curr > bestProfit) {
 				bestProfit = curr;
 				bestHigh = i;
@@ -1395,7 +1385,8 @@ public class Utils {
 
 	}
 
-	public static ArrayList<FinalEntry> similarityRestrict(HSSFSheet sheet, ArrayList<FinalEntry> finals, Table table) {
+	public static ArrayList<FinalEntry> similarityRestrict(HSSFSheet sheet, ArrayList<FinalEntry> finals, Table table)
+			throws ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry i : finals) {
 			float basicSimilar = Utils.basicSimilar(i.fixture, sheet, table);
@@ -1410,7 +1401,7 @@ public class Utils {
 		return result;
 	}
 
-	public static float basicSimilar(ExtendedFixture f, HSSFSheet sheet, Table table) {
+	public static float basicSimilar(ExtendedFixture f, HSSFSheet sheet, Table table) throws ParseException {
 		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
 		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
 
@@ -1432,7 +1423,7 @@ public class Utils {
 		return 0.6f * allGamesAVG + 0.3f * homeAwayAVG + 0.1f * BTSAVG;
 	}
 
-	public static float similarPoisson(ExtendedFixture f, HSSFSheet sheet, Table table) {
+	public static float similarPoisson(ExtendedFixture f, HSSFSheet sheet, Table table) throws ParseException {
 		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
 		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
 
@@ -1463,7 +1454,7 @@ public class Utils {
 		ArrayList<ArrayList<FinalEntry>> byYear = new ArrayList<>();
 
 		float bestCot = 0f;
-		float bestProfit = getProfit(finals, "all");
+		float bestProfit = getProfit(finals);
 
 		for (int j = 1; j <= 12; j++) {
 			ArrayList<FinalEntry> filtered = new ArrayList<>();
@@ -1471,7 +1462,7 @@ public class Utils {
 			filtered.addAll(Utils.cotRestrict(finals, cot));
 
 			float currProfit = 0f;
-			currProfit += Utils.getProfit(filtered, "all");
+			currProfit += Utils.getProfit(filtered);
 
 			if (currProfit > bestProfit) {
 				bestProfit = currProfit;
@@ -1481,6 +1472,350 @@ public class Utils {
 		}
 
 		return 5 * bestCot / 6;
+	}
+
+	public static ArrayList<FinalEntry> allOvers(ArrayList<ExtendedFixture> current) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (ExtendedFixture i : current) {
+			FinalEntry n = new FinalEntry(i, 1f, i.result, 0.55f, 0.55f, 0.55f);
+			result.add(n);
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> allUnders(ArrayList<ExtendedFixture> current) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (ExtendedFixture i : current) {
+			FinalEntry n = new FinalEntry(i, 0f, i.result, 0.55f, 0.55f, 0.55f);
+			result.add(n);
+		}
+		return result;
+	}
+
+	public static float avgShotsDiffHomeWin(HSSFSheet sheet, Date date) {
+		int totalHome = 0;
+		int totalAway = 0;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Cell dateCell = row.getCell(XlSUtils.getColumnIndex(sheet, "Date"));
+			int homegoal = (int) row.getCell(XlSUtils.getColumnIndex(sheet, "FTHG")).getNumericCellValue();
+			int awaygoal = (int) row.getCell(XlSUtils.getColumnIndex(sheet, "FTAG")).getNumericCellValue();
+			if (row.getCell(XlSUtils.getColumnIndex(sheet, "HST")) != null
+					&& row.getCell(XlSUtils.getColumnIndex(sheet, "AST")) != null && dateCell != null
+					&& dateCell.getDateCellValue().before(date)
+					&& row.getCell(XlSUtils.getColumnIndex(sheet, "HST")).getCellType() == 0
+					&& row.getCell(XlSUtils.getColumnIndex(sheet, "AST")).getCellType() == 0 && homegoal > awaygoal) {
+				totalHome += (int) row.getCell(XlSUtils.getColumnIndex(sheet, "HST")).getNumericCellValue();
+				totalAway += (int) row.getCell(XlSUtils.getColumnIndex(sheet, "AST")).getNumericCellValue();
+
+				count++;
+			}
+		}
+		return count == 0 ? 0 : (float) (totalHome - totalAway) / count;
+	}
+
+	public static String replaceNonAsciiWhitespace(String s) {
+
+		String resultString = s.replaceAll("[^\\p{ASCII}]", "");
+
+		return resultString;
+	}
+
+	public static Date getYesterday(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.DAY_OF_YEAR, -1);
+		Date oneDayBefore = cal.getTime();
+		return oneDayBefore;
+
+	}
+
+	public static Object getTommorow(Date date) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.add(Calendar.DAY_OF_YEAR, 1);
+		Date oneDayBefore = cal.getTime();
+		return oneDayBefore;
+	}
+
+	public static ArrayList<FinalEntry> equilibriums(ArrayList<FinalEntry> finals) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			if (i.prediction == 0.5f)
+				result.add(i);
+		}
+
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> noequilibriums(ArrayList<FinalEntry> finals) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			if (i.prediction != 0.5f)
+				result.add(i);
+		}
+
+		return result;
+	}
+
+	public static float getProfit(ArrayList<FinalEntry> finals) {
+		float profit = 0f;
+		for (FinalEntry i : finals) {
+			profit += i.getProfit();
+		}
+		return profit;
+	}
+
+	public static float getAvgOdds(ArrayList<FinalEntry> finals) {
+		float total = 0f;
+		for (FinalEntry i : finals) {
+			float coeff = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+			total += coeff;
+		}
+		return finals.size() == 0 ? 0 : total / finals.size();
+	}
+
+	public static ArrayList<FinalEntry> higherOdds(ArrayList<ExtendedFixture> current) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (ExtendedFixture i : current) {
+			float prediction = i.maxOver >= i.maxUnder ? 1f : 0f;
+			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
+			result.add(n);
+		}
+		return result;
+	}
+
+	public static float pValueCalculator(int count, float yield, float avgOdds) {
+		double standardDeviation = Math.pow((1 + yield) * (avgOdds - 1 - yield), 0.5);
+		double tStatistic = yield * Math.pow(count, 0.5) / standardDeviation;
+		TDistribution td = new TDistribution(count - 1);
+		double pValue = 1 - td.cumulativeProbability(tStatistic);
+		return (float) (1 / pValue);
+	}
+
+	public static void evaluateRecord(ArrayList<FinalEntry> all) {
+		float yield = Utils.getYield(all);
+		float avgOdds = Utils.getAvgOdds(all);
+		System.out.println(format(Utils.getProfit(all)) + " from " + all.size() + " picks "
+				+ String.format("%.2f%%", 100 * yield) + " yield avgOdds: " + format(avgOdds));
+		float pValue = pValueCalculator(all.size(), Utils.getYield(all), Utils.getAvgOdds(all));
+		if (yield >= 0)
+			System.out.println("1 in " + format(pValue));
+
+	}
+
+	private static float getYield(ArrayList<FinalEntry> all) {
+		return getProfit(all) / all.size();
+	}
+
+	public static float[] createProfitMovementData(ArrayList<FinalEntry> all) {
+		all.sort(new Comparator<FinalEntry>() {
+
+			@Override
+			public int compare(FinalEntry o1, FinalEntry o2) {
+
+				return o1.fixture.date.compareTo(o2.fixture.date);
+			}
+		});
+		float profit = 0;
+		float[] result = new float[all.size() + 1];
+		result[0] = 0f;
+		for (int i = 0; i < all.size(); i++) {
+			profit += all.get(i).getProfit();
+			result[i + 1] = profit;
+		}
+		return result;
+	}
+
+	public static float avgReturn(ArrayList<ExtendedFixture> all) {
+		float total = 0f;
+		for (ExtendedFixture i : all) {
+			total += 1f / i.maxOver + 1f / i.maxUnder;
+		}
+		return all.size() == 0 ? 0 : total / all.size();
+	}
+
+	public static void fairValue(ArrayList<ExtendedFixture> current) {
+
+		for (ExtendedFixture i : current) {
+			float sum = 1f / i.maxOver + 1f / i.maxUnder;
+			i.maxOver = 1f / ((1f / i.maxOver) / sum);
+			i.maxUnder = 1f / ((1f / i.maxUnder) / sum);
+		}
+	}
+
+	public static ArrayList<FinalEntry> runRandom(ArrayList<ExtendedFixture> current) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		Random random = new Random();
+		for (ExtendedFixture i : current) {
+			boolean next = random.nextBoolean();
+			float prediction = next ? 1f : 0f;
+			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
+			result.add(n);
+		}
+		return result;
+	}
+
+	// for update of results from soccerway
+	public static Date findLastPendingFixture(ArrayList<ExtendedFixture> all) {
+
+		all.sort(new Comparator<ExtendedFixture>() {
+
+			@Override
+			public int compare(ExtendedFixture o1, ExtendedFixture o2) {
+				return o1.date.compareTo(o2.date);
+			}
+		});
+
+		Date last;
+		if (all.isEmpty()) {
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.YEAR, Scraper.CURRENT_YEAR);
+			cal.set(Calendar.DAY_OF_YEAR, 1);
+			last = cal.getTime();
+		} else {
+			last = all.get(all.size() - 1).date;
+		}
+		Date lastNotPending = last;
+
+		for (int i = all.size() - 1; i >= 0; i--) {
+			if (all.get(i).result.goalsHomeTeam == -1 && all.get(i).result.goalsAwayTeam == -1)
+				lastNotPending = all.get(i).date;
+		}
+
+		return lastNotPending;
+
+	}
+
+	public static ArrayList<FinalEntry> mainGoalLine(ArrayList<FinalEntry> finals,
+			HashMap<ExtendedFixture, FullFixture> map) {
+		ArrayList<FinalEntry> fulls = new ArrayList<>();
+		for (FinalEntry f : finals) {
+
+			fulls.add(new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper,
+					map.get(f.fixture).goalLines.main));
+		}
+
+		return fulls;
+	}
+
+	// TO DO
+	public static ArrayList<FinalEntry> bestValueByDistibution(ArrayList<FinalEntry> finals,
+			HashMap<ExtendedFixture, FullFixture> map, ArrayList<ExtendedFixture> all, HSSFSheet sheet) {
+		ArrayList<FinalEntry> fulls = new ArrayList<>();
+		for (FinalEntry f : finals) {
+
+			int[] distributionHome = getGoalDistribution(f.fixture, all, f.fixture.homeTeam);
+			int[] distributionAway = getGoalDistribution(f.fixture, all, f.fixture.awayTeam);
+			FullEntry best = findBestLineFullEntry(f, distributionHome, distributionAway, map);
+
+			fulls.add(best);
+		}
+
+		return fulls;
+	}
+
+	private static FullEntry findBestLineFullEntry(FinalEntry f, int[] distributionHome, int[] distributionAway,
+			HashMap<ExtendedFixture, FullFixture> map) {
+		FullEntry best = new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper,
+				map.get(f.fixture).goalLines.main);
+		FullFixture full = map.get(f.fixture);
+		Result originalResult = new Result(full.result.goalsHomeTeam, full.result.goalsAwayTeam);
+		float bestValue = Float.NEGATIVE_INFINITY;
+
+		for (Line i : map.get(f.fixture).goalLines.getArrayLines()) {
+			float valueHome = 0;
+			int homeSize = 0;
+			for (int s : distributionHome)
+				homeSize += s;
+
+			for (int goals = 0; goals < distributionHome.length; goals++) {
+				full.result = new Result(goals, 0);
+				valueHome += distributionHome[goals]
+						* new FullEntry(full, f.prediction, new Result(goals, 0), f.threshold, f.lower, f.upper, i)
+								.getProfit();
+			}
+
+			valueHome /= homeSize;
+
+			float valueAway = 0;
+			int awaySize = 0;
+			for (int s : distributionAway)
+				awaySize += s;
+
+			for (int goals = 0; goals < distributionAway.length; goals++) {
+				full.result = new Result(goals, 0);
+				valueAway += distributionAway[goals]
+						* new FullEntry(full, f.prediction, new Result(goals, 0), f.threshold, f.lower, f.upper, i)
+								.getProfit();
+			}
+
+			valueAway /= awaySize;
+
+			float finalValue = (valueAway + valueHome) / 2;
+
+			if (finalValue > bestValue) {
+				bestValue = finalValue;
+				best.line = i;
+			}
+		}
+
+		best.result = originalResult;
+		best.fixture.result = originalResult;
+		return best;
+
+	}
+
+	private static int[] getGoalDistribution(ExtendedFixture fixture, ArrayList<ExtendedFixture> all, String team) {
+		int[] distribution = new int[20];
+		for (ExtendedFixture i : all) {
+			if ((i.homeTeam.equals(team) || i.awayTeam.equals(team)) && i.date.before(fixture.date)) {
+				int totalGoals = i.getTotalGoals();
+				distribution[totalGoals]++;
+			}
+		}
+		return distribution;
+
+	}
+
+	// offset of main line
+	public static ArrayList<FinalEntry> customGoalLine(ArrayList<FinalEntry> finals,
+			HashMap<ExtendedFixture, FullFixture> map, float offset) {
+		ArrayList<FinalEntry> fulls = new ArrayList<>();
+
+		for (FinalEntry f : finals) {
+			boolean isOver = f.prediction > f.threshold;
+			FullEntry full = new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper, null);
+			if (offset == 0.25f) {
+				if (isOver)
+					full.line = map.get(f.fixture).goalLines.line2;
+				else
+					full.line = map.get(f.fixture).goalLines.line3;
+			} else if (offset == 0.5f) {
+				if (isOver)
+					full.line = map.get(f.fixture).goalLines.line1;
+				else
+					full.line = map.get(f.fixture).goalLines.line4;
+			} else if (offset == -0.25f) {
+				if (isOver)
+					full.line = map.get(f.fixture).goalLines.line3;
+				else
+					full.line = map.get(f.fixture).goalLines.line2;
+			} else if (offset == -0.5f) {
+				if (isOver)
+					full.line = map.get(f.fixture).goalLines.line4;
+				else
+					full.line = map.get(f.fixture).goalLines.line1;
+			}
+
+			fulls.add(full);
+		}
+
+		return fulls;
 	}
 
 }

@@ -1,6 +1,9 @@
 package xls;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,7 +26,7 @@ import utils.Utils;
 
 public class AsianUtils {
 
-	public static Pair poissonAsianHome(ExtendedFixture f, HSSFSheet sheet) {
+	public static Pair poissonAsianHome(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
 
 		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
 		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
@@ -38,7 +41,8 @@ public class AsianUtils {
 		return Utils.poissonAsianHome(lambda, mu, f.line, f.asianHome, f.asianAway);
 	}
 
-	public static Pair poissonAsianLine(ExtendedFixture f, HSSFSheet sheet, float line, float home, float away) {
+	public static Pair poissonAsianLine(ExtendedFixture f, HSSFSheet sheet, float line, float home, float away)
+			throws ParseException {
 
 		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
 		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
@@ -53,7 +57,7 @@ public class AsianUtils {
 		return Utils.poissonAsianHome(lambda, mu, line, home, away);
 	}
 
-	public static Pair basic(ExtendedFixture f, HSSFSheet sheet) {
+	public static Pair basic(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
 		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 50, f.date);
 		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 50, f.date);
 
@@ -63,52 +67,81 @@ public class AsianUtils {
 		return Pair.of(home, away);
 	}
 
-	// public static float shots(AsianEntry ae, ExtendedFixture f, HSSFSheet
-	// sheet) {
-	// // float avgTotal = selectAvgShotsTotal(sheet, f.date);
-	//
-	// float avgHome = XlSUtils.selectAvgShotsHome(sheet, f.date);
-	// float avgAway = XlSUtils.selectAvgShotsAway(sheet, f.date);
-	// float homeShotsFor = XlSUtils.selectAvgHomeShotsFor(sheet, f.homeTeam,
-	// f.date);
-	// float homeShotsAgainst = XlSUtils.selectAvgHomeShotsAgainst(sheet,
-	// f.homeTeam, f.date);
-	// float awayShotsFor = XlSUtils.selectAvgAwayShotsFor(sheet, f.awayTeam,
-	// f.date);
-	// float awayShotsAgainst = XlSUtils.selectAvgAwayShotsAgainst(sheet,
-	// f.awayTeam, f.date);
-	//
-	// float lambda = avgAway == 0 ? 0 : homeShotsFor * awayShotsAgainst /
-	// avgAway;
-	// float mu = avgHome == 0 ? 0 : awayShotsFor * homeShotsAgainst / avgHome;
-	//
-	// float diff = lambda - mu;
-	//
-	// // float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
-	// // float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
-	//
-	// // float homeRatio = homeAvgFor / homeShotsFor;
-	// // float awayRatio = awayAvgFor / awayShotsFor;
-	//
-	// // return Utils.poissonOver(homeRatio * lambda, awayRatio * mu);
-	// // float avgShotsUnder = AvgShotsWhenUnder(sheet, f.date);
-	// float avgShotsOver = AvgShotsWhenOver(sheet, f.date);
-	// float expected = lambda + mu;
-	//
-	// float statisticDiff = getShotDiff(sheet, f.date, ae);
-	//
-	// if (expected >= avgShotsOver && expected > avgShotsUnder)
-	// return 1f;
-	// else if (expected <= avgShotsUnder && expected < avgShotsOver)
-	// return 0f;
-	// else {
-	// // System.out.println(f);
-	// return 0.5f;
-	// }
-	// }
+	public static Pair shotsHomeWin(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+		// float avgTotal = selectAvgShotsTotal(sheet, f.date);
 
-	//needs to be checked
-	private static float getShotDiff(HSSFSheet sheet, Date date, AsianEntry ae) {
+		float avgHome = XlSUtils.selectAvgShotsHome(sheet, f.date);
+		float avgAway = XlSUtils.selectAvgShotsAway(sheet, f.date);
+		float homeShotsFor = XlSUtils.selectAvgHomeShotsFor(sheet, f.homeTeam, f.date);
+		float homeShotsAgainst = XlSUtils.selectAvgHomeShotsAgainst(sheet, f.homeTeam, f.date);
+		float awayShotsFor = XlSUtils.selectAvgAwayShotsFor(sheet, f.awayTeam, f.date);
+		float awayShotsAgainst = XlSUtils.selectAvgAwayShotsAgainst(sheet, f.awayTeam, f.date);
+
+		float lambda = avgAway == 0 ? 0 : homeShotsFor * awayShotsAgainst / avgAway;
+		float mu = avgHome == 0 ? 0 : awayShotsFor * homeShotsAgainst / avgHome;
+
+		float diff = mu - lambda;
+
+		// float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
+		// float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
+
+		// float homeRatio = homeAvgFor / homeShotsFor;
+		// float awayRatio = awayAvgFor / awayShotsFor;
+
+		// return Utils.poissonOver(homeRatio * lambda, awayRatio * mu);
+		// float avgShotsUnder = AvgShotsWhenUnder(sheet, f.date);
+		float avgDiff = avgShotsDiffHomeWin(sheet, f.date);
+
+		float ratio = diff / avgDiff;
+
+		if (ratio < 0f) {
+			return Pair.of(f.asianHome, 0f);
+		} else if (ratio >= 2f) {
+			return Pair.of(0f, f.asianAway);
+		} else {
+			return Pair.of(f.asianHome * (1 - ratio / 2), f.asianAway * ratio / 2);
+		}
+
+		// if (diff >= avgDiff)
+		// return Pair.of(f.asianHome, 0f);
+		// else
+		// return Pair.of(0f, f.asianAway);
+
+	}
+
+	private static float avgShotsDiffHomeWin(HSSFSheet sheet, Date date) throws ParseException {
+		int totalHome = 0;
+		int totalAway = 0;
+		int count = 0;
+		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Date fdate;
+			Cell dateCell = row.getCell(XlSUtils.getColumnIndex(sheet, "Date"));
+			if (row.getCell(XlSUtils.getColumnIndex(sheet, "Date")).getCellType() == 1)
+				fdate = XLSformat.parse(row.getCell(XlSUtils.getColumnIndex(sheet, "Date")).getStringCellValue());
+			else
+				fdate = row.getCell(XlSUtils.getColumnIndex(sheet, "Date")).getDateCellValue();
+			int homegoal = (int) row.getCell(XlSUtils.getColumnIndex(sheet, "FTHG")).getNumericCellValue();
+			int awaygoal = (int) row.getCell(XlSUtils.getColumnIndex(sheet, "FTAG")).getNumericCellValue();
+			if (row.getCell(XlSUtils.getColumnIndex(sheet, "HST")) != null
+					&& row.getCell(XlSUtils.getColumnIndex(sheet, "AST")) != null && dateCell != null
+					&& fdate.before(date) && row.getCell(XlSUtils.getColumnIndex(sheet, "HST")).getCellType() == 0
+					&& row.getCell(XlSUtils.getColumnIndex(sheet, "AST")).getCellType() == 0 && homegoal < awaygoal) {
+				totalHome += (int) row.getCell(XlSUtils.getColumnIndex(sheet, "HST")).getNumericCellValue();
+				totalAway += (int) row.getCell(XlSUtils.getColumnIndex(sheet, "AST")).getNumericCellValue();
+
+				count++;
+			}
+		}
+		return count == 0 ? 0 : (float) (totalAway - totalHome) / count;
+	}
+
+	// needs to be checked
+	private static float getShotDiff(HSSFSheet sheet, Date date, ExtendedFixture ae) {
 		int totalHome = 0;
 		int totalAway = 0;
 		int count = 0;
@@ -118,8 +151,6 @@ public class AsianUtils {
 			if (row.getRowNum() == 0)
 				continue;
 			Cell dateCell = row.getCell(XlSUtils.getColumnIndex(sheet, "Date"));
-			int homegoal = (int) row.getCell(XlSUtils.getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-			int awaygoal = (int) row.getCell(XlSUtils.getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 			float line = (float) row.getCell(XlSUtils.getColumnIndex(sheet, "BbAHh")).getNumericCellValue();
 			if (row.getCell(XlSUtils.getColumnIndex(sheet, "HST")) != null
 					&& row.getCell(XlSUtils.getColumnIndex(sheet, "AST")) != null && dateCell != null
@@ -175,30 +206,48 @@ public class AsianUtils {
 				- ((float) losses / results.size());
 	}
 
-	public static float realistic(HSSFSheet sheet, int year) throws IOException, InterruptedException {
+	public static float realistic(HSSFSheet sheet, int year) throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
 		ArrayList<AsianEntry> analysis = new ArrayList<>();
-		ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
+		ArrayList<ExtendedFixture> all = XlSUtils.selectAll(sheet, 1);
 		// all = onlyHome(all);
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay; i++) {
+		for (int i = 14; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 
-			SettingsAsian temp = runForLeagueWithOdds(sheet, data, year);
-			ArrayList<AsianEntry> finals = runWithSettingsList(sheet, data, temp);
+			 SettingsAsian temp = runForLeagueWithOdds(sheet, data, year);
+			 ArrayList<AsianEntry> finals = runWithSettingsList(sheet, data,
+			 temp);
+			// current = onlyHome(current);
+			// data = onlyHome(data);
 
+//			ArrayList<AsianEntry> bets = new ArrayList<>();
+//			for (ExtendedFixture f : data) {
+//				AsianEntry ae = better(f, shotsHomeWin(f, sheet), f.line, f.asianHome, f.asianAway);
+//				if (ae.prediction)
+//					bets.add(ae);
+//			}
+//
 			float bestExp = bestExpectancy(finals);
+//
+//			bets = new ArrayList<>();
+//			for (ExtendedFixture f : current) {
+//				AsianEntry ae = better(f, shotsHomeWin(f, sheet), f.line, f.asianHome, f.asianAway);
+//				if (ae.prediction)
+//					bets.add(ae);
+//			}
 
-			ArrayList<AsianEntry> bets = runWithSettingsList(sheet, current, temp);
+			 ArrayList<AsianEntry> bets = runWithSettingsList(sheet, current,
+			 temp);
 
 			bets = restrict(bets, bestExp);
-			bets = homePredictions(bets);
+			// bets = homePredictions(bets);
 
 			profit += getProfit(bets);
-			// System.out.println("Curr: "+ profit);
+//			 System.out.println(bets);
 			played += bets.size();
 			analysis.addAll(bets);
 
@@ -214,7 +263,7 @@ public class AsianUtils {
 	private static ArrayList<ExtendedFixture> onlyHome(ArrayList<ExtendedFixture> all) {
 		ArrayList<ExtendedFixture> result = new ArrayList<>();
 		for (ExtendedFixture i : all) {
-			if (i.line % 1 == -0.5) {
+			if (i.line == 0.5f) {
 				result.add(i);
 			}
 		}
@@ -231,7 +280,8 @@ public class AsianUtils {
 		return result;
 	}
 
-	public static float realisticAllLines(HSSFSheet sheet, int year) throws IOException, InterruptedException {
+	public static float realisticAllLines(HSSFSheet sheet, int year)
+			throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
 		ArrayList<AsianEntry> analysis = new ArrayList<>();
@@ -266,7 +316,8 @@ public class AsianUtils {
 		return profit;
 	}
 
-	private static ArrayList<AsianEntry> runAllLines(HSSFSheet sheet, ArrayList<ExtendedFixture> data) {
+	private static ArrayList<AsianEntry> runAllLines(HSSFSheet sheet, ArrayList<ExtendedFixture> data)
+			throws ParseException {
 		ArrayList<AsianEntry> result = new ArrayList<>();
 		for (ExtendedFixture f : data) {
 			// TO DO REMOVE this constraint
@@ -295,7 +346,7 @@ public class AsianUtils {
 	}
 
 	static ArrayList<AsianEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> data,
-			SettingsAsian temp) {
+			SettingsAsian temp) throws ParseException {
 		ArrayList<AsianEntry> result = new ArrayList<>();
 		for (ExtendedFixture f : data) {
 			AsianEntry basic = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway);
@@ -319,7 +370,8 @@ public class AsianUtils {
 			return away;
 	}
 
-	static SettingsAsian runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) {
+	static SettingsAsian runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
+			throws ParseException {
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		SettingsAsian best = null;
@@ -454,7 +506,7 @@ public class AsianUtils {
 	}
 
 	public static ArrayList<AsianEntry> realisticFinals(HSSFSheet sheet, int year)
-			throws IOException, InterruptedException {
+			throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
 		ArrayList<AsianEntry> analysis = new ArrayList<>();
@@ -518,7 +570,7 @@ public class AsianUtils {
 	}
 
 	public static ArrayList<AsianEntry> makePrediction(HSSFSheet sheet, HSSFSheet league, ExtendedFixture f,
-			SettingsAsian temp) {
+			SettingsAsian temp) throws ParseException {
 		ArrayList<ExtendedFixture> current = new ArrayList<>();
 		current.add(f);
 		ArrayList<AsianEntry> bets = runWithSettingsList(sheet, current, temp);

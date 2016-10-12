@@ -8,4 +8,8 @@ public class Result {
 		this.goalsHomeTeam = goalsHomeTeam;
 		this.goalsAwayTeam = goalsAwayTeam;
 	}
+
+	public String toString() {
+		return goalsHomeTeam + " : " + goalsAwayTeam;
+	}
 }

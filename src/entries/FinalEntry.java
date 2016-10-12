@@ -27,21 +27,43 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		return prediction > threshold ? prediction : (1f - prediction);
 	}
 
+	public float getCOT() {
+		return prediction > threshold ? (prediction - threshold) : (threshold - prediction);
+	}
+
 	@Override
 	public String toString() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		String out = prediction >= upper ? "over" : "under";
 		return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
-				+ fixture.awayTeam + " " + totalGoals + " " + out + " " + success() + "\n";
+				+ fixture.awayTeam + " " + totalGoals + " " + out + " " + success() + " "
+				+ String.format("%.2f", getProfit()) + "\n";
+	}
+
+	public boolean isOver() {
+		return prediction >= upper;
+	}
+
+	public boolean isUnder() {
+		return prediction < lower;
 	}
 
 	public boolean success() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		if (totalGoals > 2.5d) {
-			return prediction >= upper ? true : false;
+			return isOver();
 		} else {
-			return prediction >= lower ? false : true;
+			return isUnder();
 		}
+
+	}
+
+	public float getProfit() {
+		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
+		if (success())
+			return coeff - 1f;
+		else
+			return -1f;
 
 	}
 
