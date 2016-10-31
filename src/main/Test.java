@@ -69,7 +69,7 @@ public class Test {
 
 		float total = 0f;
 		int startY = 2015;
-		int end = 2015;
+		int end = 2016;
 		for (int year = startY; year <= end; year++)
 			total += simulationAllLines(year, true);
 		System.out.println("Avg profit is " + (total / (end - startY + 1)));
@@ -77,8 +77,8 @@ public class Test {
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-//		 for (int year = 2005; year <= 2015; year++)
-//		 finals(year, false);
+		// for (int year = 2005; year <= 2015; year++)
+		// finals(year, false);
 
 		// makePredictions();
 
@@ -118,14 +118,14 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			 if (!sh.getSheetName().equals("ENG"))
-			 continue;
-//			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-//				continue;
+			if (!sh.getSheetName().equals("GER"))
+				continue;
+			// if (!Arrays.asList(MinMaxOdds.FULL).contains(sh.getSheetName()))
+			// continue;
 
-//			 if
-//			 (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
-//			 continue;
+			// if
+			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
+			// continue;
 
 			threadArray.add(pool.submit(new RunnerAllLines(sh, year)));
 		}
@@ -141,7 +141,6 @@ public class Test {
 		pool.shutdown();
 		return totalProfit;
 	}
-
 
 	public static float asian(int year, boolean parsedLeagues)
 			throws IOException, InterruptedException, ExecutionException {
@@ -445,14 +444,14 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			 if (!sh.getSheetName().equals("ENG"))
-			 continue;
-//			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-//				continue;
+			if (!sh.getSheetName().equals("SWE"))
+				continue;
+			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
 
-//			 if
-//			 (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
-//			 continue;
+			// if
+			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
+			// continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
@@ -512,27 +511,27 @@ public class Test {
 		// ArrayList<FinalEntry> overs = Utils.onlyOvers(all);
 		// Utils.analysys(overs, year);
 		// Utils.hyperReal(overs, year, 1000f, 0.05f);
-//		Utils.evaluateRecord(all);
-//		LineChart.draw(Utils.createProfitMovementData(all), year);
+		// Utils.evaluateRecord(all);
+		// LineChart.draw(Utils.createProfitMovementData(all), year);
 
 		System.out.println(year);
-		 System.out.println("3");
-		 Utils.bestNperWeek(all, 3);
-//		 System.out.println("4");
-//		 Utils.bestNperWeek(all, 4);
-//		 System.out.println("5");
-//		 Utils.bestNperWeek(all, 5);
-//		 System.out.println("6");
-//		 Utils.bestNperWeek(all, 6);
-//		 System.out.println("7");
-//		 Utils.bestNperWeek(all, 7);
-//		 System.out.println("8");
-//		 Utils.bestNperWeek(all, 8);
-//		 // Utils.triples(all, year);
-//		 System.out.println("9");
-//		 Utils.bestNperWeek(all, 9);
-//		 System.out.println("10");
-//		 Utils.bestNperWeek(all, 10);
+		System.out.println("3");
+		Utils.bestNperWeek(all, 3);
+		// System.out.println("4");
+		// Utils.bestNperWeek(all, 4);
+		// System.out.println("5");
+		// Utils.bestNperWeek(all, 5);
+		// System.out.println("6");
+		// Utils.bestNperWeek(all, 6);
+		// System.out.println("7");
+		// Utils.bestNperWeek(all, 7);
+		// System.out.println("8");
+		// Utils.bestNperWeek(all, 8);
+		// // Utils.triples(all, year);
+		// System.out.println("9");
+		// Utils.bestNperWeek(all, 9);
+		// System.out.println("10");
+		// Utils.bestNperWeek(all, 10);
 
 	}
 

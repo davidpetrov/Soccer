@@ -37,12 +37,21 @@ import main.Line;
 import main.Result;
 import main.SQLiteJDBC;
 import results.Results;
+import scraper.Names;
 import scraper.Scraper;
 import settings.Settings;
 import tables.Position;
 import tables.Table;
 import xls.XlSUtils;
 
+/**
+ * @author Tereza
+ *
+ */
+/**
+ * @author Tereza
+ *
+ */
 public class Utils {
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	public static final String TOKEN = "19f6c3cd0bd54c4286322c08734b53bd";
@@ -1816,6 +1825,59 @@ public class Utils {
 		}
 
 		return fulls;
+	}
+
+	public static ArrayList<String> getTeamsList(ArrayList<ExtendedFixture> odds) {
+		ArrayList<String> result = new ArrayList<>();
+		for (ExtendedFixture i : odds) {
+			if (!result.contains(i.homeTeam))
+				result.add(i.homeTeam);
+			if (!result.contains(i.awayTeam))
+				result.add(i.awayTeam);
+		}
+		return result;
+	}
+
+	/**
+	 * 
+	 * @param team
+	 * @param fixtures
+	 * @return list of the fixtures for the given team
+	 */
+	public static ArrayList<ExtendedFixture> getFixturesList(String team, ArrayList<ExtendedFixture> fixtures) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (ExtendedFixture i : fixtures)
+			if (i.homeTeam.equals(team) || i.awayTeam.equals(team))
+				result.add(i);
+
+		return result;
+	}
+
+	/**
+	 * Method for verifying two list of fixtures are the same (only difference
+	 * in naming the clubs)
+	 * 
+	 * @param fixtures
+	 * @param fwa
+	 * @return
+	 */
+	public static boolean matchesFixtureLists(ArrayList<ExtendedFixture> fixtures, ArrayList<ExtendedFixture> fwa) {
+
+		for (ExtendedFixture i : fixtures) {
+			boolean foundMatch = false;
+			for (ExtendedFixture j : fwa) {
+				if ((i.date.equals(i.date) || i.date.equals(Utils.getYesterday(i.date))
+						|| i.date.equals(Utils.getTommorow(i.date))) && i.result.equals(j.result)) {
+					foundMatch = true;
+					break;
+				}
+			}
+			if (!foundMatch)
+				return false;
+
+		}
+
+		return true;
 	}
 
 }

@@ -9,8 +9,8 @@ public class EntryPoints {
 	public static final int CURRENT = 2016;
 
 	public static final String[] TRACKING = { "BRA", "BRB", "SWE", "NOR", "FIN", "USA", };
-	public static final String[] MERGED = { "FR2", "BEL", "SWI", "E0" };
-	public static final String[] HYPHENODDS = { "ENG", "SWI", "SPA" };
+	public static final String[] MERGED = { "FR2", "BEL", "SWI", "E0", "ENG", "SPA", "GER", "FR", "IT" };
+	public static final String[] HYPHENODDS = { "ENG", "SWI", "SPA", "GER", "FR", "IT" };
 
 	public static HashMap<String, String> map = new HashMap<>();
 	public static HashMap<String, String> odds = new HashMap<>();
@@ -34,7 +34,9 @@ public class EntryPoints {
 		map.put("SWI", "http://int.soccerway.com/national/switzerland/super-league/");
 		map.put("ENG", "http://int.soccerway.com/national/england/premier-league/");
 		map.put("SPA", "http://int.soccerway.com/national/spain/primera-division/");
-
+		map.put("GER", "http://int.soccerway.com/national/germany/bundesliga/");
+		map.put("FR", "http://int.soccerway.com/national/france/ligue-1/");
+		map.put("IT", "http://int.soccerway.com/national/italy/serie-a/");
 	}
 
 	// oddsportal links
@@ -53,7 +55,9 @@ public class EntryPoints {
 		odds.put("SWI", "http://www.oddsportal.com/soccer/switzerland/super-league");
 		odds.put("ENG", "http://www.oddsportal.com/soccer/england/premier-league");
 		odds.put("SPA", "http://www.oddsportal.com/soccer/spain/laliga");
-
+		odds.put("GER", "http://www.oddsportal.com/soccer/germany/bundesliga");
+		odds.put("FR", "http://www.oddsportal.com/soccer/france/ligue-1");
+		odds.put("IT", "http://www.oddsportal.com/soccer/italy/serie-a");
 	}
 
 	public static String getLink(String competition, int year) {

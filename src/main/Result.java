@@ -12,4 +12,8 @@ public class Result {
 	public String toString() {
 		return goalsHomeTeam + " : " + goalsAwayTeam;
 	}
+
+	public boolean equals(Result other) {
+		return goalsAwayTeam == other.goalsAwayTeam && goalsHomeTeam == other.goalsHomeTeam;
+	}
 }

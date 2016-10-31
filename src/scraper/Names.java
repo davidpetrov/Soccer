@@ -67,7 +67,6 @@ public class Names {
 
 		map.put("BRA", bra);
 		map.put("BRB", bra);
-		
 
 		HashMap<String, String> swe = new HashMap<>();
 		swe.put("AIK", "AIK");
@@ -491,7 +490,7 @@ public class Names {
 		usa.put("Seattle Sounders", "Seattle Sounders");
 		usa.put("Sporting Kansas City", "Sporting KC");
 		usa.put("Toronto FC", "Toronto");
-		usa.put("Vancouver Whitecaps", "Vancouver Whitecaps");
+		usa.put("Vancouver Whitecaps", "Whitecaps");
 		usa.put("Chivas USA", "Chivas USA");
 		map.put("USA", usa);
 
@@ -519,8 +518,7 @@ public class Names {
 		tur.put("Kayseri Erciyesspor", "Kayseri Erciyesspor");
 		tur.put("Elazigspor", "Elazspor");
 		map.put("TUR", tur);
-		
-		
+
 		HashMap<String, String> gre = new HashMap<>();
 		gre.put("AEK Athens FC", "AEK Athens");
 		gre.put("Asteras Tripolis", "Asteras Tripolis");
@@ -545,8 +543,7 @@ public class Names {
 		gre.put("Aris", "Aris");
 		gre.put("Smyrnis", "Apollon Smirnis");
 		map.put("GRE", gre);
-		
-		
+
 		HashMap<String, String> hun = new HashMap<>();
 		hun.put("Bekescsaba 1912", "Bkscsaba");
 		hun.put("Debrecen", "Debrecen");
@@ -569,7 +566,7 @@ public class Names {
 		hun.put("Kaposvar", "Kaposvri Rkczi");
 		hun.put("Mezokovesd-Zsory", "Mezkvesd-Zsry");
 		map.put("HUN", hun);
-		
+
 		HashMap<String, String> d2 = new HashMap<>();
 		d2.put("Arminia Bielefeld", "Arminia Bielefeld");
 		d2.put("Bochum", "Bochum");
@@ -597,7 +594,7 @@ public class Names {
 		d2.put("Energie Cottbus", "Energie Cottbus");
 		d2.put("SG Dynamo Dresden", "Dynamo Dresden");
 		map.put("D2", d2);
-		
+
 		HashMap<String, String> it2 = new HashMap<>();
 		it2.put("Ascoli", "Ascoli");
 		it2.put("Avellino", "Avellino");
@@ -634,7 +631,7 @@ public class Names {
 		it2.put("Reggio Calabria", "Reggina");
 		it2.put("Siena", "Robur Siena");
 		map.put("IT2", it2);
-		
+
 		HashMap<String, String> pol = new HashMap<>();
 		pol.put("Cracovia", "Cracovia Krakw");
 		pol.put("Gornik Z.", "Grnik Zabrze");
@@ -657,8 +654,7 @@ public class Names {
 		pol.put("Widzew Lodz", "Widzew d");
 		pol.put("Ruch", "Ruch Chorzw");
 		map.put("POL", pol);
-		
-		
+
 		HashMap<String, String> eng = new HashMap<>();
 		eng.put("Arsenal", "Arsenal");
 		eng.put("Bournemouth", "AFC Bournemouth");
@@ -683,17 +679,101 @@ public class Names {
 		eng.put("Aston Villa", "Aston Villa");
 		eng.put("Newcastle Utd", "Newcastle United");
 		eng.put("Norwich", "Norwich City");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
-//		eng.put("", "");
+		 eng.put("QPR", "Queens Park Rangers");
+		 eng.put("Cardiff", "Cardiff City");
+		 eng.put("Fulham", "Fulham");
+		 eng.put("Norwich", "Norwich City");
+		 eng.put("Reading", "Reading");
+		 eng.put("Wigan", "Wigan Athletic");
+		// eng.put("", "");
+		// eng.put("", "");
+		// eng.put("", "");
+		// eng.put("", "");
 		map.put("ENG", eng);
+
+		HashMap<String, String> spa = new HashMap<>();
+		spa.put("Alaves", "Deportivo Alavs");
+		spa.put("Ath Bilbao", "Athletic Club");
+		spa.put("Atl. Madrid", "Atltico Madrid");
+		spa.put("Barcelona", "Barcelona");
+		spa.put("Betis", "Real Betis");
+		spa.put("Celta Vigo", "Celta de Vigo");
+		spa.put("Dep. La Coruna", "Deportivo La Corua");
+		spa.put("Eibar", "Eibar");
+		spa.put("Espanyol", "Espanyol");
+		spa.put("Gijon", "Sporting Gijn");
+		spa.put("Granada CF", "Granada");
+		spa.put("Las Palmas", "Las Palmas");
+		spa.put("Leganes", "Legans");
+		spa.put("Malaga", "Mlaga");
+		spa.put("Osasuna", "Osasuna");
+		spa.put("Real Madrid", "Real Madrid");
+		spa.put("Real Sociedad", "Real Sociedad");
+		spa.put("Sevilla", "Sevilla");
+		spa.put("Valencia", "Valencia");
+		spa.put("Villarreal", "Villarreal");
+		spa.put("Getafe", "Getafe");
+		spa.put("Levante", "Levante");
+		spa.put("Rayo Vallecano", "Rayo Vallecano");
+		spa.put("Almeria", "Almera");
+		spa.put("Cordoba", "Crdoba");
+		spa.put("Elche", "Elche");
+		map.put("SPA", spa);
+
+		HashMap<String, String> ger = new HashMap<>();
+		ger.put("1. FC Koln", "Kln");
+		ger.put("Augsburg", "Augsburg");
+		ger.put("B. Monchengladbach", "Borussia M'gladbach");
+		ger.put("Bayer Leverkusen", "Bayer Leverkusen");
+		ger.put("Bayern Munich", "Bayern Mnchen");
+		ger.put("Darmstadt", "Darmstadt 98");
+		ger.put("Dortmund", "Borussia Dortmund");
+		ger.put("Eintracht Frankfurt", "Eintracht Frankfurt");
+		ger.put("Freiburg", "Freiburg");
+		ger.put("Hamburger SV", "Hamburger SV");
+		ger.put("Hertha Berlin", "Hertha BSC");
+		ger.put("Hoffenheim", "Hoffenheim");
+		ger.put("Ingolstadt", "Ingolstadt");
+		ger.put("Mainz", "Mainz 05");
+		ger.put("RB Leipzig", "RB Leipzig");
+		ger.put("Schalke", "Schalke 04");
+		ger.put("SV Werder Bremen", "Werder Bremen");
+		ger.put("Wolfsburg", "Wolfsburg");
+		ger.put("Hannover", "Hannover 96");
+		ger.put("VfB Stuttgart", "Stuttgart");
+		// ger.put("", "");
+		// ger.put("", "");
+		map.put("GER", ger);
+
+		HashMap<String, String> fr = new HashMap<>();
+		fr.put("Angers", "Angers");
+		fr.put("Bastia", "Bastia");
+		fr.put("Bordeaux", "Bordeaux");
+		fr.put("Caen", "Caen");
+		fr.put("GFC Ajaccio", "Gazlec Ajaccio");
+		fr.put("Guingamp", "Guingamp");
+		fr.put("Lille", "Lille");
+		fr.put("Lorient", "Lorient");
+		fr.put("Lyon", "Olympique Lyonnais");
+		fr.put("Marseille", "Olympique Marseille");
+		fr.put("Monaco", "Monaco");
+		fr.put("Montpellier", "Montpellier");
+		fr.put("Nantes", "Nantes");
+		fr.put("Nice", "Nice");
+		fr.put("Paris SG", "PSG");
+		fr.put("Reims", "Reims");
+		fr.put("Rennes", "Rennes");
+		fr.put("St Etienne", "Saint-tienne");
+		fr.put("Toulouse", "Toulouse");
+		fr.put("Troyes", "Troyes");
+		fr.put("Evian TG", "Evian TG");
+		fr.put("Lens", "Lens");
+		fr.put("Metz", "Metz");
+		fr.put("", "");
+		fr.put("", "");
+		fr.put("", "");
+		map.put("FR", fr);
+
 	}
 
 	public static String getSoccerName(String competition, String name) {

@@ -54,28 +54,29 @@ public class Scraper {
 			throws IOException, ParseException, InterruptedException, ExecutionException {
 		long start = System.currentTimeMillis();
 
-		// ArrayList<ExtendedFixture> list = collect("BRA", 2016,
-		// null/*"http://int.soccerway.com/national/england/premier-league/2010-2011/regular-season/"*/);
+		// ArrayList<ExtendedFixture> list = collect("USA", 2014, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		//
-		// XlSUtils.storeInExcel(list, "BRA", 2016, "manual");
+		// XlSUtils.storeInExcel(list, "USA", 2014, "manual");
 
 		//
-		ArrayList<FullFixture> list = fullOdds("SPA", 2014,
-				"http://www.oddsportal.com/soccer/spain/primera-division-2014-2015/");
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
-		//
-		XlSUtils.storeInExcelFull(list, "SPA", 2014, "fullodds");
 
-		// XlSUtils.combineFull("ENG", 2015);
+		// ArrayList<FullFixture> list = fullOdds("ENG", 2012, null);
+		// XlSUtils.storeInExcelFull(list, "ENG", 2012, "fullodds");
+
+		// ArrayList<FullFixture> list2 = fullOdds("SPA", 2013,
+		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
+		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
+
+//		 XlSUtils.combineFull("GER", 2016);
 		// ////
-		// XlSUtils.fillMissingShotsData("USA", 2016);
+		XlSUtils.fillMissingShotsData("IT", 2011, true);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		// checkAndUpdate("SWI");
+		// checkAndUpdate("SWE");
 		// updateInParallel();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
@@ -1452,7 +1453,8 @@ public class Scraper {
 		}
 
 		ExtendedFixture ef = new FullFixture(date, home, away, fullResult, competition).withHTResult(htResult)
-				.with1X2Odds(homeOdds, drawOdds, awayOdds).withAsian(GLS.main.line, GLS.main.home, GLS.main.away)
+				.with1X2Odds(homeOdds, drawOdds, awayOdds)
+				.withAsian(asianLines.main.line, asianLines.main.home, asianLines.main.away)
 				.withOdds(overOdds, underOdds, overOdds, underOdds).withShots(-1, -1);
 
 		return ((FullFixture) ef).withAsianLines(asianLines).withGoalLines(GLS);

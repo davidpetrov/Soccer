@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -2319,28 +2320,29 @@ public class XlSUtils {
 			map.put(all.get(j), full.get(j));
 		}
 
+		// Utils.fairValue(all);
 		float th = 0.55f;
 		Settings temp = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th, th, th, 0.5f, 0f).withShots(1f);
 
 		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 14; i <= maxMatchDay; i++) {
+		for (int i = 5; i <= maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
 			finals = runWithSettingsList(sheet, current, temp);
 
-			// finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3,
+			// finals = runBestTH(sheet, current, "I1", year, 3,
 			// "shots", temp);
 			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
 			// year, 3, "shots");
 			finals = Utils.noequilibriums(finals);
 			// finals = Utils.onlyUnders(finals);
-			// finals = Utils.onlyOvers(finals);
+			finals = Utils.onlyOvers(finals);
 
-			 finals = Utils.mainGoalLine(finals, map);
-//			finals = Utils.customGoalLine(finals, map, -0.25f);
-//			 finals = Utils.bestValueByDistibution(finals, map, all, sheet);
+			// finals = Utils.mainGoalLine(finals, map);
+			// finals = Utils.customGoalLine(finals, map, -0.5f);
+			finals = Utils.bestValueByDistibution(finals, map, all, sheet);
 
 			played += finals.size();
 
@@ -2414,8 +2416,7 @@ public class XlSUtils {
 			// finals = Utils.allUnders(current);
 			// finals = Utils.higherOdds(current);
 
-			// finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3,
-			// "shots", temp);
+			finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3, "shots", temp);
 			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
 			// year, 3, "shots");
 			finals = Utils.noequilibriums(finals);
@@ -2423,7 +2424,7 @@ public class XlSUtils {
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-			// finals = Utils.onlyUnders(finals);
+			finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);
@@ -4806,11 +4807,27 @@ public class XlSUtils {
 		return null;
 	}
 
-	public static void fillMissingShotsData(String competition, int year) throws IOException, ParseException {
+	/**
+	 * 
+	 * @param competition
+	 * @param year
+	 * @param full
+	 *            - true for filling full data(all lines)
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static void fillMissingShotsData(String competition, int year, boolean full)
+			throws IOException, ParseException {
 		String base = new File("").getAbsolutePath();
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
+		String tableName = full ? "fullOdds" : "odds";
+		FileInputStream file = new FileInputStream(new File(base + "\\data\\" + tableName + year + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		ArrayList<ExtendedFixture> odds = selectAll(workbook.getSheet(competition), 0);
+		ArrayList<ExtendedFixture> odds = new ArrayList<>();
+		if (full)
+			for (FullFixture i : selectAllFull(workbook.getSheet(competition), 0))
+				odds.add(i);
+		else
+			odds = selectAll(workbook.getSheet(competition), 0);
 		System.out.println("odds size " + odds.size());
 
 		ArrayList<ExtendedFixture> filled = new ArrayList<>();
@@ -4848,9 +4865,18 @@ public class XlSUtils {
 
 		System.out.println(filledCount + " filled missing shots by same number as goals scored");
 
-		System.out.println(filled.size() + "stored");
-		if (filled.size() == odds.size())
-			storeInExcel(filled, competition, year, "odds");
+		if (filledCount != 0) {
+			System.out.println(filled.size() + "stored");
+			if (filled.size() == odds.size()) {
+				if (full) {
+					ArrayList<FullFixture> fulls = new ArrayList<>();
+					for (ExtendedFixture i : filled)
+						fulls.add((FullFixture) i);
+					storeInExcelFull(fulls, competition, year, "fullOdds");
+				} else
+					storeInExcel(filled, competition, year, "odds");
+			}
+		}
 
 		workbook.close();
 
@@ -5023,7 +5049,10 @@ public class XlSUtils {
 		ArrayList<ExtendedFixture> ways = selectAll(workbookWay.getSheet(competition), 0);
 		System.out.println("ways size " + ways.size());
 
-		ArrayList<ExtendedFixture> combined = combine(odds, ways, competition);
+		HashMap<String, String> dictionary = deduceDictionary(odds, ways);
+		System.out.println(dictionary);
+
+		ArrayList<ExtendedFixture> combined = combineWithDictionary(odds, ways, competition, dictionary);
 		ArrayList<FullFixture> fullCombined = new ArrayList<>();
 		for (ExtendedFixture i : combined) {
 			fullCombined.add((FullFixture) i);
@@ -5036,6 +5065,90 @@ public class XlSUtils {
 
 		workbook.close();
 		workbookWay.close();
+
+	}
+
+	private static ArrayList<ExtendedFixture> combineWithDictionary(ArrayList<ExtendedFixture> odds,
+			ArrayList<ExtendedFixture> ways, String competition, HashMap<String, String> dictionary) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+
+		for (ExtendedFixture i : odds) {
+			ExtendedFixture match = findCorresponding(i, ways, competition, dictionary);
+			if (match == null) {
+				System.out.println(i);
+				break;
+			} else
+				result.add(match);
+
+		}
+
+		return result;
+	}
+
+	private static ExtendedFixture findCorresponding(ExtendedFixture oddsFixture, ArrayList<ExtendedFixture> ways,
+			String competition, HashMap<String, String> dictionary) {
+
+		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+
+		for (ExtendedFixture i : ways) {
+			if (oddsFixture.homeTeam.equals(reverseDictionary.get(i.homeTeam))
+					&& oddsFixture.awayTeam.equals(reverseDictionary.get(i.awayTeam))
+					&& (oddsFixture.date.equals(i.date) || oddsFixture.date.equals(Utils.getYesterday(i.date))
+							|| oddsFixture.date.equals(Utils.getTommorow(i.date)))) {
+				ExtendedFixture ef = oddsFixture.withShots(i.shotsHome, i.shotsAway);
+				return ef;
+			}
+		}
+
+		return null;
+	}
+
+	private static HashMap<String, String> deduceDictionary(ArrayList<ExtendedFixture> odds,
+			ArrayList<ExtendedFixture> ways) {
+		HashMap<String, String> dictionary = new HashMap<>();
+
+		ArrayList<String> teamsOdds = Utils.getTeamsList(odds);
+		ArrayList<String> teamsWays = Utils.getTeamsList(ways);
+
+		ArrayList<String> matchedOdds = new ArrayList<>();
+		ArrayList<String> matchedWays = new ArrayList<>();
+
+		// find direct matches
+		for (String i : teamsOdds) {
+			for (String j : teamsWays) {
+				if (i.equals(j)) {
+					matchedOdds.add(i);
+					matchedWays.add(j);
+					dictionary.put(i, i);
+				}
+			}
+		}
+
+		for (String team : teamsOdds) {
+			if (matchedOdds.contains(team))
+				continue;
+
+			ArrayList<ExtendedFixture> fixtures = Utils.getFixturesList(team, odds);
+			for (String tways : teamsWays) {
+				if (!matchedWays.contains(tways)) {
+					ArrayList<ExtendedFixture> fwa = Utils.getFixturesList(tways, ways);
+					if (Utils.matchesFixtureLists(fixtures, fwa)) {
+						matchedOdds.add(team);
+						matchedWays.add(tways);
+						dictionary.put(team, tways);
+						break;
+					}
+				}
+
+			}
+
+		}
+
+		if (matchedOdds.size() != teamsOdds.size())
+			System.err.println("Deducing dictionary failed");
+
+		return dictionary;
 
 	}
 

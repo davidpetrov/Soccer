@@ -17,7 +17,9 @@ public class MinMaxOdds {
 	public static final String[] SHOTSDONT = { "I1", "F1", "E1", "E3" };
 	public static final String[] MANUAL = { /* "ARG", */ "ARG2", "BRA", "BRB", "SWE", "NOR", "USA", "ICE", "FIN", "JP",
 			"SP2", "SWI", "DEN", "AUS", "CZE", "RUS", "NED", "POR", "BEL", "FR2", "TUR", "GRE", "HUN", "D2", "IT2",
-			"POL", "ENG", "SPA" };
+			"POL", "ENG", "SPA", "GER", "FR", "IT" };
+
+	public static final String[] FULL = { "SWI", "BRA", "ENG", "SPA" };
 
 	public static float getMinOdds(String league) {
 		switch (league) {
