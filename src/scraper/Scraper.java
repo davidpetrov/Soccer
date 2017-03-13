@@ -3,13 +3,13 @@ package scraper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +46,7 @@ import xls.XlSUtils;
 
 public class Scraper {
 	public static final DateFormat OPTAFORMAT = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
+	public static final DateFormat FORMATFULL = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
 	public static final String BASE = "http://int.soccerway.com/";
 	public static final String OUSUFFIX = "#over-under;2;2.50;0";
 	public static final int CURRENT_YEAR = 2016;
@@ -54,38 +55,44 @@ public class Scraper {
 			throws IOException, ParseException, InterruptedException, ExecutionException {
 		long start = System.currentTimeMillis();
 
-		// ArrayList<ExtendedFixture> list = collect("USA", 2014, null);
+//		 ArrayList<ExtendedFixture> list = collect("SLK", 2016, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		// XlSUtils.storeInExcel(list, "USA", 2014, "manual");
+//		 XlSUtils.storeInExcel(list, "SLK", 2016, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-		// ArrayList<FullFixture> list = fullOdds("ENG", 2012, null);
-		// XlSUtils.storeInExcelFull(list, "ENG", 2012, "fullodds");
+//		ArrayList<ExtendedFixture> list = odds("SLK", 2016, null);
+//		XlSUtils.storeInExcel(list, "SLK", 2016, "odds");
+		// nextMatches("GER", null);
+		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
+		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
 		// ArrayList<FullFixture> list2 = fullOdds("SPA", 2013,
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-//		 XlSUtils.combineFull("GER", 2016);
+//		 XlSUtils.combine("SLK", 2016, "manual");
+		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
-		XlSUtils.fillMissingShotsData("IT", 2011, true);
+//		 XlSUtils.fillMissingShotsData("SLO", 2016, false);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		// checkAndUpdate("SWE");
+//		 checkAndUpdate("ARG");
 		// updateInParallel();
+
+		// fastOdds("SPA", 2016, null);
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
 
-	public static void updateInParallel() {
+	public static void updateInParallel(ArrayList<String> list, int n) {
 
-		ExecutorService executor = Executors.newFixedThreadPool(EntryPoints.MERGED.length);
-		for (String i : EntryPoints.MERGED) {
+		ExecutorService executor = Executors.newFixedThreadPool(n);
+		for (String i : list) {
 			Runnable worker = new UpdateRunner(i);
 			executor.execute(worker);
 		}
@@ -94,7 +101,6 @@ public class Scraper {
 		executor.shutdown();
 		// Wait until all threads are finish
 		// executor.awaitTermination(0, null);
-		System.out.println("Finished all threads");
 	}
 
 	public static void checkAndUpdate(String competition) throws IOException, ParseException, InterruptedException {
@@ -106,6 +112,7 @@ public class Scraper {
 		HSSFSheet sh = workbook.getSheet(competition);
 
 		ArrayList<ExtendedFixture> all = XlSUtils.selectAll(sh, 0);
+		// problem when no pending fixtures?
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
 
@@ -113,13 +120,27 @@ public class Scraper {
 				null);
 		System.out.println(odds.size() + " odds ");
 
-		ArrayList<ExtendedFixture> list = collectUpToDate(competition, CURRENT_YEAR, Utils.getYesterday(oldestTocheck),
-				null);
+		ArrayList<ExtendedFixture> list = new ArrayList<>();
+		int count = 0;
+		int maxTries = 10;
+		while (true) {
+			try {
+				list = collectUpToDate(competition, CURRENT_YEAR, Utils.getYesterday(oldestTocheck), null);
+				break;
+			} catch (Exception e) {
+				if (++count == maxTries)
+					throw e;
+			}
+		}
 
-		System.err.println(list.size() + "shots");
+		System.out.println(list.size() + "shots");
 
-		ArrayList<ExtendedFixture> combined = XlSUtils.combine(odds, list, competition);
+		HashMap<String, String> dictionary = XlSUtils.deduceDictionary(odds, list);
+
+		ArrayList<ExtendedFixture> combined = XlSUtils.combineWithDictionary(odds, list, competition, dictionary);
 		System.out.println(combined.size() + " combined");
+		System.out.println(
+				competition + " " + (combined.size() == list.size() ? " combined successfull" : " combined failed"));
 		workbook.close();
 
 		ArrayList<ExtendedFixture> toAdd = new ArrayList<>();
@@ -140,7 +161,18 @@ public class Scraper {
 		}
 
 		System.out.println("to add " + toAdd.size());
-		ArrayList<ExtendedFixture> next = nextMatches(competition, null);
+		ArrayList<ExtendedFixture> next = new ArrayList<>();
+		// int countTries = 0;
+		// int maxTriesNext = 5;
+		// while (true) {
+		// try {
+		next = nextMatches(competition, null);
+		// break;
+		// } catch (Exception e) {
+		// if (++countTries == maxTriesNext)
+		// throw e;
+		// }
+		// }
 
 		ArrayList<ExtendedFixture> withNext = new ArrayList<>();
 
@@ -204,6 +236,7 @@ public class Scraper {
 				ArrayList<String> links = new ArrayList<>();
 				for (WebElement i : list) {
 					// better logic here?
+					Thread.sleep(100);
 					if (i.getText().contains("-") && isFixtureLink(i.getAttribute("href")))
 						links.add(i.getAttribute("href"));
 				}
@@ -225,7 +258,7 @@ public class Scraper {
 				page--;
 				System.out.println("Starting over from page:" + page);
 				driver.close();
-				Thread.sleep(30000);
+				Thread.sleep(20000);
 				driver = new ChromeDriver();
 				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 				driver.manage().window().maximize();
@@ -317,7 +350,7 @@ public class Scraper {
 	}
 
 	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object)
-			throws ParseException, InterruptedException {
+			throws ParseException, InterruptedException, IOException {
 		String address = EntryPoints.getOddsLink(competition, 2016);
 		System.out.println(address);
 
@@ -339,16 +372,25 @@ public class Scraper {
 		String leagueYear = splitAddress[splitAddress.length - 1];
 		List<WebElement> list = driver.findElements(By.cssSelector("a[href*='" + leagueYear + "']"));
 		ArrayList<String> links = new ArrayList<>();
+		HashMap<String, String> texts = new HashMap<>();
 		for (WebElement i : list) {
 			if (i.getText().contains("-")) {
-				links.add(i.getAttribute("href"));
+				String href = i.getAttribute("href");
+				links.add(href);
 				System.out.println(i.getText());
+				texts.put(href, i.getText());
 			}
 		}
 
 		for (String i : links) {
+			String homeTeam = texts.get(i).split("-")[0].trim();
+			String awayTeam = texts.get(i).split("-")[1].trim();
+			if (teams.contains(homeTeam) && teams.contains(awayTeam))
+				continue;
+
 			ExtendedFixture ef = getOddsFixture(driver, i, competition, true);
-			if (ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam) && !teams.contains(ef.awayTeam)) {
+			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
+					&& !teams.contains(ef.awayTeam)) {
 				result.add(ef);
 				teams.add(ef.awayTeam);
 				teams.add(ef.homeTeam);
@@ -421,6 +463,8 @@ public class Scraper {
 		return setlist;
 
 	}
+	
+	
 
 	public static ExtendedFixture getFixture(Document fixture, String competition) throws IOException, ParseException {
 
@@ -869,7 +913,7 @@ public class Scraper {
 	}
 
 	public static ExtendedFixture getOddsFixture(WebDriver driver, String i, String competition,
-			boolean liveMatchesFlag) throws ParseException, InterruptedException {
+			boolean liveMatchesFlag) throws ParseException, InterruptedException, IOException {
 		// System.out.println(i);
 		int count = 0;
 		int maxTries = 10;
@@ -892,18 +936,36 @@ public class Scraper {
 		Date date = OPTAFORMAT.parse(dateString.split(",")[1].trim());
 		System.out.println(date);
 
-		// Result
+		// --------------------------
+		// Document fixture = Jsoup.connect(i).get();
+		//
+		//
+		// Element dt = fixture.select("p[class^=date]").first();
+		//
+		// String millisString = dt.outerHtml().split("
+		// ")[3].split("-")[0].substring(1);
+		//
+		// long timeInMillis = Long.parseLong(millisString) * 1000;
+		//
+		// Calendar cal = Calendar.getInstance();
+		// cal.setTimeInMillis(timeInMillis);
+		// Date date2 = cal.getTime();
+		// System.out.println(date2);
+		// date=date2;
+		// -----------------------------------------------------------
+
+		// Resultss
 		Result fullResult = new Result(-1, -1);
 		Result htResult = new Result(-1, -1);
 		try {
 			WebElement resElement = driver.findElement(By.xpath("//*[@id='event-status']/p"));
 			if (resElement != null) {
 				String resString = resElement.getText();
-				if (resString.contains("penalties") || resString.contains("ET")) {
+				if (resString.contains("penalties") || resString.contains("ET") || resString.contains("Postponed")) {
 					return null;
 				}
 
-				if (!liveMatchesFlag && resString.contains("already started")) {
+				if ((!liveMatchesFlag && resString.contains("already started")) || resString.contains("Abandoned")) {
 					return null;
 				}
 				if (resString.contains("awarded") && resString.contains(home)) {
@@ -961,6 +1023,7 @@ public class Scraper {
 
 		// Over and under odds
 		float overOdds = -1f, underOdds = -1f;
+		float overOdds365 = -1f, underOdds365 = -1f;
 		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
 		for (WebElement t : tabs) {
 			if (t.getText().contains("O/U")) {
@@ -989,10 +1052,56 @@ public class Scraper {
 			for (WebElement row : rows) {
 				if (row.getText().contains("Pinnacle")) {
 					String textOdds = row.getText();
-					overOdds = Float.parseFloat(textOdds.split("\n")[2].trim());
-					underOdds = Float.parseFloat(textOdds.split("\n")[3].trim());
+					// Actions ToolTip1 = new Actions(driver);
+					// WebElement overElement =
+					// row.findElement(By.cssSelector("td:nth-child(3) > div"));
+					// WebElement underElement =
+					// row.findElement(By.cssSelector("td:nth-child(4) > div"));
+					// Thread.sleep(200);
+					//
+					// ToolTip1.clickAndHold(overElement).perform();
+					//
+					// WebElement hover =
+					// overElement.findElement(By.xpath("//*[@id='tooltiptext']"));
+					// String openingOdds = hover.getText().split("Opening
+					// odds:")[1];
+					// Float openOddsOver = Float.parseFloat(openingOdds.split("
+					// ")[openingOdds.split(" ").length - 1]);
+					//
+					// ToolTip1.clickAndHold(underElement).perform();
+					// WebElement hoverUnder =
+					// overElement.findElement(By.xpath("//*[@id='tooltiptext']"));
+					// String openingOddsUnder =
+					// hoverUnder.getText().split("Opening odds:")[1];
+					// Float openOddsUnder = Float
+					// .parseFloat(openingOddsUnder.split("
+					// ")[openingOddsUnder.split(" ").length - 1]);
+					//
+					// System.out.println(openOddsOver + " " + openOddsUnder);
+
+					overOdds = Float.parseFloat(textOdds.split("\n")[2].trim())
+					/* openOddsOver */;
+					underOdds = Float.parseFloat(textOdds.split("\n")[3].trim())
+					/* openOddsUnder */;
+					break;
+				}
+
+				if (row.getText().contains("bet365")) {
+					String textOdds = row.getText();
+					try {
+						overOdds365 = Float.parseFloat(textOdds.split("\n")[2].trim());
+						underOdds365 = Float.parseFloat(textOdds.split("\n")[3].trim());
+					} catch (Exception e) {
+						//nothing
+					}
 				}
 			}
+
+			if (overOdds == -1f) {
+				overOdds = overOdds365;
+				underOdds = underOdds365;
+			}
+
 		}
 
 		// System.out.println("over: " + overOdds + " " + underOdds);

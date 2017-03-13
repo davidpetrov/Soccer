@@ -16,6 +16,8 @@ public class FullEntry extends FinalEntry {
 	public String successFull() {
 		int result = fixture.result.goalsHomeTeam + fixture.result.goalsAwayTeam;
 		float diff = result - line.line;
+		if (line.line == -1f)
+			return "missing  data";
 
 		if (prediction >= upper) {
 			if (diff >= 0.5f)
@@ -45,6 +47,8 @@ public class FullEntry extends FinalEntry {
 	}
 
 	public float getProfit() {
+		if (line.line == -1f)
+			return 0;
 		float coeff = prediction >= upper ? line.home : line.away;
 		String success = successFull();
 		if (success.equals("W")) {

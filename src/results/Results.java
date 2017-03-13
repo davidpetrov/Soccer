@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import constants.MinMaxOdds;
+import utils.Utils;
 
 public class Results {
 
@@ -49,7 +50,7 @@ public class Results {
 		br.close();
 
 		System.out.println("Count: " + count);
-		stats(results);
+		stats(results, count);
 
 		avgByLeague(results);
 
@@ -61,7 +62,7 @@ public class Results {
 
 	}
 
-	public static void stats(HashMap<Integer, Map<String, Float>> results) {
+	public static void stats(HashMap<Integer, Map<String, Float>> results, int count) {
 		HashMap<Integer, Float> byYear = new HashMap<>();
 
 		for (Entry<Integer, Map<String, Float>> entry : results.entrySet()) {
@@ -73,6 +74,12 @@ public class Results {
 
 		byYear.forEach((k, v) -> System.out.println(k + " " + format(v)));
 		System.out.println("Average: " + format(avg));
+
+		float yield = avg * byYear.size() / count;
+		System.out.println("Yield is: " + String.format("%.2f%%", 100*yield));
+		float pValue = Utils.pValueCalculator(count, yield, 1.95f);
+		if (yield >= 0)
+			System.out.println("1 in " + format(pValue)+ "\n");
 	}
 
 	public static HashMap<String, Float> avgByLeague(HashMap<Integer, Map<String, Float>> results) {
@@ -101,7 +108,7 @@ public class Results {
 
 		float fgnRestrict = leagues.values().stream().filter(v -> v >= 0).collect(Collectors.toList()).stream()
 				.reduce(0f, (a, b) -> a + b) / results.size();
-		 System.out.println("Full negative restrict avg: " + format(fgnRestrict));
+		System.out.println("Full negative restrict avg: " + format(fgnRestrict));
 
 		return leagues;
 	}

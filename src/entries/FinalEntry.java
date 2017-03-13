@@ -35,9 +35,14 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public String toString() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		String out = prediction >= upper ? "over" : "under";
-		return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
-				+ fixture.awayTeam + " " + totalGoals + " " + out + " " + success() + " "
-				+ String.format("%.2f", getProfit()) + "\n";
+		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
+		if (fixture.result.goalsHomeTeam == -1)
+			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
+					+ fixture.awayTeam + " " + out + " " + String.format("%.2f", coeff) + "\n";
+		else
+			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
+					+ fixture.awayTeam + " " + totalGoals + " " + out + " " + success() + " "
+					+ String.format("%.2f", getProfit()) + "\n";
 	}
 
 	public boolean isOver() {
@@ -59,6 +64,8 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	}
 
 	public float getProfit() {
+		if(fixture.getTotalGoals()<0)
+			return 0f;
 		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
 		if (success())
 			return coeff - 1f;

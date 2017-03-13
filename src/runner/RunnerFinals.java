@@ -21,8 +21,6 @@ public class RunnerFinals implements Callable<ArrayList<FinalEntry>> {
 	@Override
 	public ArrayList<FinalEntry> call() throws Exception {
 		ArrayList<FinalEntry> tobet = XlSUtils.finalsShots(sh, year);
-		// System.out.println("Profit for " + sh.getSheetName() + " " + year + "
-		// is: " + String.format("%.2f", profit));
 		return tobet;
 	}
 }

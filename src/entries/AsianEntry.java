@@ -1,6 +1,8 @@
 package entries;
 
 import main.ExtendedFixture;
+import results.Results;
+import utils.Utils;
 
 public class AsianEntry {
 	public ExtendedFixture fixture;
@@ -25,7 +27,7 @@ public class AsianEntry {
 		String out = prediction ? "home" : "away";
 		float coeff = prediction ? home : away;
 		return fixture.date + " " + fixture.homeTeam + " : " + fixture.awayTeam + " " + " " + out + " " + line + " "
-				+ coeff + " " + " exp " + expectancy + "\n";
+				+ coeff + " " + success() + " exp " + Results.format(expectancy) + "\n";
 	}
 
 	public String success() {

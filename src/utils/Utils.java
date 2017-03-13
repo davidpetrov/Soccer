@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import org.apache.commons.math3.distribution.TDistribution;
@@ -29,10 +30,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.FullEntry;
 import main.ExtendedFixture;
 import main.FullFixture;
+import main.GoalLines;
 import main.Line;
 import main.Result;
 import main.SQLiteJDBC;
@@ -42,6 +45,7 @@ import scraper.Scraper;
 import settings.Settings;
 import tables.Position;
 import tables.Table;
+import xls.AsianUtils;
 import xls.XlSUtils;
 
 /**
@@ -703,7 +707,7 @@ public class Utils {
 		return null;
 	}
 
-	public static void bestNperWeek(ArrayList<FinalEntry> all, int n) {
+	public static float bestNperWeek(ArrayList<FinalEntry> all, int n) {
 		String[] literals = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : all) {
@@ -725,6 +729,8 @@ public class Utils {
 		});
 
 		float profit = 0f;
+		int winBets = 0;
+		int loseBets = 0;
 		ArrayList<FinalEntry> curr = new ArrayList<>();
 		Date currDate = filtered.get(0).fixture.date;
 		for (int i = 0; i < filtered.size(); i++) {
@@ -754,6 +760,7 @@ public class Utils {
 					int successes = 0;
 					int notlosses = 0;
 					if (curr.size() >= n) {
+						// System.out.println(curr);
 						for (int j = 0; j < n; j++) {
 							if (curr.get(j).success()) {
 								coeff *= curr.get(j).prediction >= curr.get(j).upper ? curr.get(j).fixture.maxOver
@@ -772,8 +779,14 @@ public class Utils {
 								break;
 							}
 						}
-						System.out.println(curr.get(0).fixture.date + " " + " " + successes + " not loss: " + notlosses
-								+ " pr: " + (coeff != -1f ? (coeff - 1f) : coeff));
+						// System.out.println(curr.get(0).fixture.date + " " + "
+						// " + successes + " not loss: " + notlosses
+						// + " pr: " + (coeff != -1f ? (coeff - 1f) : coeff));
+						if (coeff != -1f)
+							winBets++;
+						else
+							loseBets++;
+
 						profit += (coeff != -1f ? (coeff - 1f) : coeff);
 					}
 					curr = new ArrayList<>();
@@ -782,7 +795,9 @@ public class Utils {
 				}
 			}
 		}
-		System.out.println("Total from " + n + "s: " + profit);
+		System.out.println("Total from " + n + "s: " + profit + " " + winBets + "W " + loseBets + "L");
+
+		return profit;
 
 	}
 
@@ -1551,6 +1566,17 @@ public class Utils {
 		return oneDayBefore;
 	}
 
+	public static boolean isToday(Date date) {
+		Date today = new Date();
+		Calendar cal1 = Calendar.getInstance();
+		Calendar cal2 = Calendar.getInstance();
+		cal1.setTime(date);
+		cal2.setTime(today);
+		boolean sameDay = cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
+				&& cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
+		return sameDay;
+	}
+
 	public static ArrayList<FinalEntry> equilibriums(ArrayList<FinalEntry> finals) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry i : finals) {
@@ -1654,6 +1680,12 @@ public class Utils {
 			float sum = 1f / i.maxOver + 1f / i.maxUnder;
 			i.maxOver = 1f / ((1f / i.maxOver) / sum);
 			i.maxUnder = 1f / ((1f / i.maxUnder) / sum);
+
+			if (i.asianHome > 1f && i.asianAway > 1f) {
+				float sumAsian = 1f / i.asianHome + 1f / i.asianAway;
+				i.asianHome = 1f / ((1f / i.asianHome) / sumAsian);
+				i.asianAway = 1f / ((1f / i.asianAway) / sumAsian);
+			}
 		}
 	}
 
@@ -1680,6 +1712,13 @@ public class Utils {
 			}
 		});
 
+		boolean noPendings = true;
+		for (ExtendedFixture i : all)
+			if (i.result.goalsHomeTeam == -1) {
+				noPendings = false;
+				break;
+			}
+
 		Date last;
 		if (all.isEmpty()) {
 			Calendar cal = Calendar.getInstance();
@@ -1696,7 +1735,7 @@ public class Utils {
 				lastNotPending = all.get(i).date;
 		}
 
-		return lastNotPending;
+		return noPendings ? new Date() : lastNotPending;
 
 	}
 
@@ -1857,17 +1896,22 @@ public class Utils {
 	 * Method for verifying two list of fixtures are the same (only difference
 	 * in naming the clubs)
 	 * 
+	 * @param teamFor
+	 * 
 	 * @param fixtures
 	 * @param fwa
 	 * @return
 	 */
-	public static boolean matchesFixtureLists(ArrayList<ExtendedFixture> fixtures, ArrayList<ExtendedFixture> fwa) {
-
+	public static boolean matchesFixtureLists(String teamFor, ArrayList<ExtendedFixture> fixtures,
+			ArrayList<ExtendedFixture> fwa) {
+//		System.out.println(fixtures);
+//		System.out.println(fwa);
 		for (ExtendedFixture i : fixtures) {
 			boolean foundMatch = false;
+			boolean isHomeSide = teamFor.equals(i.homeTeam);
 			for (ExtendedFixture j : fwa) {
-				if ((i.date.equals(i.date) || i.date.equals(Utils.getYesterday(i.date))
-						|| i.date.equals(Utils.getTommorow(i.date))) && i.result.equals(j.result)) {
+				if ((i.date.equals(j.date) || i.date.equals(Utils.getYesterday(j.date))
+						|| i.date.equals(Utils.getTommorow(j.date))) && i.result.equals(j.result)) {
 					foundMatch = true;
 					break;
 				}
@@ -1878,6 +1922,247 @@ public class Utils {
 		}
 
 		return true;
+	}
+
+	public static ArrayList<FinalEntry> specificLine(ArrayList<FinalEntry> finals,
+			HashMap<ExtendedFixture, FullFixture> map, float line) {
+		ArrayList<FinalEntry> fulls = new ArrayList<>();
+
+		for (FinalEntry f : finals) {
+			// boolean isOver = f.prediction > f.threshold;
+			FullEntry full = new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper, null);
+			for (Line l : map.get(f.fixture).goalLines.getArrayLines()) {
+				if (l.line == line) {
+					full.line = l;
+					fulls.add(full);
+					continue;
+				}
+			}
+
+		}
+
+		return fulls;
+	}
+
+	/**
+	 * Calculates the similarity (a number within 0 and 1) between two strings.
+	 */
+	public static double similarity(String s1, String s2) {
+		String longer = s1, shorter = s2;
+		if (s1.length() < s2.length()) { // longer should always have greater
+											// length
+			longer = s2;
+			shorter = s1;
+		}
+		int longerLength = longer.length();
+		if (longerLength == 0) {
+			return 1.0;
+			/* both strings are zero length */ }
+		/*
+		 * // If you have StringUtils, you can use it to calculate the edit
+		 * distance: return (longerLength -
+		 * StringUtils.getLevenshteinDistance(longer, shorter)) / (double)
+		 * longerLength;
+		 */
+		return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
+
+	}
+
+	// Example implementation of the Levenshtein Edit Distance
+	// See http://rosettacode.org/wiki/Levenshtein_distance#Java
+	public static int editDistance(String s1, String s2) {
+		s1 = s1.toLowerCase();
+		s2 = s2.toLowerCase();
+
+		int[] costs = new int[s2.length() + 1];
+		for (int i = 0; i <= s1.length(); i++) {
+			int lastValue = i;
+			for (int j = 0; j <= s2.length(); j++) {
+				if (i == 0)
+					costs[j] = j;
+				else {
+					if (j > 0) {
+						int newValue = costs[j - 1];
+						if (s1.charAt(i - 1) != s2.charAt(j - 1))
+							newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+						costs[j - 1] = lastValue;
+						lastValue = newValue;
+					}
+				}
+			}
+			if (i > 0)
+				costs[s2.length()] = lastValue;
+		}
+		return costs[s2.length()];
+	}
+
+	public static ArrayList<FinalEntry> estimateOposite(ArrayList<ExtendedFixture> current,
+			HashMap<ExtendedFixture, FullFixture> map, HSSFSheet sheet) throws ParseException {
+		ArrayList<FinalEntry> fulls = new ArrayList<>();
+		for (ExtendedFixture f : current) {
+			FullEntry fe = worse(f, estimateBoth(f, map, sheet), f.line, f.asianHome, f.asianAway, map);
+			fulls.add(fe);
+		}
+
+		return fulls;
+	}
+
+	/**
+	 * The oposite of the main goal line with advantage
+	 * 
+	 * @param f
+	 * @param map
+	 * @param sheet
+	 * @return
+	 * @throws ParseException
+	 */
+	private static Pair estimateBoth(ExtendedFixture f, HashMap<ExtendedFixture, FullFixture> map, HSSFSheet sheet)
+			throws ParseException {
+		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date);
+		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date);
+
+		float over = Utils.estimateTheLineFull(f, f.homeTeam, lastHomeHomeTeam, f.line, true, map);
+		float under = Utils.estimateTheLineFull(f, f.awayTeam, lastAwayAwayTeam, f.line, false, map);
+
+		return Pair.of(over, under);
+	}
+
+	private static float estimateTheLineFull(ExtendedFixture f, String homeTeam,
+			ArrayList<ExtendedFixture> lastHomeTeam, float line, boolean b, HashMap<ExtendedFixture, FullFixture> map) {
+		if (lastHomeTeam.size() == 0)
+			return 0;
+		ArrayList<String> results = new ArrayList<>();
+		for (ExtendedFixture i : lastHomeTeam) {
+			float prediction = b ? 1f : 0f;
+			FullEntry ae = new FullEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f, mapget(map, i).goalLines.main);
+			results.add(ae.successFull());
+		}
+
+		float coeff = b ? map.get(f).goalLines.main.home : map.get(f).goalLines.main.away;
+		return outcomes(results, coeff);
+	}
+
+	private static FullFixture mapget(HashMap<ExtendedFixture, FullFixture> map, ExtendedFixture i) {
+		for (Entry<ExtendedFixture, FullFixture> entry : map.entrySet())
+			if (entry.getKey().homeTeam.equals(i.homeTeam) && entry.getKey().awayTeam.equals(i.awayTeam)
+					&& entry.getKey().date.equals(i.date))
+				return entry.getValue();
+
+		return null;
+	}
+
+	private static FullEntry worse(ExtendedFixture f, Pair pair, float line, float home2, float away2,
+			HashMap<ExtendedFixture, FullFixture> map) {
+		FullEntry home = new FullEntry(f, pair.home, f.result, f.matchday, 0.55f, 0.55f, map.get(f).goalLines.main);
+		FullEntry away = new FullEntry(f, pair.away, f.result, f.matchday, 0.55f, 0.55f, map.get(f).goalLines.main);
+		if (home.prediction < away.prediction) {
+			home.prediction = 1f;
+			return home;
+		} else {
+			away.prediction = 0f;
+			return away;
+		}
+	}
+
+	public static float outcomes(ArrayList<String> results, float coeff) {
+		int wins = 0;
+		int halfwins = 0;
+		int draws = 0;
+		int halflosses = 0;
+		int losses = 0;
+		for (String i : results) {
+			if (i.equals("W"))
+				wins++;
+			else if (i.equals("HW")) {
+				halfwins++;
+			} else if (i.equals("D")) {
+				draws++;
+			} else if (i.equals("HL")) {
+				halflosses++;
+			} else {
+				losses++;
+			}
+
+		}
+
+		return ((float) wins / results.size()) * coeff + ((float) halfwins / results.size()) * (1 + (coeff - 1) / 2)
+		/* + ((float) draws / results.size()) */ - ((float) halflosses / results.size()) / 2
+				- ((float) losses / results.size());
+	}
+
+	public static LinearRegression getRegression(String homeTeam, ArrayList<ExtendedFixture> lastHome) {
+		ArrayList<Double> homeGoals = new ArrayList<>();
+		ArrayList<Double> homeShots = new ArrayList<>();
+		for (ExtendedFixture i : lastHome) {
+			if (i.homeTeam.equals(homeTeam)) {
+				homeGoals.add((double) i.result.goalsHomeTeam);
+				homeShots.add((double) i.shotsHome);
+			} else {
+				homeGoals.add((double) i.result.goalsAwayTeam);
+				homeShots.add((double) i.shotsAway);
+			}
+		}
+
+		double[] xhome = new double[homeGoals.size()];
+		double[] yhome = new double[homeGoals.size()];
+
+		for (int i = 0; i < homeGoals.size(); i++) {
+			xhome[i] = homeShots.get(i);
+			yhome[i] = homeGoals.get(i);
+		}
+
+		return new LinearRegression(xhome, yhome);
+	}
+
+	public static ArrayList<FinalEntry> removePending(ArrayList<FinalEntry> finals) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			if (i.fixture.getTotalGoals() >= 0)
+				result.add(i);
+		}
+		return result;
+	}
+
+	public static float predictionCorrelation(ArrayList<FinalEntry> all) {
+		Integer[] totalGoals = new Integer[all.size()];
+		Integer[] predictions = new Integer[all.size()];
+		for (int i = 0; i < all.size(); i++) {
+			totalGoals[i] = all.get(i).fixture.getTotalGoals();
+			predictions[i] = (int) (all.get(i).prediction * 1000);
+		}
+
+		System.out.println("Correlation is: " + Utils.correlation(totalGoals, predictions));
+		return Utils.correlation(totalGoals, predictions);
+	}
+
+	/**
+	 * zero based months
+	 * 
+	 * @param current
+	 */
+
+	public static ArrayList<ExtendedFixture> inMonth(ArrayList<ExtendedFixture> current, int i, int j) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (ExtendedFixture c : current) {
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(c.date);
+			int month = cal.get(Calendar.MONTH);
+			if (month >= i && month <= j)
+				result.add(c);
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> similarRanking(ArrayList<FinalEntry> finals, Table table) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry c : finals) {
+			if ((table.getMiddleTeams().contains((c.fixture.homeTeam))
+					&& table.getMiddleTeams().contains((c.fixture.awayTeam)))
+					/*|| (table.getBottomTeams().contains((c.fixture.homeTeam))
+							&& table.getTopTeams().contains((c.fixture.awayTeam)))*/)
+				result.add(c);
+		}
+		return result;
 	}
 
 }

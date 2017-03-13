@@ -26,6 +26,7 @@ import constants.MinMaxOdds;
 import entries.AsianEntry;
 import entries.Entry;
 import entries.FinalEntry;
+import predictions.Predictions;
 import results.Results;
 import runner.Runner;
 import runner.RunnerAggregateInterval;
@@ -50,9 +51,9 @@ public class Test {
 
 		// simplePredictions();
 
-		// Results.eval("asianhome");
-		// Results.eval("realdouble+bestcotfull");
-		// Results.eval("drawsintersect");
+		// Results.eval("estimateBoth");
+		// Results.eval("smooth");
+//		 Results.eval("test");
 
 		// stored24();
 
@@ -60,25 +61,24 @@ public class Test {
 		// asianPredictions();
 
 		// float total = 0f;
-		// for (int year = 2005; year <= 2015; year++)
+//		 for (int year = 2005; year <= 2015; year++)
 		// total += asian(year);
 		// System.out.println("Avg profit is " + (total / 11));
 
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-		float total = 0f;
-		int startY = 2015;
-		int end = 2016;
-		for (int year = startY; year <= end; year++)
-			total += simulationAllLines(year, true);
-		System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		 float total = 0f;
+		 int startY = 2005;
+		 int end = 2016;
+		 for (int year = startY; year <= end; year++)
+		 total += simulation(year, false);
+		 System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-		// for (int year = 2005; year <= 2015; year++)
-		// finals(year, false);
+//		accumulators(2005, 2015);
 
 		// makePredictions();
 
@@ -95,6 +95,20 @@ public class Test {
 		// optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
+
+	}
+
+	private static void accumulators(int start, int end) throws InterruptedException, ExecutionException, IOException {
+
+		float[] profit = new float[8];
+		for (int year = start; year <= end; year++) {
+			float[] curr = finals(year, false);
+			for (int i = 0; i < 8; i++)
+				profit[i] += curr[i];
+		}
+		System.out.println("=========================================================================");
+		for (int i = 0; i < 8; i++)
+			System.out.println("Total from " + (i + 3) + "s: " + profit[i]);
 
 	}
 
@@ -118,8 +132,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!sh.getSheetName().equals("GER"))
-				continue;
+			// if (!sh.getSheetName().equals("ENG"))
+			// continue;
 			// if (!Arrays.asList(MinMaxOdds.FULL).contains(sh.getSheetName()))
 			// continue;
 
@@ -159,10 +173,10 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("BRA"))
-			// continue;
-			if (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
+			if (!sh.getSheetName().equals("SPA2"))
 				continue;
+			// if (Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
 
 			threadArray.add(pool.submit(new RunnerAsian(sh, year)));
 		}
@@ -444,14 +458,16 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!sh.getSheetName().equals("SWE"))
-				continue;
-			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// if (!sh.getSheetName().equals("ENG"))
+			// continue;
+			// if
+			// (!Arrays.asList(Predictions.CHECKLIST).contains(sh.getSheetName()))
 			// continue;
 
-			// if
-			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
-			// continue;
+			 if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			 continue;
+//			 if (sh.getSheetName().equals("D1")||sh.getSheetName().equals("SP1"))
+//				 continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
@@ -468,7 +484,7 @@ public class Test {
 		return totalProfit;
 	}
 
-	public static void finals(int year, boolean parsedLeagues)
+	public static float[] finals(int year, boolean parsedLeagues)
 			throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
@@ -493,7 +509,7 @@ public class Test {
 			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
 			// continue;
 
-			// if (!sh.getSheetName().equals("BRA"))
+			// if (!sh.getSheetName().equals("ENG"))
 			// continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
@@ -506,7 +522,9 @@ public class Test {
 		file.close();
 		pool.shutdown();
 
-		// Utils.analysys(all, year);
+		Utils.predictionCorrelation(all);
+		
+		 Utils.analysys(all, year);
 		// Utils.drawAnalysis(all);
 		// ArrayList<FinalEntry> overs = Utils.onlyOvers(all);
 		// Utils.analysys(overs, year);
@@ -514,24 +532,12 @@ public class Test {
 		// Utils.evaluateRecord(all);
 		// LineChart.draw(Utils.createProfitMovementData(all), year);
 
+		float[] profits = new float[8];
 		System.out.println(year);
-		System.out.println("3");
-		Utils.bestNperWeek(all, 3);
-		// System.out.println("4");
-		// Utils.bestNperWeek(all, 4);
-		// System.out.println("5");
-		// Utils.bestNperWeek(all, 5);
-		// System.out.println("6");
-		// Utils.bestNperWeek(all, 6);
-		// System.out.println("7");
-		// Utils.bestNperWeek(all, 7);
-		// System.out.println("8");
-		// Utils.bestNperWeek(all, 8);
-		// // Utils.triples(all, year);
-		// System.out.println("9");
-		// Utils.bestNperWeek(all, 9);
-		// System.out.println("10");
-		// Utils.bestNperWeek(all, 10);
+		for (int i = 3; i <= 10; i++)
+			profits[i - 3] = Utils.bestNperWeek(all, i);
+
+		return profits;
 
 	}
 
