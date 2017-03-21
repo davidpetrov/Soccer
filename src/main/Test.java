@@ -69,7 +69,7 @@ public class Test {
 		// makePredictions();
 
 		 float total = 0f;
-		 int startY = 2005;
+		 int startY = 2013;
 		 int end = 2016;
 		 for (int year = startY; year <= end; year++)
 		 total += simulation(year, false);
@@ -458,14 +458,14 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("ENG"))
-			// continue;
+			 if (!sh.getSheetName().equals("E0"))
+			 continue;
 			// if
 			// (!Arrays.asList(Predictions.CHECKLIST).contains(sh.getSheetName()))
 			// continue;
 
-			 if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-			 continue;
+//			 if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+//			 continue;
 //			 if (sh.getSheetName().equals("D1")||sh.getSheetName().equals("SP1"))
 //				 continue;
 

@@ -38,7 +38,9 @@ import main.ExtendedFixture;
 import main.FullFixture;
 import main.GoalLines;
 import main.Line;
+import main.PlayerFixture;
 import main.Result;
+import main.SQLiteJDBC;
 import runner.RunnerOdds;
 import runner.UpdateRunner;
 import utils.Utils;
@@ -55,16 +57,28 @@ public class Scraper {
 			throws IOException, ParseException, InterruptedException, ExecutionException {
 		long start = System.currentTimeMillis();
 
-//		 ArrayList<ExtendedFixture> list = collect("SLK", 2016, null);
+		// =================================================================
+
+		ArrayList<PlayerFixture> list = collectFull("ENG", 2011, null);
+
+//		"http://int.soccerway.com/national/spain/primera-division/2011-2012/regular-season/r15105/");
+		SQLiteJDBC.storePlayerFixtures(list, 2011, "ENG");
+
+		// ArrayList<PlayerFixture> list =
+		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
+		// System.out.println(list.size());
+		// ====================================================================
+
+		// ArrayList<ExtendedFixture> list = collect("SLK", 2016, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-//		 XlSUtils.storeInExcel(list, "SLK", 2016, "manual");
+		// XlSUtils.storeInExcel(list, "SLK", 2016, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-//		ArrayList<ExtendedFixture> list = odds("SLK", 2016, null);
-//		XlSUtils.storeInExcel(list, "SLK", 2016, "odds");
+		// ArrayList<ExtendedFixture> list = odds("SLK", 2016, null);
+		// XlSUtils.storeInExcel(list, "SLK", 2016, "odds");
 		// nextMatches("GER", null);
 		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
@@ -73,15 +87,15 @@ public class Scraper {
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-//		 XlSUtils.combine("SLK", 2016, "manual");
+		// XlSUtils.combine("SLK", 2016, "manual");
 		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
-//		 XlSUtils.fillMissingShotsData("SLO", 2016, false);
+		// XlSUtils.fillMissingShotsData("CZE", 2016, false);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-//		 checkAndUpdate("ARG");
+		// checkAndUpdate("ENG", true);
 		// updateInParallel();
 
 		// fastOdds("SPA", 2016, null);
@@ -89,11 +103,21 @@ public class Scraper {
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
 
-	public static void updateInParallel(ArrayList<String> list, int n) {
+	/**
+	 * Updates list of leagues in parallel
+	 * 
+	 * @param list
+	 *            - list of leagues to be updated
+	 * @param n
+	 *            - number of leagues updating in parallel
+	 * @param onlyTodaysMatches
+	 *            - flag for getting next matches only for today (for speed up)
+	 */
+	public static void updateInParallel(ArrayList<String> list, int n, boolean onlyTodaysMatches) {
 
 		ExecutorService executor = Executors.newFixedThreadPool(n);
 		for (String i : list) {
-			Runnable worker = new UpdateRunner(i);
+			Runnable worker = new UpdateRunner(i, onlyTodaysMatches);
 			executor.execute(worker);
 		}
 		// This will make the executor accept no new threads
@@ -103,7 +127,8 @@ public class Scraper {
 		// executor.awaitTermination(0, null);
 	}
 
-	public static void checkAndUpdate(String competition) throws IOException, ParseException, InterruptedException {
+	public static void checkAndUpdate(String competition, boolean onlyTodaysMatches)
+			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
 
 		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + CURRENT_YEAR + ".xls"));
@@ -166,7 +191,7 @@ public class Scraper {
 		// int maxTriesNext = 5;
 		// while (true) {
 		// try {
-		next = nextMatches(competition, null);
+		next = nextMatches(competition, null, onlyTodaysMatches);
 		// break;
 		// } catch (Exception e) {
 		// if (++countTries == maxTriesNext)
@@ -242,7 +267,7 @@ public class Scraper {
 				}
 
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false);
+					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, false);
 
 					if (ef != null) {
 						if (ef.date.before(yesterday)) {
@@ -349,7 +374,7 @@ public class Scraper {
 		return setlist;
 	}
 
-	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object)
+	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object, boolean onlyTodaysMatches)
 			throws ParseException, InterruptedException, IOException {
 		String address = EntryPoints.getOddsLink(competition, 2016);
 		System.out.println(address);
@@ -388,7 +413,7 @@ public class Scraper {
 			if (teams.contains(homeTeam) && teams.contains(awayTeam))
 				continue;
 
-			ExtendedFixture ef = getOddsFixture(driver, i, competition, true);
+			ExtendedFixture ef = getOddsFixture(driver, i, competition, true, true);
 			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
 					&& !teams.contains(ef.awayTeam)) {
 				result.add(ef);
@@ -463,8 +488,58 @@ public class Scraper {
 		return setlist;
 
 	}
-	
-	
+
+	public static ArrayList<PlayerFixture> collectFull(String competition, int year, String add)
+			throws IOException, ParseException, InterruptedException {
+		ArrayList<PlayerFixture> result = new ArrayList<>();
+		Set<PlayerFixture> set = new HashSet<>();
+		String address;
+		if (add == null) {
+			address = EntryPoints.getLink(competition, year);
+			System.out.println(address);
+		} else
+			address = add;
+
+		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
+		WebDriver driver = new ChromeDriver();
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		driver.manage().window().maximize();
+		driver.navigate().to(address);
+
+		while (true) {
+			String html = driver.getPageSource();
+			Document matches = Jsoup.parse(html);
+
+			Elements linksM = matches.select("a[href]");
+			for (Element linkM : linksM) {
+				if (isScore(linkM.text())) {
+					Document fixture = Jsoup.connect(BASE + linkM.attr("href")).timeout(0).get();
+					ArrayList<PlayerFixture> ef = getFixtureFull(fixture, competition);
+					result.addAll(ef);
+					set.addAll(ef);
+					// break;
+				}
+			}
+
+			driver.findElement(By.className("previous")).click();
+			Thread.sleep(1000);
+			String htmlAfter = driver.getPageSource();
+
+			if (html.equals(htmlAfter))
+				break;
+
+		}
+
+		driver.close();
+		System.out.println(result.size());
+		System.out.println(set.size());
+
+		ArrayList<PlayerFixture> setlist = new ArrayList<>();
+		set.addAll(result);
+		setlist.addAll(set);
+		return setlist;
+
+	}
 
 	public static ExtendedFixture getFixture(Document fixture, String competition) throws IOException, ParseException {
 
@@ -536,6 +611,336 @@ public class Scraper {
 		return ef;
 	}
 
+	public static ArrayList<PlayerFixture> getFixtureFull(Document fixture, String competition)
+			throws IOException, ParseException {
+		boolean verbose = false;
+
+		Result ht = new Result(-1, -1);
+		try {
+			ht = getResult(fixture.select("dt:contains(Half-time) + dd").first().text());
+		} catch (Exception e) {
+			System.out.println("No ht result!");
+		}
+
+		Result result = new Result(-1, -1);
+		try {
+			result = getResult(fixture.select("dt:contains(Full-time) + dd").first().text());
+		} catch (Exception e) {
+			System.out.println("No full time result!");
+			return null;
+		}
+
+		int matchday = -1;
+		try {
+			matchday = Integer.parseInt(fixture.select("dt:contains(Game week) + dd").first().text());
+		} catch (Exception e) {
+
+		}
+
+		Date date = OPTAFORMAT.parse(fixture.select("dt:contains(Date) + dd").first().text());
+		// System.out.println(date);
+
+		String teams = fixture.select("h1").first().text();
+		String homeTeam = Utils.replaceNonAsciiWhitespace(getHome(teams));
+		String awayTeam = Utils.replaceNonAsciiWhitespace(getAway(teams));
+
+		// Lineups
+		// =====================================================================
+		ExtendedFixture fix = new ExtendedFixture(date, homeTeam, awayTeam, result, competition);
+		System.out.println(fix);
+
+		ArrayList<PlayerFixture> playerFixtures = new ArrayList<>();
+
+		Element divLineups = fixture.select("div[id*=match_lineups").first();
+		if (divLineups != null) {
+			Element tableHome = divLineups.select("div.container.left").first();
+			Element tableAway = divLineups.select("div.container.right").first();
+
+			Elements rowsHome = tableHome.select("table").first().select("tr");
+			for (int i = 1; i < rowsHome.size() - 1; i++) {// without coach
+				Element row = rowsHome.get(i);
+				if (row.text().contains("Coach"))
+					continue;
+
+				Elements cols = row.select("td");
+				// String shirtNumber = cols.get(0).text();
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				// System.out.println(shirtNumber + " " + name);
+				PlayerFixture pf = new PlayerFixture(fix, homeTeam, name, 90, true, false, 0, 0);
+				playerFixtures.add(pf);
+
+			}
+
+			Elements rowsAway = tableAway.select("table").first().select("tr");
+			for (int i = 1; i < rowsAway.size() - 1; i++) {
+				Element row = rowsAway.get(i);
+				if (row.text().contains("Coach"))
+					continue;
+
+				Elements cols = row.select("td");
+				// String shirtNumber = cols.get(0).text();
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				// System.out.println(shirtNumber + " " + name);
+				PlayerFixture pf = new PlayerFixture(fix, awayTeam, name, 90, true, false, 0, 0);
+				playerFixtures.add(pf);
+			}
+
+		}
+
+		// Substitutes
+		// ==========================================================
+
+		Element divSubstitutes = fixture.select("div[id*=match_substitutes").first();
+		if (divSubstitutes != null) {
+			Element tableHome = divSubstitutes.select("div.container.left").first();
+			Element tableAway = divSubstitutes.select("div.container.right").first();
+
+			Elements rowsHome = tableHome.select("table").first().select("tr");
+			for (int i = 1; i < rowsHome.size(); i++) {// without coach
+														// information
+				Element row = rowsHome.get(i);
+				Elements cols = row.select("td");
+				String shirtNumber = cols.get(0).text();
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				if (name.contains(" for ")) {
+					String inPlayer = name.split(" for ")[0].trim();
+					String outPlayer = "";
+					try {
+						outPlayer = name.split(" for ")[1].split("[0-9]+'")[0].trim();
+					} catch (Exception e) {
+						System.err.println("da ddassd");
+					}
+					int minute = 0;
+					try {
+						String cleanMinutes = name.split(" ")[name.split(" ").length - 1].split("'")[0];
+						if (cleanMinutes.contains("+"))
+							minute = Integer.parseInt(cleanMinutes.split("\\+")[0])
+									+ Integer.parseInt(cleanMinutes.split("\\+")[1]);
+						else
+							minute = Integer.parseInt(cleanMinutes);
+					} catch (Exception e) {
+						System.out.println("parse");
+					}
+					PlayerFixture pf = new PlayerFixture(fix, homeTeam, inPlayer, 90 - minute, false, true, 0, 0);
+					playerFixtures.add(pf);
+
+					for (PlayerFixture player : playerFixtures) {
+						if (player.name.equals(outPlayer)) {
+							player.minutesPlayed = minute;
+							break;
+						}
+					}
+
+					if (verbose)
+						System.out.println(inPlayer + " for " + outPlayer + " in " + minute);
+
+				} else {
+					PlayerFixture pf = new PlayerFixture(fix, homeTeam, name, 0, false, false, 0, 0);
+					playerFixtures.add(pf);
+					if (verbose)
+						System.out.println(shirtNumber + " " + name);
+				}
+
+			}
+
+			Elements rowsAway = tableAway.select("table").first().select("tr");
+			for (int i = 1; i < rowsAway.size(); i++) {
+				Element row = rowsAway.get(i);
+				Elements cols = row.select("td");
+				String shirtNumber = cols.get(0).text();
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				if (name.contains(" for ")) {
+					String inPlayer = name.split(" for ")[0].trim();
+					String outPlayer = name.split(" for ")[1].split("[0-9]+'")[0].trim();
+					int minute = 0;
+					try {
+						String cleanMinutes = name.split(" ")[name.split(" ").length - 1].split("'")[0];
+						if (cleanMinutes.contains("+"))
+							minute = Integer.parseInt(cleanMinutes.split("\\+")[0])
+									+ Integer.parseInt(cleanMinutes.split("\\+")[1]);
+						else
+							minute = Integer.parseInt(cleanMinutes);
+					} catch (Exception e) {
+						System.out.println("parse");
+					}
+
+					PlayerFixture pf = new PlayerFixture(fix, awayTeam, inPlayer, 90 - minute, false, true, 0, 0);
+					playerFixtures.add(pf);
+
+					for (PlayerFixture player : playerFixtures) {
+						if (player.name.equals(outPlayer)) {
+							player.minutesPlayed = minute;
+							break;
+						}
+					}
+					if (verbose)
+						System.out.println(inPlayer + " for " + outPlayer + " in " + minute);
+
+				} else {
+					PlayerFixture pf = new PlayerFixture(fix, awayTeam, name, 0, false, false, 0, 0);
+					playerFixtures.add(pf);
+					if (verbose)
+						System.out.println(shirtNumber + " " + name);
+				}
+
+			}
+
+		}
+
+		// Goals and assists
+		// ========================================================================================
+
+		Element divGoals = fixture.select("div[id*=match_goals").first();
+		if (divGoals != null) {
+			Element table = divGoals.select("div.content").first().select("table").first();
+			Elements rows = table.select("table").first().select("tr");
+			for (int i = 0; i < rows.size(); i++) {
+				Element row = rows.get(i);
+				if (verbose)
+					System.out.println(row.text());
+				Elements cols = row.select("td");
+				for (Element j : cols) {
+					if (!isScore(j.text()) && !j.text().isEmpty()) {
+						// String[] splitted = j.text().split("-");
+						// Result curr = new
+						// Result(Integer.parseInt(splitted[0].trim()),
+						// Integer.parseInt(splitted[1].trim()));
+						// System.out.println(result);
+						if (verbose)
+							System.out.println(j.text());
+
+						String[] splitByMinute = j.text().split("[0-9]+'");
+						if (verbose)
+							System.out.println(splitByMinute.length);
+						if (!splitByMinute[0].isEmpty()) {
+							// Home goal
+
+							String goalScorer = splitByMinute[0].trim();
+							goalScorer = Utils.replaceNonAsciiWhitespace(goalScorer).trim();
+							if (goalScorer.contains("(PG)")) {
+								goalScorer = goalScorer.replace("(PG)", "").trim();
+							}
+
+							if (!goalScorer.contains("(OG)"))
+								updatePlayer(goalScorer, playerFixtures, true);
+
+							if (splitByMinute.length > 1) {
+								// Extra info like assisted by, PG or OG
+								String extraString = splitByMinute[1];
+
+								if (extraString.contains("assist by")) {
+									String assister = splitByMinute[1].split("\\(assist by ")[1].trim();
+									assister = Utils.replaceNonAsciiWhitespace(assister);
+									assister = assister.substring(0, assister.length() - 1);
+									updatePlayer(assister, playerFixtures, false);
+
+								}
+							}
+						} else {
+							// Away goal
+							if (splitByMinute[1].contains("(PG)")) {
+								String goalScorer = splitByMinute[1].replace("(PG)", "").trim();
+								if (goalScorer.contains("+")) {// scored in
+																// additional
+																// time
+									goalScorer = goalScorer.replace("+", "").replaceAll("\\d", "").trim();
+								}
+								goalScorer = Utils.replaceNonAsciiWhitespace(goalScorer).trim();
+								updatePlayer(goalScorer, playerFixtures, true);
+							} else if (splitByMinute[1].contains("assist by")) {
+								String goalScorer = splitByMinute[1].split("\\(assist by ")[0].trim();
+								goalScorer = Utils.replaceNonAsciiWhitespace(goalScorer).trim();
+								if (goalScorer.contains("+")) {// scored in
+									goalScorer = goalScorer.replace("+", "").replaceAll("\\d", "").trim();
+								}
+
+								updatePlayer(goalScorer, playerFixtures, true);
+
+								String assister = splitByMinute[1].split("\\(assist by ")[1].trim();
+								assister = Utils.replaceNonAsciiWhitespace(assister);
+								assister = assister.substring(0, assister.length() - 1);
+								updatePlayer(assister, playerFixtures, false);
+							} else if (!splitByMinute[1].contains("(OG)")) {
+								// Solo goal no assists, no PG,no OG
+								String goalScorer = Utils.replaceNonAsciiWhitespace(splitByMinute[1].trim()).trim();
+								if (goalScorer.contains("+")) {// scored in
+									// additional
+									// time
+									goalScorer = goalScorer.replace("+", "").replaceAll("\\d", "").trim();
+								}
+								updatePlayer(goalScorer, playerFixtures, true);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// String iframe;
+		//
+		// int shotsHome = -1, shotsAway = -1;
+		//
+		// Elements frames = fixture.select("iframe");
+		// for (Element i : frames) {
+		// if (i.attr("src").contains("/charts/statsplus")) {
+		// Document stats = Jsoup.connect(BASE +
+		// i.attr("src")).timeout(0).get();
+		// try {
+		// shotsHome = Integer.parseInt(
+		// stats.select("tr:contains(Shots on
+		// target)").get(1).select("td.legend.left.value").text());
+		//
+		// shotsAway = Integer.parseInt(
+		// stats.select("tr:contains(Shots on
+		// target)").get(1).select("td.legend.right.value").text());
+		// } catch (Exception exp) {
+		// }
+		// break;
+		// }
+		// }
+		//
+		// System.out.println(shotsHome + " s " + shotsAway);
+		//
+		// ExtendedFixture ef = new ExtendedFixture(date, homeTeam, awayTeam,
+		// result, "BRA").withHTResult(ht)
+		// .withShots(shotsHome, shotsAway);
+		// if (matchday != -1)
+		// ef = ef.withMatchday(matchday);
+		// System.out.println(ef);
+
+		return playerFixtures;
+
+	}
+
+	/**
+	 * Updates the goals or assists (by 1) of the player in the playerFixtures
+	 * collection
+	 * 
+	 * @param name
+	 * @param playerFixtures
+	 * @param goals
+	 *            true if updating goals, false if updating assists
+	 */
+
+	private static void updatePlayer(String name, ArrayList<PlayerFixture> playerFixtures, boolean goals) {
+		boolean updated = false;
+		for (PlayerFixture player : playerFixtures) {
+			if (player.name.equals(name)) {
+				if (goals)
+					player.goals++;
+				else
+					player.assists++;
+				updated = true;
+				break;
+			}
+		}
+		// Utils.printPlayers(playerFixtures);
+
+		if (!updated)
+			System.out.println("Problem in updating " + (goals ? "goals " : "assists ") + "for " + name);
+
+	}
+
 	public static ArrayList<ExtendedFixture> odds(String competition, int year, String add)
 			throws IOException, ParseException, InterruptedException {
 
@@ -596,7 +1001,7 @@ public class Scraper {
 
 				System.out.println(links);
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false);
+					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, false);
 					if (ef != null)
 						result.add(ef);
 
@@ -739,7 +1144,7 @@ public class Scraper {
 
 				// System.out.println(links);
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false);
+					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, false);
 					if (ef != null)
 						result.add(ef);
 
@@ -912,8 +1317,25 @@ public class Scraper {
 
 	}
 
+	/**
+	 * Gets fixture with odds data
+	 * 
+	 * @param driver
+	 * @param i
+	 *            - link to the fixture
+	 * @param competition
+	 * @param liveMatchesFlag
+	 *            - flag for matches that are currently live - true in this case
+	 * @param onlyTodaysMathces
+	 *            - true if we want to update only todays matches (to be played)
+	 * @return
+	 * @throws ParseException
+	 * @throws InterruptedException
+	 * @throws IOException
+	 */
 	public static ExtendedFixture getOddsFixture(WebDriver driver, String i, String competition,
-			boolean liveMatchesFlag) throws ParseException, InterruptedException, IOException {
+			boolean liveMatchesFlag, boolean onlyTodaysMathces)
+					throws ParseException, InterruptedException, IOException {
 		// System.out.println(i);
 		int count = 0;
 		int maxTries = 10;
@@ -935,6 +1357,11 @@ public class Scraper {
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
 		Date date = OPTAFORMAT.parse(dateString.split(",")[1].trim());
 		System.out.println(date);
+
+		// skipping to update matches that are played later than today (for
+		// performance in nextMatches())
+		if (onlyTodaysMathces && !Utils.isToday(date))
+			return null;
 
 		// --------------------------
 		// Document fixture = Jsoup.connect(i).get();
@@ -1092,7 +1519,7 @@ public class Scraper {
 						overOdds365 = Float.parseFloat(textOdds.split("\n")[2].trim());
 						underOdds365 = Float.parseFloat(textOdds.split("\n")[3].trim());
 					} catch (Exception e) {
-						//nothing
+						// nothing
 					}
 				}
 			}

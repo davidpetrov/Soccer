@@ -20,7 +20,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Random;
+import java.util.function.Function;
 
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -37,6 +39,8 @@ import main.ExtendedFixture;
 import main.FullFixture;
 import main.GoalLines;
 import main.Line;
+import main.Player;
+import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
 import results.Results;
@@ -1904,8 +1908,8 @@ public class Utils {
 	 */
 	public static boolean matchesFixtureLists(String teamFor, ArrayList<ExtendedFixture> fixtures,
 			ArrayList<ExtendedFixture> fwa) {
-//		System.out.println(fixtures);
-//		System.out.println(fwa);
+		// System.out.println(fixtures);
+		// System.out.println(fwa);
 		for (ExtendedFixture i : fixtures) {
 			boolean foundMatch = false;
 			boolean isHomeSide = teamFor.equals(i.homeTeam);
@@ -2158,9 +2162,155 @@ public class Utils {
 		for (FinalEntry c : finals) {
 			if ((table.getMiddleTeams().contains((c.fixture.homeTeam))
 					&& table.getMiddleTeams().contains((c.fixture.awayTeam)))
-					/*|| (table.getBottomTeams().contains((c.fixture.homeTeam))
-							&& table.getTopTeams().contains((c.fixture.awayTeam)))*/)
+			/*
+			 * || (table.getBottomTeams().contains((c.fixture.homeTeam)) &&
+			 * table.getTopTeams().contains((c.fixture.awayTeam)))
+			 */)
 				result.add(c);
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> runWithPlayersData(ArrayList<ExtendedFixture> current,
+			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (ExtendedFixture i : current) {
+			float eval = evaluatePlayers(i, pfs, dictionary);
+			FinalEntry fe = new FinalEntry(i, eval > 2.5f ? 1f : 0f, i.result, 0.55f, 0.55f, 0.55f);
+			result.add(fe);
+		}
+		return result;
+	}
+
+	private static float evaluatePlayers(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary) {
+
+		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true);
+		float awayEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, false);
+
+		float totalEstimate = homeEstimate + awayEstimate;
+
+//		System.out.println(homeEstimate + " : " + awayEstimate);
+		return totalEstimate;
+
+	}
+
+	private static float estimateGoalFromPlayerStats(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary, boolean home) {
+		ArrayList<PlayerFixture> homePlayers = getPlayers(ef, home, pfs, dictionary);
+//		printPlayers(homePlayers);
+		ArrayList<Player> playerStatsHome = createStatistics(ef, home, pfs, dictionary);
+		HashMap<String, Player> homeHash = (HashMap<String, Player>) playerStatsHome.stream()
+				.collect(Collectors.toMap(Player::getName, Function.identity()));
+
+//		System.out.println(playerStatsHome);
+
+		float homeEstimate = 0f;
+		for (PlayerFixture i : homePlayers) {
+			if (i.lineup) {
+				if (homeHash.containsKey(i.name))
+					homeEstimate += homeHash.get(i.name).getGoalAvg() * 90;
+			}
+		}
+
+		return homeEstimate;
+	}
+
+	private static ArrayList<Player> createStatistics(ExtendedFixture i, boolean home, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary) {
+		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+		String team = home ? i.homeTeam : i.awayTeam;
+
+		HashMap<String, ArrayList<PlayerFixture>> players = new HashMap<>();
+		for (PlayerFixture pf : pfs) {
+			if ((reverseDictionary.get(pf.team).equals(team) || reverseDictionary.get(pf.team).equals(team))
+					&& pf.fixture.date.before(i.date)) {
+
+				if (!players.containsKey(pf.name))
+					players.put(pf.name, new ArrayList<>());
+
+				players.get(pf.name).add(pf);
+			}
+		}
+
+		ArrayList<Player> result = new ArrayList<>();
+		for (Entry<String, ArrayList<PlayerFixture>> entry : players.entrySet()) {
+			Player player = new Player((home ? i.homeTeam : i.awayTeam), entry.getKey(), 0, 0, 0, 0, 0, 0);
+			for (PlayerFixture pf : entry.getValue()) {
+				player.minutesPlayed += pf.minutesPlayed;
+				player.goals += pf.goals;
+				player.assists += pf.assists;
+				if (pf.lineup)
+					player.lineups++;
+				else if (pf.substitute)
+					player.substitutes++;
+				else
+					player.subsWOP++;
+			}
+			result.add(player);
+		}
+
+		// Sort - goalscorers first
+		result.sort(new Comparator<Player>() {
+
+			@Override
+			public int compare(Player o1, Player o2) {
+				return ((Integer) o2.goals).compareTo((Integer) o1.goals);
+			}
+		});
+
+		return result;
+	}
+
+	// TODO remove later
+	public static void printPlayers(ArrayList<PlayerFixture> homePlayers) {
+		if (homePlayers.size() > 0)
+			System.out.println(homePlayers.get(0).team);
+		for (PlayerFixture i : homePlayers) {
+			System.out.println(i.name + " " + i.lineup + " " + i.minutesPlayed + "' " + i.goals + " " + i.assists);
+		}
+	}
+
+	private static ArrayList<PlayerFixture> getPlayers(ExtendedFixture i, boolean home, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary) {
+		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+
+		ArrayList<PlayerFixture> result = new ArrayList<>();
+		for (PlayerFixture pf : pfs) {
+			if (reverseDictionary.get(pf.fixture.homeTeam).equals(i.homeTeam)
+					&& reverseDictionary.get(pf.fixture.awayTeam).equals(i.awayTeam)
+					&& (pf.fixture.date.equals(i.date) || pf.fixture.date.equals(Utils.getYesterday(i.date))
+							|| pf.fixture.date.equals(Utils.getTommorow(i.date)))
+					&& reverseDictionary.get(pf.team).equals(home ? i.homeTeam : i.awayTeam)) {
+				result.add(pf);
+			}
+		}
+		result.sort(new Comparator<PlayerFixture>() {
+
+			@Override
+			public int compare(PlayerFixture o1, PlayerFixture o2) {
+				return ((Integer) o2.minutesPlayed).compareTo((Integer) o1.minutesPlayed);
+			}
+		});
+		return result;
+	}
+
+	public static ArrayList<ExtendedFixture> getFixtures(ArrayList<PlayerFixture> pfs) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (PlayerFixture i : pfs) {
+			if (!result.contains(i.fixture))
+				result.add(i.fixture);
+		}
+		return result;
+	}
+
+	public static ArrayList<ExtendedFixture> notPending(ArrayList<ExtendedFixture> all) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (ExtendedFixture i : all) {
+			if (i.getTotalGoals() >= 0)
+				result.add(i);
 		}
 		return result;
 	}

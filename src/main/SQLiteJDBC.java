@@ -785,6 +785,99 @@ public class SQLiteJDBC {
 		}
 	}
 
+	public static synchronized void storePlayerFixtures(ArrayList<PlayerFixture> finals, int year, String competition) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+			
+			int success  = 0;
+			int fails = 0;
+			stmt = c.createStatement();
+			for (PlayerFixture f : finals) {
+				String sql = "INSERT INTO PLAYERFIXTURES "
+						+ "(DATE,HOMETEAMNAME,AWAYTEAMNAME,HOMEGOALS,AWAYGOALS,YEAR,COMPETITION,TEAM,NAME,MINUTESPLAYED,LINEUP,SUBSTITUTE,GOALS,ASSISTS)"
+						+ "VALUES (" + addQuotes(format.format(f.fixture.date)) + "," + addQuotes(f.fixture.homeTeam)
+						+ "," + addQuotes(f.fixture.awayTeam) + "," + f.fixture.result.goalsHomeTeam + ","
+						+ f.fixture.result.goalsAwayTeam + "," + year + "," + addQuotes(competition) + ","
+						+ addQuotes(f.team) + "," + addQuotes(f.name) + "," + f.minutesPlayed + "," + (f.lineup ? 1 : 0)
+						+ "," + (f.substitute ? 1 : 0) + "," + f.goals + "," + f.assists + " );";
+				try {
+					stmt.executeUpdate(sql);
+//					success++;
+				} catch (SQLException e) {
+					fails++;
+					e.printStackTrace();
+//					System.out.println(success + " succ " + fails + " failed");
+//					System.out.println(sql);
+//					break;
+					
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+	}
+
+	public static synchronized ArrayList<PlayerFixture> selectPlayerFixtures(String competition, int year)
+			throws InterruptedException {
+
+		ArrayList<PlayerFixture> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from playerfixtures" + " where year=" + year
+					+ " AND competition=" + addQuotes(competition) + ";");
+			while (rs.next()) {
+				String date = rs.getString("date");
+				String homeTeamName = rs.getString("hometeamname");
+				String awayTeamName = rs.getString("awayteamname");
+				int homeGoals = rs.getInt("homegoals");
+				int awayGoals = rs.getInt("awaygoals");
+				String team = rs.getString("team");
+				String name = rs.getString("name");
+				int minutesPlayed = rs.getInt("minutesPlayed");
+				int lineup = rs.getInt("lineup");
+				int substitute = rs.getInt("substitute");
+				int goals = rs.getInt("goals");
+				int assists = rs.getInt("assists");
+
+				PlayerFixture pf = new PlayerFixture(
+						new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+								new Result(homeGoals, awayGoals), competition),
+						team, name, minutesPlayed, lineup == 1, substitute == 1, goals, assists);
+
+				result.add(pf);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
+	}
+
 	public static synchronized ArrayList<FinalEntry> selectFinals(String competition, int year, String description)
 			throws InterruptedException {
 
@@ -872,8 +965,8 @@ public class SQLiteJDBC {
 			System.exit(0);
 		}
 
-		if(result.isEmpty())
-			System.out.println("NO LINE FOUND for "+f.asianHome);
+		if (result.isEmpty())
+			System.out.println("NO LINE FOUND for " + f.asianHome);
 		return result.get(0);
 	}
 

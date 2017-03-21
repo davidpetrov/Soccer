@@ -27,12 +27,32 @@ public class MinMaxOdds {
 	public static final String[] FULL = { "SWI", "BRA", "ENG", "SPA" };
 
 	public static HashMap<String, String> equivalents = new HashMap<>();
+	public static HashMap<String, String> reverseEquivalents = new HashMap<>();
 
 	static {
 		equivalents.put("IT", "I1");
 		equivalents.put("ENG", "E0");
+		equivalents.put("ENG2", "E1");
+		equivalents.put("ENG3", "E2");
+		equivalents.put("ENG4", "E3");
+		equivalents.put("ENG5", "EC");
+		equivalents.put("GER", "D1");
+		equivalents.put("FR", "F1");
+		equivalents.put("SCO", "SC0");
 		equivalents.put("SPA", "SP1");
 		equivalents.put("SPA2", "SP2");
+		// -----------------------
+		reverseEquivalents.put("I1", "IT");
+		reverseEquivalents.put("E0", "ENG");
+		reverseEquivalents.put("E1", "ENG2");
+		reverseEquivalents.put("E2", "ENG3");
+		reverseEquivalents.put("E3", "ENG4");
+		reverseEquivalents.put("EC", "ENG5");
+		reverseEquivalents.put("D1", "GER");
+		reverseEquivalents.put("F1", "FR");
+		reverseEquivalents.put("SC0", "SCO");
+		reverseEquivalents.put("SP1", "SPA");
+		reverseEquivalents.put("SP2", "SPA2");
 	}
 
 	public static float getMinOdds(String league) {

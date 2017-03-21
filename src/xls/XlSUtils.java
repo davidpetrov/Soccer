@@ -37,6 +37,7 @@ import main.AsianLines;
 import main.ExtendedFixture;
 import main.FullFixture;
 import main.GoalLines;
+import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
 import results.Results;
@@ -2438,7 +2439,7 @@ public class XlSUtils {
 			throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<ExtendedFixture> all = selectAll(sheet, 1);
+		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
 		// System.out.println("VIG: " + Utils.avgReturn(all));
 		// System.out.println(all.size());
 
@@ -2468,17 +2469,27 @@ public class XlSUtils {
 		// bestCot = pair.away;
 		// System.out.println(bestCot);
 		int maxMatchDay = addMatchDay(sheet, all);
+		ArrayList<PlayerFixture> pfs = SQLiteJDBC
+				.selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
+						? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) : sheet.getSheetName(), year);
+		ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
+		HashMap<String, String> dictionary = XlSUtils.deduceDictionary(Utils.notPending(all), allPfs);
 		for (int i = 14; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-//			 current = Utils.inMonth(current, 0, 5);
+			// current = Utils.inMonth(current, 0, 5);
 			// Utils.fairValue(current);
 			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
 
-			Table table = Utils.createTable(data, sheet.getSheetName(), year, i);
+			// Table table = Utils.createTable(data, sheet.getSheetName(), year,
+			// i);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
 			finals = runWithSettingsList(sheet, current, temp);
-			finals = Utils.similarRanking(finals, table);
+
+			ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
+			finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary);
+			finals = finalsPFS;
+			// finals = Utils.similarRanking(finals, table);
 
 			// Settings we = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th,
 			// th, th, 0.5f, 0f).withShots(1f);
@@ -2500,11 +2511,11 @@ public class XlSUtils {
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-//			 finals = Utils.onlyUnders(finals);
+			// finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
-//			finals = Utils.onlyOvers(finals);
+			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);
-			 finals = Utils.onlyOvers(finals);
+			finals = Utils.onlyOvers(finals);
 
 			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
 			// "shots");
@@ -5249,6 +5260,8 @@ public class XlSUtils {
 
 	public static HashMap<String, String> deduceDictionary(ArrayList<ExtendedFixture> odds,
 			ArrayList<ExtendedFixture> ways) {
+		if (odds.size() != ways.size())
+			System.out.println("Deducing dictionary with different sizes");
 		HashMap<String, String> dictionary = new HashMap<>();
 
 		ArrayList<String> teamsOdds = Utils.getTeamsList(odds);
@@ -5382,11 +5395,11 @@ public class XlSUtils {
 
 		ArrayList<FinalEntry> todayGames = new ArrayList<>();
 		for (FinalEntry p : pending) {
-			 if (Utils.isToday(p.fixture.date))
-			todayGames.add(p);
+			if (Utils.isToday(p.fixture.date))
+				todayGames.add(p);
 		}
 
-		 System.out.println(todayGames);
+		System.out.println(todayGames);
 
 		return todayGames;
 	}
