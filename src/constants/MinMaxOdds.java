@@ -16,6 +16,7 @@ public class MinMaxOdds {
 	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1", "B1" };
 	public static final String[] DRAW = { "I1", "I2", "F2", "P1", "D1", "D2", "SP2" };
 	public static final String[] SHOTS = { "E0", "E1", "E2", "E3", "EC", "SC0", "D1", "SP1", "I1", "F1" };
+	public static final String[] PFS = { "E0", "E1", "E2", "E3", "EC", "SC0", "SP1", "D1", "I1", "F1" };
 	public static final String[] SHOTSEQUIVALENTS = { "ENG", "ENG2", "ENG3", "ENG4", "ENG5", "SC0", "GER", "SPA", "IT",
 			"FR" };
 	public static final String[] SHOTSDONT = { "I1", "F1", "E1", "E3" };

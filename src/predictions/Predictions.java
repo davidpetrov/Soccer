@@ -22,6 +22,7 @@ import runner.RunnerPredictions;
 import scraper.Scraper;
 
 public class Predictions {
+	
 
 	public static final ArrayList<String> CHECKLIST = new ArrayList<>();
 
@@ -52,20 +53,20 @@ public class Predictions {
 		CHECKLIST.add("AUS");
 		CHECKLIST.add("DEN");
 		CHECKLIST.add("CZE");
-		CHECKLIST.add("ARG");	
+		CHECKLIST.add("ARG");
 		CHECKLIST.add("POL");
 		CHECKLIST.add("CRO");
 		CHECKLIST.add("SLO");
 
-//		 Scraper.updateInParallel(CHECKLIST, 2, true);
+		// Scraper.updateInParallel(CHECKLIST, 2, true, UpdateType.AUTOMATIC);
 
-		 predictions(2016, true);
-		
-//		 asianPredictions(2016, true);
+		predictions(2016, true, UpdateType.AUTOMATIC);
+
+		// asianPredictions(2016, true);
 
 	}
 
-	public static ArrayList<FinalEntry> predictions(int year, boolean parsedLeagues)
+	public static ArrayList<FinalEntry> predictions(int year, boolean parsedLeagues, UpdateType automatic)
 			throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 
@@ -81,11 +82,12 @@ public class Predictions {
 
 		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
+		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? Scraper.getTodaysLeagueList() : CHECKLIST;
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (!sh.getSheetName().equals("ENG2"))
 			// continue;
-			if (!Predictions.CHECKLIST.contains(sh.getSheetName()))
+			if (!leagues.contains(sh.getSheetName()))
 				continue;
 
 			threadArray.add(pool.submit(new RunnerPredictions(sh, year)));

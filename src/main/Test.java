@@ -61,24 +61,24 @@ public class Test {
 		// asianPredictions();
 
 		// float total = 0f;
-//		 for (int year = 2005; year <= 2015; year++)
+		// for (int year = 2005; year <= 2015; year++)
 		// total += asian(year);
 		// System.out.println("Avg profit is " + (total / 11));
 
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-		 float total = 0f;
-		 int startY = 2013;
-		 int end = 2016;
-		 for (int year = startY; year <= end; year++)
-		 total += simulation(year, false);
-		 System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		float total = 0f;
+		int startY = 2005;
+		int end = 2015;
+		for (int year = startY; year <= end; year++)
+			total += simulation(year, false);
+		System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-//		accumulators(2005, 2015);
+		// accumulators(2005, 2015);
 
 		// makePredictions();
 
@@ -454,20 +454,20 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ExecutorService pool = Executors.newFixedThreadPool(1);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			 if (!sh.getSheetName().equals("E0"))
-			 continue;
-			// if
-			// (!Arrays.asList(Predictions.CHECKLIST).contains(sh.getSheetName()))
+			// if (!sh.getSheetName().equals("EC"))
+			// continue;
+			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
 
-//			 if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-//			 continue;
-//			 if (sh.getSheetName().equals("D1")||sh.getSheetName().equals("SP1"))
-//				 continue;
+			if (!Arrays.asList(MinMaxOdds.PFS).contains(sh.getSheetName()))
+				continue;
+			// if
+			// (sh.getSheetName().equals("D1")||sh.getSheetName().equals("SP1"))
+			// continue;
 
 			threadArray.add(pool.submit(new Runner(sh, year)));
 		}
@@ -523,8 +523,8 @@ public class Test {
 		pool.shutdown();
 
 		Utils.predictionCorrelation(all);
-		
-		 Utils.analysys(all, year);
+
+		Utils.analysys(all, year);
 		// Utils.drawAnalysis(all);
 		// ArrayList<FinalEntry> overs = Utils.onlyOvers(all);
 		// Utils.analysys(overs, year);

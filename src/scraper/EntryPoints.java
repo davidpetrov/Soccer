@@ -1,5 +1,6 @@
 package scraper;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -8,7 +9,10 @@ import org.omg.CORBA.Current;
 public class EntryPoints {
 	public static final int CURRENT = 2016;
 
-	public static final String[] TRACKING = { "BRA", "BRB", "SWE", "NOR", "FIN", "USA", };
+	public static final String[] TRACKING = { "ENG", "ENG2", "ENG3", "ENG4", "ENG5", "IT", "IT2", "FR", "FR2", "SPA",
+			"SPA2", "GER", "GER2", "SCO", "NED", "BEL", "SWI", "POR", "GRE", "TUR", "BUL", "RUS", "AUS", "DEN", "CZE",
+			"ARG", "POL", "CRO", "SLO" };
+
 	public static final String[] MERGED = { "FR2", "BEL", "SWI", "E0", "ENG", "SPA", "SPA2", "GER", "GER2", "FR", "IT",
 			"SCO", "IT2", "TUR", "ENG2", "ENG3", "ENG4", "ENG5", "ARG", "GRE", "POR", "NED", "BUL", "RUS", "AUS", "DEN",
 			"CZE", "POL", "CRO", "SLO", "SLK" };
@@ -21,49 +25,51 @@ public class EntryPoints {
 	public static HashMap<String, String> map = new HashMap<>();
 	public static HashMap<String, String> odds = new HashMap<>();
 
+	public static final String SOCCERBASE = "http://int.soccerway.com";
+
 	static {
 
-		map.put("BRA", "http://int.soccerway.com/national/brazil/serie-a/");
-		map.put("BRB", "http://int.soccerway.com/national/brazil/serie-b/");
-		map.put("ARG", "http://int.soccerway.com/national/argentina/primera-division/");
-		map.put("ARG2", "http://int.soccerway.com/national/argentina/prim-b-nacional/");
-		map.put("SWE", "http://int.soccerway.com/national/sweden/allsvenskan/");
-		map.put("SWE2", "http://int.soccerway.com/national/sweden/superettan/");
-		map.put("NOR", "http://int.soccerway.com/national/norway/eliteserien/");
-		map.put("USA", "http://int.soccerway.com/national/united-states/mls/");
-		map.put("ICE", "http://int.soccerway.com/national/iceland/urvalsdeild/");
-		map.put("FIN", "http://int.soccerway.com/national/finland/veikkausliiga/");
-		map.put("JP", "http://int.soccerway.com/national/japan/j1-league/");
-		map.put("USA", "http://int.soccerway.com/national/united-states/mls/");
-		map.put("FR2", "http://int.soccerway.com/national/france/ligue-2/");
-		map.put("BEL", "http://int.soccerway.com/national/belgium/pro-league/");
-		map.put("SWI", "http://int.soccerway.com/national/switzerland/super-league/");
-		map.put("ENG", "http://int.soccerway.com/national/england/premier-league/");
-		map.put("SPA", "http://int.soccerway.com/national/spain/primera-division/");
-		map.put("SPA2", "http://int.soccerway.com/national/spain/segunda-division/");
-		map.put("GER", "http://int.soccerway.com/national/germany/bundesliga/");
-		map.put("FR", "http://int.soccerway.com/national/france/ligue-1/");
-		map.put("IT", "http://int.soccerway.com/national/italy/serie-a/");
-		map.put("SCO", "http://int.soccerway.com/national/scotland/premier-league/");
-		map.put("IT2", "http://int.soccerway.com/national/italy/serie-b/");
-		map.put("TUR", "http://int.soccerway.com/national/turkey/super-lig/");
-		map.put("ENG2", "http://int.soccerway.com/national/england/championship/");
-		map.put("ENG3", "http://int.soccerway.com/national/england/league-one/");
-		map.put("ENG4", "http://int.soccerway.com/national/england/league-two/");
-		map.put("ENG5", "http://int.soccerway.com/national/england/conference-national/");
-		map.put("GRE", "http://int.soccerway.com/national/greece/super-league/");
-		map.put("POR", "http://int.soccerway.com/national/portugal/portuguese-liga-/");
-		map.put("NED", "http://int.soccerway.com/national/netherlands/eredivisie/");
-		map.put("BUL", "http://int.soccerway.com/national/bulgaria/a-pfg/");
-		map.put("RUS", "http://int.soccerway.com/national/russia/premier-league/");
-		map.put("AUS", "http://int.soccerway.com/national/austria/bundesliga/");
-		map.put("DEN", "http://int.soccerway.com/national/denmark/superliga/");
-		map.put("CZE", "http://int.soccerway.com/national/czech-republic/czech-liga/");
-		map.put("GER2", "http://int.soccerway.com/national/germany/2-bundesliga/");
-		map.put("POL", "http://int.soccerway.com/national/poland/ekstraklasa/");
-		map.put("CRO", "http://int.soccerway.com/national/croatia/1-hnl/");
-		map.put("SLO", "http://int.soccerway.com/national/slovenia/1-snl/");
-		map.put("SLK", "http://int.soccerway.com/national/slovakia/super-liga/");
+		map.put("BRA", "/national/brazil/serie-a/");
+		map.put("BRB", "/national/brazil/serie-b/");
+		map.put("ARG", "/national/argentina/primera-division/");
+		map.put("ARG2", "/national/argentina/prim-b-nacional/");
+		map.put("SWE", "/national/sweden/allsvenskan/");
+		map.put("SWE2", "/national/sweden/superettan/");
+		map.put("NOR", "/national/norway/eliteserien/");
+		map.put("USA", "/national/united-states/mls/");
+		map.put("ICE", "/national/iceland/urvalsdeild/");
+		map.put("FIN", "/national/finland/veikkausliiga/");
+		map.put("JP", "/national/japan/j1-league/");
+		map.put("USA", "/national/united-states/mls/");
+		map.put("FR2", "/national/france/ligue-2/");
+		map.put("BEL", "/national/belgium/pro-league/");
+		map.put("SWI", "/national/switzerland/super-league/");
+		map.put("ENG", "/national/england/premier-league/");
+		map.put("SPA", "/national/spain/primera-division/");
+		map.put("SPA2", "/national/spain/segunda-division/");
+		map.put("GER", "/national/germany/bundesliga/");
+		map.put("FR", "/national/france/ligue-1/");
+		map.put("IT", "/national/italy/serie-a/");
+		map.put("SCO", "/national/scotland/premier-league/");
+		map.put("IT2", "/national/italy/serie-b/");
+		map.put("TUR", "/national/turkey/super-lig/");
+		map.put("ENG2", "/national/england/championship/");
+		map.put("ENG3", "/national/england/league-one/");
+		map.put("ENG4", "/national/england/league-two/");
+		map.put("ENG5", "/national/england/conference-national/");
+		map.put("GRE", "/national/greece/super-league/");
+		map.put("POR", "/national/portugal/portuguese-liga-/");
+		map.put("NED", "/national/netherlands/eredivisie/");
+		map.put("BUL", "/national/bulgaria/a-pfg/");
+		map.put("RUS", "/national/russia/premier-league/");
+		map.put("AUS", "/national/austria/bundesliga/");
+		map.put("DEN", "/national/denmark/superliga/");
+		map.put("CZE", "/national/czech-republic/czech-liga/");
+		map.put("GER2", "/national/germany/2-bundesliga/");
+		map.put("POL", "/national/poland/ekstraklasa/");
+		map.put("CRO", "/national/croatia/1-hnl/");
+		map.put("SLO", "/national/slovenia/1-snl/");
+		map.put("SLK", "/national/slovakia/super-liga/");
 	}
 
 	// oddsportal links
@@ -110,16 +116,15 @@ public class EntryPoints {
 	}
 
 	public static String getLink(String competition, int year) {
-		String result = map.get(competition);
-		if (Arrays.asList(EXCEPTIONS).contains(competition))
-			return result;
+		String result = SOCCERBASE + map.get(competition);
 
 		if (Arrays.asList(MERGED).contains(competition))
-			result += year + "" + (year + 1);
+			result += year + (year <= 2011 ? "-" : "") + (year + 1);
 		else
 			result += year;
 
-		return result + "/regular-season/matches/";
+		return result + (Arrays.asList(EXCEPTIONS).contains(competition) ? "/1st-phase/matches/"
+				: "/regular-season/matches/");
 	}
 
 	public static String getOddsLink(String competition, int year) {
@@ -131,6 +136,14 @@ public class EntryPoints {
 				result += "-" + year;
 		}
 
+		return result;
+	}
+
+	public static HashMap<String, String> getTrackingLeagueDescriptions() {
+		HashMap<String, String> result = new HashMap<>();
+		for (String i : TRACKING) {
+			result.put(map.get(i), i);
+		}
 		return result;
 	}
 

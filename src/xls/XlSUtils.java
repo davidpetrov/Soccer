@@ -335,7 +335,7 @@ public class XlSUtils {
 		// }
 	}
 
-	static float selectAvgHomeShotsFor(HSSFSheet sheet, String homeTeam, Date date) throws ParseException {
+	public static float selectAvgHomeShotsFor(HSSFSheet sheet, String homeTeam, Date date) throws ParseException {
 		int total = 0;
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 		int count = 0;
@@ -365,7 +365,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : ((float) total) / count;
 	}
 
-	static float selectAvgHomeShotsAgainst(HSSFSheet sheet, String homeTeam, Date date) throws ParseException {
+	public static float selectAvgHomeShotsAgainst(HSSFSheet sheet, String homeTeam, Date date) throws ParseException {
 		int total = 0;
 		int count = 0;
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
@@ -396,7 +396,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : ((float) total) / count;
 	}
 
-	static float selectAvgAwayShotsFor(HSSFSheet sheet, String awayTeam, Date date) throws ParseException {
+	public static float selectAvgAwayShotsFor(HSSFSheet sheet, String awayTeam, Date date) throws ParseException {
 		int total = 0;
 		int count = 0;
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
@@ -426,7 +426,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : ((float) total) / count;
 	}
 
-	static float selectAvgAwayShotsAgainst(HSSFSheet sheet, String awayTeam, Date date) throws ParseException {
+	public static float selectAvgAwayShotsAgainst(HSSFSheet sheet, String awayTeam, Date date) throws ParseException {
 		int total = 0;
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 		int count = 0;
@@ -487,7 +487,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : (float) total / count;
 	}
 
-	private static float AvgShotsWhenUnder(HSSFSheet sheet, Date date) throws ParseException {
+	public static float AvgShotsWhenUnder(HSSFSheet sheet, Date date) throws ParseException {
 		int total = 0;
 		int count = 0;
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
@@ -521,7 +521,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : (float) total / count;
 	}
 
-	private static float AvgShotsWhenOver(HSSFSheet sheet, Date date) throws ParseException {
+	public static float AvgShotsWhenOver(HSSFSheet sheet, Date date) throws ParseException {
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 		int total = 0;
 		int count = 0;
@@ -555,7 +555,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : (float) total / count;
 	}
 
-	static float selectAvgShotsHome(HSSFSheet sheet, Date date) throws ParseException {
+	public static float selectAvgShotsHome(HSSFSheet sheet, Date date) throws ParseException {
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 		int total = 0;
 		int count = 0;
@@ -583,7 +583,7 @@ public class XlSUtils {
 		return count == 0 ? 0 : ((float) total) / count;
 	}
 
-	static float selectAvgShotsAway(HSSFSheet sheet, Date date) throws ParseException {
+	public static float selectAvgShotsAway(HSSFSheet sheet, Date date) throws ParseException {
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 		int total = 0;
 		int count = 0;
@@ -711,6 +711,40 @@ public class XlSUtils {
 					&& fdate.before(date)) {
 				int homegoal = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 				total += homegoal;
+				count++;
+			}
+		}
+		return count == 0 ? 0 : (float) total / count;
+	}
+
+	public static float selectAvgFor(HSSFSheet sheet, String team, Date date) throws ParseException {
+		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
+		float total = 0f;
+		int count = 0;
+		Iterator<Row> rowIterator = sheet.iterator();
+		while (rowIterator.hasNext()) {
+			Row row = rowIterator.next();
+			if (row.getRowNum() == 0)
+				continue;
+			Date fdate;
+			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
+			if (row.getCell(getColumnIndex(sheet, "Date")).getCellType() == 1)
+				fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+			else
+				fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
+			String htname = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
+			String atname = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
+			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && htname.equals(team) && dateCell != null
+					&& fdate.before(date)) {
+				int goal = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
+				total += goal;
+				count++;
+			}
+
+			if (row.getCell(getColumnIndex(sheet, "ATHG")) != null && atname.equals(team) && dateCell != null
+					&& fdate.before(date)) {
+				int goal = (int) row.getCell(getColumnIndex(sheet, "ATHG")).getNumericCellValue();
+				total += goal;
 				count++;
 			}
 		}
@@ -2456,11 +2490,11 @@ public class XlSUtils {
 		// HashMap<ExtendedFixture, Float> shots = SQLiteJDBC.selectScores(all,
 		// "SHOTS", year, sheet.getSheetName());
 		float th = 0.55f;
-		Settings temp = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th, th, th, 0.5f, 0f).withShots(1f);
+		Settings temp = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th, 0.55f, 0.55f, 0.55f, 0f).withShots(1f);
 		// temp.value = 0.86f;
 		// temp.minOver = 1.9f;
 
-		// float bestTH = findTH(sheet.getSheetName(), year, 2, "shots", temp);
+//		 float bestTH = findTH(sheet.getSheetName(), year, 3, "shots", temp);
 		// float bestCot = findCot(sheet.getSheetName(), year, 2, "shots");
 		// System.out.println(bestCot);
 		// Pair pair = findTHandCOT(sheet.getSheetName(), year, 2, "shots",
@@ -2473,22 +2507,28 @@ public class XlSUtils {
 				.selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
 						? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) : sheet.getSheetName(), year);
 		ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
-		HashMap<String, String> dictionary = XlSUtils.deduceDictionary(Utils.notPending(all), allPfs);
-		for (int i = 14; i < maxMatchDay; i++) {
+		HashMap<String, String> dictionary = null;
+		if (!allPfs.isEmpty())
+			dictionary = XlSUtils.deduceDictionary(Utils.notPending(all), allPfs);
+
+		for (int i = dictionary == null ? 100 : 14; i < maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-			// current = Utils.inMonth(current, 0, 5);
+			 current = Utils.inMonth(current, 0, 5);
 			// Utils.fairValue(current);
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
+			// i);
 
 			// Table table = Utils.createTable(data, sheet.getSheetName(), year,
 			// i);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
+			// finals = Utils.allUnders(current);
+//			 finals = runWithSettingsList(sheet, current, temp);
+			// finals = runWithSettingsList(sheet, current, temp, pfs,
+			// dictionary);
 
-			finals = runWithSettingsList(sheet, current, temp);
-
-			ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
-			finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary);
-			finals = finalsPFS;
+//			ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
+//			finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary, sheet, 0.525f);
+//			finals = finalsPFS;
 			// finals = Utils.similarRanking(finals, table);
 
 			// Settings we = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th,
@@ -2497,7 +2537,7 @@ public class XlSUtils {
 
 			// weights = runWithSettingsList(sheet, current, we);
 
-			// finals = Utils.cotRestrict(finals, 0.1f);
+//			finals = Utils.cotRestrict(finals, 0.025f);
 			// finals = Utils.allUnders(current);
 			// finals = Utils.higherOdds(current);
 
@@ -2507,15 +2547,15 @@ public class XlSUtils {
 			// year, 3, "shots");
 			finals = Utils.noequilibriums(finals);
 
-			// finals = Utils.intersectDiff( weights,finals);
+			// finals = Utils.intersectDiff(finals, finalsPFS);
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-			// finals = Utils.onlyUnders(finals);
+			 finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);
-			finals = Utils.onlyOvers(finals);
+//			 finals = Utils.onlyOvers(finals);
 
 			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
 			// "shots");
@@ -2587,6 +2627,7 @@ public class XlSUtils {
 
 			// System.out.println(finals);
 			float trprofit = Utils.getProfit(finals);
+			// System.out.println(i + " " + trprofit);
 			// System.out.println(String.format("%.3f",
 			// Utils.avgReturn(finals)));
 
@@ -2594,11 +2635,51 @@ public class XlSUtils {
 
 		}
 
+		// System.err.println("Played: " + played);
 		float yield = (profit / played) * 100f;
 		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
 				+ " yield is: " + String.format("%.2f%%", yield));
 
 		return profit;
+	}
+
+	private static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
+			Settings settings, ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) throws ParseException {
+		ArrayList<FinalEntry> finals = calculateScores(sheet, current, settings, pfs, dictionary);
+
+		return restrict(finals, settings);
+	}
+
+	private static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+			Settings settings, ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) throws ParseException {
+		ArrayList<FinalEntry> finals = new ArrayList<>();
+		for (ExtendedFixture f : all) {
+
+			float finalScore = 0f;
+
+			// TODO pfs instead of basic remove or fix later
+			if (settings.basic != 0f)
+				finalScore += settings.basic * Utils.evaluatePlayers(f, pfs, dictionary, sheet);
+
+			if (settings.poisson != 0f)
+				finalScore += settings.poisson * poisson(f, sheet);
+
+			if (settings.weightedPoisson != 0f)
+				finalScore += settings.weightedPoisson * poissonWeighted(f, sheet);
+
+			if (settings.htCombo != 0f)
+				finalScore += settings.htCombo * (settings.halfTimeOverOne * halfTimeOnly(f, sheet, 1)
+						+ (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+
+			if (settings.shots != 0f)
+				finalScore += settings.shots * shots(f, sheet);
+
+			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
+					settings.threshold, settings.lowerBound, settings.upperBound);
+			// if (!fe.prediction.equals(Float.NaN))
+			finals.add(fe);
+		}
+		return finals;
 	}
 
 	public static ArrayList<FinalEntry> runBestCot(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
@@ -5261,7 +5342,7 @@ public class XlSUtils {
 	public static HashMap<String, String> deduceDictionary(ArrayList<ExtendedFixture> odds,
 			ArrayList<ExtendedFixture> ways) {
 		if (odds.size() != ways.size())
-			System.out.println("Deducing dictionary with different sizes");
+			System.out.println("Deducing dictionary with different sizes: " + odds.size() + " " + ways.size());
 		HashMap<String, String> dictionary = new HashMap<>();
 
 		ArrayList<String> teamsOdds = Utils.getTeamsList(odds);
@@ -5300,6 +5381,9 @@ public class XlSUtils {
 				}
 			}
 
+			if (possibleCandidates.isEmpty())
+				System.out.println("No possible candidates for: " + team);
+
 			String bestMatch = null;
 			double bestSimilarity = -1d;
 			for (String pos : possibleCandidates) {
@@ -5311,14 +5395,19 @@ public class XlSUtils {
 			}
 
 			matchedOdds.add(team);
-			matchedWays.add(bestMatch);
-			dictionary.put(team, bestMatch);
+			if (bestMatch != null) {
+				matchedWays.add(bestMatch);
+				dictionary.put(team, bestMatch);
+			} else {
+				System.out.println();
+			}
 
 		}
 
 		if (matchedOdds.size() != teamsOdds.size())
 			System.err.println("Deducing dictionary failed");
 
+		dictionary.put("CSKA Moscow", "CSKA Moskva");
 		return dictionary;
 
 	}

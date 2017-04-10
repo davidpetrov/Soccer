@@ -3,6 +3,7 @@ package scraper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -20,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.jsoup.Jsoup;
@@ -41,8 +43,10 @@ import main.Line;
 import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
+import predictions.UpdateType;
 import runner.RunnerOdds;
 import runner.UpdateRunner;
+import utils.Triple;
 import utils.Utils;
 import xls.XlSUtils;
 
@@ -59,20 +63,26 @@ public class Scraper {
 
 		// =================================================================
 
-		ArrayList<PlayerFixture> list = collectFull("ENG", 2011, null);
+//		for (int i = 2015; i <= 2015; i++) {
+//			ArrayList<PlayerFixture> list = collectFull("ENG5", i, null);
+//			// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
+//			// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
+//			SQLiteJDBC.storePlayerFixtures(list, i, "ENG5");
+//		}
 
-//		"http://int.soccerway.com/national/spain/primera-division/2011-2012/regular-season/r15105/");
-		SQLiteJDBC.storePlayerFixtures(list, 2011, "ENG");
+		// collectAndStoreSinglePFS("ENG4", 2015,
+		// "http://int.soccerway.com/matches/2016/04/23/england/league-two/bristol-rovers-fc/exeter-city-fc/2045047/");
 
 		// ArrayList<PlayerFixture> list =
 		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
 		// System.out.println(list.size());
 		// ====================================================================
 
-		// ArrayList<ExtendedFixture> list = collect("SLK", 2016, null);
+		// ArrayList<ExtendedFixture> list = collect("GER", 2011,
+		// "http://int.soccerway.com/national/germany/bundesliga/2011-2012/regular-season/r14759/");
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		// XlSUtils.storeInExcel(list, "SLK", 2016, "manual");
+		// XlSUtils.storeInExcel(list, "GER", 2011, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
@@ -95,12 +105,45 @@ public class Scraper {
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		// checkAndUpdate("ENG", true);
+		 checkAndUpdate("RUS", true);
 		// updateInParallel();
 
 		// fastOdds("SPA", 2016, null);
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
+	}
+
+	/**
+	 * Helper method for collecting and storing PFS from a a single fixture due
+	 * to some sort of bug in the collection process of collectfull method which
+	 * misses only 1 fixture for some reason
+	 * 
+	 * @param string
+	 * @param i
+	 * @param string2
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	private static void collectAndStoreSinglePFS(String competition, int year, String link)
+			throws IOException, ParseException {
+		ArrayList<PlayerFixture> result = new ArrayList<>();
+		Set<PlayerFixture> set = new HashSet<>();
+
+		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
+		WebDriver driver = new ChromeDriver();
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		driver.manage().window().maximize();
+		driver.navigate().to(link);
+
+		Document fixture = Jsoup.connect(link).timeout(0).get();
+		ArrayList<PlayerFixture> ef = getFixtureFull(fixture, competition);
+		result.addAll(ef);
+
+		driver.close();
+		System.out.println(result.size());
+
+		SQLiteJDBC.storePlayerFixtures(result, year, competition);
+
 	}
 
 	/**
@@ -112,11 +155,17 @@ public class Scraper {
 	 *            - number of leagues updating in parallel
 	 * @param onlyTodaysMatches
 	 *            - flag for getting next matches only for today (for speed up)
+	 * @param automatic - type of update - manual - hardcoded leagues, automatic - tracking leagues that have games today
+	 * @throws IOException
 	 */
-	public static void updateInParallel(ArrayList<String> list, int n, boolean onlyTodaysMatches) {
+	public static void updateInParallel(ArrayList<String> list, int n, boolean onlyTodaysMatches, UpdateType automatic)
+			throws IOException {
 
 		ExecutorService executor = Executors.newFixedThreadPool(n);
-		for (String i : list) {
+		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? getTodaysLeagueList() : list;
+		System.out.println("Updating for: ");
+		System.out.println(leagues);
+		for (String i : leagues) {
 			Runnable worker = new UpdateRunner(i, onlyTodaysMatches);
 			executor.execute(worker);
 		}
@@ -125,6 +174,25 @@ public class Scraper {
 		executor.shutdown();
 		// Wait until all threads are finish
 		// executor.awaitTermination(0, null);
+	}
+
+	public static ArrayList<String> getTodaysLeagueList() throws IOException {
+		ArrayList<String> result = new ArrayList<>();
+
+		Document page = Jsoup.connect("http://www.soccerway.com/").timeout(0).get();
+
+		HashMap<String, String> leagueDescriptions = EntryPoints.getTrackingLeagueDescriptions();
+		Elements linksM = page.select("th.competition-link");
+		for (Element i : linksM) {
+			String href = i.childNode(1).attr("href");
+			if (href.contains("national")) {
+				href = href.substring(0, StringUtils.ordinalIndexOf(href, "/", 4) + 1);
+				if (leagueDescriptions.keySet().contains(href))
+					result.add(leagueDescriptions.get(href));
+			}
+		}
+
+		return result;
 	}
 
 	public static void checkAndUpdate(String competition, boolean onlyTodaysMatches)
@@ -504,8 +572,9 @@ public class Scraper {
 		WebDriver driver = new ChromeDriver();
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
-		driver.navigate().to(address);
+		driver.navigate().to(address /* + "/matches/" */ );
 
+		int fixtureCount = 0;
 		while (true) {
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
@@ -513,10 +582,23 @@ public class Scraper {
 			Elements linksM = matches.select("a[href]");
 			for (Element linkM : linksM) {
 				if (isScore(linkM.text())) {
-					Document fixture = Jsoup.connect(BASE + linkM.attr("href")).timeout(0).get();
-					ArrayList<PlayerFixture> ef = getFixtureFull(fixture, competition);
-					result.addAll(ef);
-					set.addAll(ef);
+					// Thread.sleep(50);
+					// System.out.println(linkM.text());
+					int count = 0;
+					int maxTries = 10;
+					while (true) {
+						try {
+							Document fixture = Jsoup.connect(BASE + linkM.attr("href")).timeout(30 * 1000).get();
+							ArrayList<PlayerFixture> ef = getFixtureFull(fixture, competition);
+							fixtureCount++;
+							result.addAll(ef);
+							break;
+						} catch (Exception e) {
+							if (++count == maxTries)
+								throw e;
+						}
+					}
+					// set.addAll(ef);
 					// break;
 				}
 			}
@@ -531,12 +613,15 @@ public class Scraper {
 		}
 
 		driver.close();
+		System.out.println(fixtureCount + " fixtures");
 		System.out.println(result.size());
-		System.out.println(set.size());
 
 		ArrayList<PlayerFixture> setlist = new ArrayList<>();
-		set.addAll(result);
-		setlist.addAll(set);
+		// set.addAll(result);
+		setlist = Utils.removeRepeats(result);
+		System.out.println(setlist.size());
+		// setlist.addAll(set);
+
 		return setlist;
 
 	}
@@ -648,6 +733,8 @@ public class Scraper {
 		// =====================================================================
 		ExtendedFixture fix = new ExtendedFixture(date, homeTeam, awayTeam, result, competition);
 		System.out.println(fix);
+		// if (homeTeam.equals("Freiburg") && awayTeam.equals("Kln"))
+		// System.out.println("dadsa");
 
 		ArrayList<PlayerFixture> playerFixtures = new ArrayList<>();
 
@@ -657,14 +744,22 @@ public class Scraper {
 			Element tableAway = divLineups.select("div.container.right").first();
 
 			Elements rowsHome = tableHome.select("table").first().select("tr");
-			for (int i = 1; i < rowsHome.size() - 1; i++) {// without coach
+			for (int i = 1; i < rowsHome.size(); i++) {// without coach
 				Element row = rowsHome.get(i);
-				if (row.text().contains("Coach"))
+				if (row.text().contains("Coach") || row.text().contains("coach") || row.text().isEmpty())
 					continue;
 
 				Elements cols = row.select("td");
+				if (cols.size() < 2)
+					continue;
 				// String shirtNumber = cols.get(0).text();
-				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				String name = "";
+				try {
+					name = Utils.replaceNonAsciiWhitespace(cols.get(cols.size() == 2 ? 0 : 1).text());
+				} catch (Exception e) {
+					System.out.println("Empty column when parsing startin 11");
+					continue;
+				}
 				// System.out.println(shirtNumber + " " + name);
 				PlayerFixture pf = new PlayerFixture(fix, homeTeam, name, 90, true, false, 0, 0);
 				playerFixtures.add(pf);
@@ -672,14 +767,16 @@ public class Scraper {
 			}
 
 			Elements rowsAway = tableAway.select("table").first().select("tr");
-			for (int i = 1; i < rowsAway.size() - 1; i++) {
+			for (int i = 1; i < rowsAway.size(); i++) {
 				Element row = rowsAway.get(i);
-				if (row.text().contains("Coach"))
+				if (row.text().contains("Coach") || row.text().contains("coach") || row.text().isEmpty())
 					continue;
 
 				Elements cols = row.select("td");
+				if (cols.size() < 2)
+					continue;
 				// String shirtNumber = cols.get(0).text();
-				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(cols.size() == 2 ? 0 : 1).text());
 				// System.out.println(shirtNumber + " " + name);
 				PlayerFixture pf = new PlayerFixture(fix, awayTeam, name, 90, true, false, 0, 0);
 				playerFixtures.add(pf);
@@ -701,7 +798,7 @@ public class Scraper {
 				Element row = rowsHome.get(i);
 				Elements cols = row.select("td");
 				String shirtNumber = cols.get(0).text();
-				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(cols.size() == 2 ? 0 : 1).text());
 				if (name.contains(" for ")) {
 					String inPlayer = name.split(" for ")[0].trim();
 					String outPlayer = "";
@@ -748,7 +845,7 @@ public class Scraper {
 				Element row = rowsAway.get(i);
 				Elements cols = row.select("td");
 				String shirtNumber = cols.get(0).text();
-				String name = Utils.replaceNonAsciiWhitespace(cols.get(1).text());
+				String name = Utils.replaceNonAsciiWhitespace(cols.get(cols.size() == 2 ? 0 : 1).text());
 				if (name.contains(" for ")) {
 					String inPlayer = name.split(" for ")[0].trim();
 					String outPlayer = name.split(" for ")[1].split("[0-9]+'")[0].trim();
@@ -831,7 +928,7 @@ public class Scraper {
 								if (extraString.contains("assist by")) {
 									String assister = splitByMinute[1].split("\\(assist by ")[1].trim();
 									assister = Utils.replaceNonAsciiWhitespace(assister);
-									assister = assister.substring(0, assister.length() - 1);
+									assister = assister.substring(0, assister.length() - 1).trim();
 									updatePlayer(assister, playerFixtures, false);
 
 								}
@@ -840,12 +937,21 @@ public class Scraper {
 							// Away goal
 							if (splitByMinute[1].contains("(PG)")) {
 								String goalScorer = splitByMinute[1].replace("(PG)", "").trim();
-								if (goalScorer.contains("+")) {// scored in
+								if (goalScorer.contains("+")) {// scored i
 																// additional
 																// time
 									goalScorer = goalScorer.replace("+", "").replaceAll("\\d", "").trim();
 								}
+
 								goalScorer = Utils.replaceNonAsciiWhitespace(goalScorer).trim();
+
+								if (goalScorer.contains("assist by")) {
+									String assister = goalScorer.split("\\(assist by ")[1].trim();
+									assister = Utils.replaceNonAsciiWhitespace(assister);
+									assister = assister.substring(0, assister.length() - 1);
+									updatePlayer(assister, playerFixtures, false);
+									goalScorer = goalScorer.split("\\(assist by ")[0].trim();
+								}
 								updatePlayer(goalScorer, playerFixtures, true);
 							} else if (splitByMinute[1].contains("assist by")) {
 								String goalScorer = splitByMinute[1].split("\\(assist by ")[0].trim();
@@ -858,7 +964,7 @@ public class Scraper {
 
 								String assister = splitByMinute[1].split("\\(assist by ")[1].trim();
 								assister = Utils.replaceNonAsciiWhitespace(assister);
-								assister = assister.substring(0, assister.length() - 1);
+								assister = assister.substring(0, assister.length() - 1).trim();
 								updatePlayer(assister, playerFixtures, false);
 							} else if (!splitByMinute[1].contains("(OG)")) {
 								// Solo goal no assists, no PG,no OG
@@ -937,7 +1043,7 @@ public class Scraper {
 		// Utils.printPlayers(playerFixtures);
 
 		if (!updated)
-			System.out.println("Problem in updating " + (goals ? "goals " : "assists ") + "for " + name);
+			System.err.println("Problem in updating " + (goals ? "goals " : "assists ") + "for " + name);
 
 	}
 

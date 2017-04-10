@@ -2172,48 +2172,113 @@ public class Utils {
 	}
 
 	public static ArrayList<FinalEntry> runWithPlayersData(ArrayList<ExtendedFixture> current,
-			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) {
+			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary, HSSFSheet sheet, float th) throws ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (ExtendedFixture i : current) {
-			float eval = evaluatePlayers(i, pfs, dictionary);
-			FinalEntry fe = new FinalEntry(i, eval > 2.5f ? 1f : 0f, i.result, 0.55f, 0.55f, 0.55f);
+			float eval = evaluatePlayers(i, pfs, dictionary, sheet);
+			FinalEntry fe = new FinalEntry(i, eval/* >=0.55f ? 0f : 1f */, i.result, th, th, th);
+			// fe.prediction = fe.isOver() ? 0f : 1f;
 			result.add(fe);
 		}
 		return result;
 	}
 
-	private static float evaluatePlayers(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
-			HashMap<String, String> dictionary) {
+	public static float evaluatePlayers(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary, HSSFSheet sheet) throws ParseException {
 
-		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true);
-		float awayEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, false);
+		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true, sheet);
+		float awayEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, false, sheet);
 
-		float totalEstimate = homeEstimate + awayEstimate;
+		// -----------------------------------------------
+		// poisson weighted adjusted with pfs team expectancy)
+		float avgHome = XlSUtils.selectAvgShotsHome(sheet, ef.date);
+		float avgAway = XlSUtils.selectAvgShotsAway(sheet, ef.date);
+		float homeShotsFor = XlSUtils.selectAvgHomeShotsFor(sheet, ef.homeTeam, ef.date);
+		float homeShotsAgainst = XlSUtils.selectAvgHomeShotsAgainst(sheet, ef.homeTeam, ef.date);
+		float awayShotsFor = XlSUtils.selectAvgAwayShotsFor(sheet, ef.awayTeam, ef.date);
+		float awayShotsAgainst = XlSUtils.selectAvgAwayShotsAgainst(sheet, ef.awayTeam, ef.date);
 
-//		System.out.println(homeEstimate + " : " + awayEstimate);
-		return totalEstimate;
+		float lambda = avgAway == 0 ? 0 : homeShotsFor * awayShotsAgainst / avgAway;
+		float mu = avgHome == 0 ? 0 : awayShotsFor * homeShotsAgainst / avgHome;
+
+		// float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
+		// float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
+
+		// float homeRatio = homeAvgFor / homeShotsFor;
+		// float awayRatio = awayAvgFor / awayShotsFor;
+
+		// return Utils.poissonOver(homeRatio * lambda, awayRatio * mu);
+		float avgShotsUnder = XlSUtils.AvgShotsWhenUnder(sheet, ef.date);
+		float avgShotsOver = XlSUtils.AvgShotsWhenOver(sheet, ef.date);
+		float expected = homeEstimate * lambda + awayEstimate * mu;
+
+		float dist = avgShotsOver - avgShotsUnder;
+		// System.out.println(dist);
+
+		if (avgShotsUnder > avgShotsOver) {
+			return 0.5f;
+		}
+		if (expected >= avgShotsOver && expected > avgShotsUnder) {
+			float score = 0.5f + 0.5f * (expected - avgShotsOver) / dist;
+			return (score >= 0 && score <= 1f) ? score : 1f;
+		} else if (expected <= avgShotsUnder && expected < avgShotsOver) {
+			float score = 0.5f - 0.5f * (-expected + avgShotsUnder) / dist;
+			return (score >= 0 && score <= 1f) ? score : 0f;
+		} else {
+			// System.out.println(f);
+			return 0.5f;
+		}
+
+		// System.out.println(homeEstimate + " : " + awayEstimate);
+		// return /* Utils.poissonOver(homeEstimate, awayEstimate)
+		// */totalEstimate / 2;
 
 	}
 
 	private static float estimateGoalFromPlayerStats(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
-			HashMap<String, String> dictionary, boolean home) {
+			HashMap<String, String> dictionary, boolean home, HSSFSheet sheet) throws ParseException {
 		ArrayList<PlayerFixture> homePlayers = getPlayers(ef, home, pfs, dictionary);
-//		printPlayers(homePlayers);
+		// printPlayers(homePlayers);
 		ArrayList<Player> playerStatsHome = createStatistics(ef, home, pfs, dictionary);
 		HashMap<String, Player> homeHash = (HashMap<String, Player>) playerStatsHome.stream()
 				.collect(Collectors.toMap(Player::getName, Function.identity()));
 
-//		System.out.println(playerStatsHome);
+		float homeAvgFor = home ? XlSUtils.selectAvgHomeTeamFor(sheet, ef.homeTeam, ef.date)
+				: XlSUtils.selectAvgAwayTeamFor(sheet, ef.awayTeam, ef.date);
+		// float homeAvgFor = XlSUtils.selectAvgFor(sheet, home ? ef.homeTeam :
+		// ef.awayTeam, ef.date);
+		ArrayList<Player> keyAttackingPlayers = new ArrayList<>();
+		// int totalGoals = 0, totalAssists = 0;
+		// for (Player i : playerStatsHome) {
+		// totalGoals += i.goals;
+		// totalAssists += i.assists;
+		// }
 
+		// for (Player i : playerStatsHome) {
+		// if (((float) i.goals / totalGoals) > 0.4f)
+		// keyAttackingPlayers.add(i);
+		// }
+
+		// System.out.println(playerStatsHome);
+
+		float goalRatio = 1f;
+		float assistRatio = 1f - goalRatio;
 		float homeEstimate = 0f;
 		for (PlayerFixture i : homePlayers) {
 			if (i.lineup) {
-				if (homeHash.containsKey(i.name))
-					homeEstimate += homeHash.get(i.name).getGoalAvg() * 90;
+				if (homeHash.containsKey(i.name)) {
+					homeEstimate += goalRatio * homeHash.get(i.name).getGoalAvg() * 90
+							+ assistRatio * homeHash.get(i.name).getAssistAvg() * 90;
+				}
 			}
 		}
 
-		return homeEstimate;
+		// for (Player i : keyAttackingPlayers) {
+		// if (!homePlayers.contains(i))
+		// return 0f;
+		// }
+
+		return homeEstimate / homeAvgFor;
 	}
 
 	private static ArrayList<Player> createStatistics(ExtendedFixture i, boolean home, ArrayList<PlayerFixture> pfs,
@@ -2236,7 +2301,7 @@ public class Utils {
 
 		ArrayList<Player> result = new ArrayList<>();
 		for (Entry<String, ArrayList<PlayerFixture>> entry : players.entrySet()) {
-			Player player = new Player((home ? i.homeTeam : i.awayTeam), entry.getKey(), 0, 0, 0, 0, 0, 0);
+			Player player = new Player(team, entry.getKey(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 			for (PlayerFixture pf : entry.getValue()) {
 				player.minutesPlayed += pf.minutesPlayed;
 				player.goals += pf.goals;
@@ -2247,6 +2312,28 @@ public class Utils {
 					player.substitutes++;
 				else
 					player.subsWOP++;
+
+				if (team.equals(pf.fixture.homeTeam)) {
+					player.homeMinutesPlayed += pf.minutesPlayed;
+					player.homeGoals += pf.goals;
+					player.homeAssists += pf.assists;
+					if (pf.lineup)
+						player.homeLineups++;
+					else if (pf.substitute)
+						player.homeSubstitutes++;
+					else
+						player.homeSubsWOP++;
+				} else {
+					player.awayMinutesPlayed += pf.minutesPlayed;
+					player.awayGoals += pf.goals;
+					player.awayAssists += pf.assists;
+					if (pf.lineup)
+						player.awayLineups++;
+					else if (pf.substitute)
+						player.awaySubstitutes++;
+					else
+						player.awaySubsWOP++;
+				}
 			}
 			result.add(player);
 		}
@@ -2310,6 +2397,22 @@ public class Utils {
 		ArrayList<ExtendedFixture> result = new ArrayList<>();
 		for (ExtendedFixture i : all) {
 			if (i.getTotalGoals() >= 0)
+				result.add(i);
+		}
+		return result;
+	}
+
+	public static ArrayList<PlayerFixture> removeRepeats(ArrayList<PlayerFixture> all) {
+		ArrayList<PlayerFixture> result = new ArrayList<>();
+
+		for (PlayerFixture i : all) {
+			boolean repeat = false;
+			for (PlayerFixture j : result) {
+				if (i.fixture.equals(j.fixture) && i.team.equals(j.team) && i.name.equals(j.name))
+					repeat = true;
+				break;
+			}
+			if (!repeat)
 				result.add(i);
 		}
 		return result;
