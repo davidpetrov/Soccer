@@ -58,9 +58,9 @@ public class Predictions {
 		CHECKLIST.add("CRO");
 		CHECKLIST.add("SLO");
 
-		// Scraper.updateInParallel(CHECKLIST, 2, true, UpdateType.AUTOMATIC);
+		 Scraper.updateInParallel(CHECKLIST, 2, true, UpdateType.AUTOMATIC);
 
-		predictions(2016, true, UpdateType.AUTOMATIC);
+//		predictions(2016, true, UpdateType.AUTOMATIC);
 
 		// asianPredictions(2016, true);
 

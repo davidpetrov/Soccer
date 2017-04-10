@@ -3,7 +3,6 @@ package scraper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -46,7 +45,6 @@ import main.SQLiteJDBC;
 import predictions.UpdateType;
 import runner.RunnerOdds;
 import runner.UpdateRunner;
-import utils.Triple;
 import utils.Utils;
 import xls.XlSUtils;
 

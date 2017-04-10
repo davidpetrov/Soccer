@@ -68,17 +68,17 @@ public class Test {
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-		float total = 0f;
-		int startY = 2005;
-		int end = 2015;
-		for (int year = startY; year <= end; year++)
-			total += simulation(year, false);
-		System.out.println("Avg profit is " + (total / (end - startY + 1)));
+//		float total = 0f;
+//		int startY = 2005;
+//		int end = 2015;
+//		for (int year = startY; year <= end; year++)
+//			total += simulation(year, false);
+//		System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-		// accumulators(2005, 2015);
+//		 accumulators(2015, 2015);
 
 		// makePredictions();
 
@@ -530,7 +530,7 @@ public class Test {
 		// Utils.analysys(overs, year);
 		// Utils.hyperReal(overs, year, 1000f, 0.05f);
 		// Utils.evaluateRecord(all);
-		// LineChart.draw(Utils.createProfitMovementData(all), year);
+		 LineChart.draw(Utils.createProfitMovementData(all), year);
 
 		float[] profits = new float[8];
 		System.out.println(year);

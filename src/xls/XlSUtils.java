@@ -2,7 +2,6 @@ package xls;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -21,8 +20,6 @@ import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor.MAROON;
-import org.apache.poi.ss.formula.functions.Replace;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -32,7 +29,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import constants.MinMaxOdds;
 import entries.AsianEntry;
 import entries.FinalEntry;
-import entries.FullEntry;
 import main.AsianLines;
 import main.ExtendedFixture;
 import main.FullFixture;
@@ -40,7 +36,6 @@ import main.GoalLines;
 import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
-import results.Results;
 import scraper.Names;
 import settings.Settings;
 import settings.SettingsAsian;
@@ -2526,9 +2521,9 @@ public class XlSUtils {
 			// finals = runWithSettingsList(sheet, current, temp, pfs,
 			// dictionary);
 
-//			ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
-//			finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary, sheet, 0.525f);
-//			finals = finalsPFS;
+			ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
+			finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary, sheet, 0.525f);
+			finals = finalsPFS;
 			// finals = Utils.similarRanking(finals, table);
 
 			// Settings we = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th,
@@ -2537,7 +2532,7 @@ public class XlSUtils {
 
 			// weights = runWithSettingsList(sheet, current, we);
 
-//			finals = Utils.cotRestrict(finals, 0.025f);
+			finals = Utils.cotRestrict(finals, 0.025f);
 			// finals = Utils.allUnders(current);
 			// finals = Utils.higherOdds(current);
 
