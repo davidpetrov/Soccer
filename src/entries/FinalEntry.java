@@ -23,12 +23,32 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		this.value = 0.9f;
 	}
 
+	/**
+	 * Copy constructor (doesn't copy the fixture field, not necessary for now)
+	 * 
+	 * @param i
+	 */
+	public FinalEntry(FinalEntry i) {
+		this.fixture = i.fixture;
+		this.prediction = i.prediction;
+		this.result = new Result(i.result);
+		this.threshold = i.threshold;
+		this.upper = i.upper;
+		this.lower = i.lower;
+		this.value = i.value;
+	}
+
 	public float getCertainty() {
 		return prediction > threshold ? prediction : (1f - prediction);
 	}
 
 	public float getCOT() {
 		return prediction > threshold ? (prediction - threshold) : (threshold - prediction);
+	}
+
+	public float getValue() {
+		float gain = prediction > threshold ? fixture.maxOver : fixture.maxUnder;
+		return getCertainty() * gain;
 	}
 
 	@Override
@@ -64,7 +84,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	}
 
 	public float getProfit() {
-		if(fixture.getTotalGoals()<0)
+		if (fixture.getTotalGoals() < 0)
 			return 0f;
 		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
 		if (success())

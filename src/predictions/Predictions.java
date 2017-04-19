@@ -83,6 +83,7 @@ public class Predictions {
 		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? Scraper.getTodaysLeagueList() : CHECKLIST;
+		System.out.println(leagues);
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (!sh.getSheetName().equals("ENG2"))

@@ -61,15 +61,15 @@ public class Scraper {
 
 		// =================================================================
 
-//		for (int i = 2015; i <= 2015; i++) {
-//			ArrayList<PlayerFixture> list = collectFull("ENG5", i, null);
+//		for (int i = 2016; i <= 2016; i++) {
+//			ArrayList<PlayerFixture> list = collectFull("IT", i, null);
 //			// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
 //			// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
-//			SQLiteJDBC.storePlayerFixtures(list, i, "ENG5");
+//			SQLiteJDBC.storePlayerFixtures(list, i, "IT");
 //		}
 
-		// collectAndStoreSinglePFS("ENG4", 2015,
-		// "http://int.soccerway.com/matches/2016/04/23/england/league-two/bristol-rovers-fc/exeter-city-fc/2045047/");
+//		 collectAndStoreSinglePFS("IT", 2012,
+//		 "http://int.soccerway.com/matches/2012/09/23/italy/serie-a/cagliari-calcio/as-roma/1351284/");
 
 		// ArrayList<PlayerFixture> list =
 		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
@@ -103,7 +103,7 @@ public class Scraper {
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		 checkAndUpdate("RUS", true);
+		 checkAndUpdate("IT2", true);
 		// updateInParallel();
 
 		// fastOdds("SPA", 2016, null);

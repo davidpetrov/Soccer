@@ -99,6 +99,26 @@ public class Settings {
 		return this;
 	}
 
+	public static Settings shots(String league) {
+		return new Settings(league, 0f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(1f);
+	}
+
+	public static Settings basic(String league) {
+		return new Settings(league, 1f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f);
+	}
+
+	public static Settings poisson(String league) {
+		return new Settings(league, 0f, 1f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f);
+	}
+
+	public static Settings weightedPoisson(String league) {
+		return new Settings(league, 0f, 0f, 1f, 0.55f, 0.55f, 0.55f, 0.5f, 0f);
+	}
+
+	public static Settings halfTime(String league, float overOne) {
+		return new Settings(league, 0f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withHT(overOne, 1f);
+	}
+
 	@Override
 	public String toString() {
 		return league + " bas*" + format(basic) + " poi*" + format(poisson) + " wei*" + format(weightedPoisson) + " ht*"

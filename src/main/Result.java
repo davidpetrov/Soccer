@@ -9,6 +9,16 @@ public class Result {
 		this.goalsAwayTeam = goalsAwayTeam;
 	}
 
+	/**
+	 * Copy constructor
+	 * 
+	 * @param result
+	 */
+	public Result(Result result) {
+		this.goalsHomeTeam = result.goalsHomeTeam;
+		this.goalsAwayTeam = result.goalsAwayTeam;
+	}
+
 	public String toString() {
 		return goalsHomeTeam + " : " + goalsAwayTeam;
 	}

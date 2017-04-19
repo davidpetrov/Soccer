@@ -34,6 +34,15 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		this.competition = competition;
 	}
 
+//	/**
+//	 * Copy constructor
+//	 * 
+//	 * @param fixture
+//	 */
+//	public ExtendedFixture(ExtendedFixture fixture) {
+//		// TODO Auto-generated constructor stub
+//	}
+
 	public ExtendedFixture withOdds(float overOdds, float underOdds, float maxOver, float maxUnder) {
 		this.overOdds = overOdds;
 		this.underOdds = underOdds;
@@ -161,5 +170,3 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	}
 
 }
-
-

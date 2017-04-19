@@ -3,6 +3,7 @@ package main;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +44,7 @@ import utils.Api;
 import utils.Utils;
 import xls.AsianUtils;
 import xls.XlSUtils;
+import xls.XlSUtils.MaximizingBy;
 
 public class Test {
 
@@ -53,7 +55,7 @@ public class Test {
 
 		// Results.eval("estimateBoth");
 		// Results.eval("smooth");
-//		 Results.eval("test");
+		// Results.eval("test");
 
 		// stored24();
 
@@ -68,21 +70,19 @@ public class Test {
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-//		float total = 0f;
-//		int startY = 2005;
-//		int end = 2015;
-//		for (int year = startY; year <= end; year++)
-//			total += simulation(year, false);
-//		System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		// float total = 0f;
+		// int startY = 2008;
+		// int end = 2015;
+		// for (int year = startY; year <= end; year++)
+		// total += simulation(year, false);
+		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
-//		 accumulators(2015, 2015);
+		// accumulators(2015, 2015);
 
-		// makePredictions();
-
-		// singleMethod();
+		analysis(2011, 2015, DataType.ODDSPORTAL);
 
 		// aggregateInterval();
 
@@ -98,19 +98,71 @@ public class Test {
 
 	}
 
-	private static void accumulators(int start, int end) throws InterruptedException, ExecutionException, IOException {
+	private static void analysis(int start, int end, DataType type)
+			throws InterruptedException, ExecutionException, IOException {
+		ArrayList<FinalEntry> all = new ArrayList<>();
+		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
+		for (int i = start; i <= end; i++) {
+			ArrayList<FinalEntry> finals = finals(i, type);
+			HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(finals);
+			for (java.util.Map.Entry<String, ArrayList<FinalEntry>> league : byLeague.entrySet()) {
+				if (!byLeagueYear.containsKey(league.getKey()))
+					byLeagueYear.put(league.getKey(), new HashMap<>());
 
-		float[] profit = new float[8];
-		for (int year = start; year <= end; year++) {
-			float[] curr = finals(year, false);
-			for (int i = 0; i < 8; i++)
-				profit[i] += curr[i];
+				byLeagueYear.get(league.getKey()).put(i, league.getValue());
+
+			}
+
+			all.addAll(finals);
 		}
-		System.out.println("=========================================================================");
-		for (int i = 0; i < 8; i++)
-			System.out.println("Total from " + (i + 3) + "s: " + profit[i]);
 
+		// HashMap<String, ArrayList<FinalEntry>> byLeague =
+		// Utils.byLeague(all);
+		// for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i :
+		// byLeague.entrySet()) {
+		// System.out.println(i.getKey());
+		// Utils.analysys(i.getValue(), 3000);
+		// }
+//		ArrayList<FinalEntry> withTHU = Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.UNDERS);
+		
+//		ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear, 1, MaximizingBy.OVERS);
+//		ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear, 2, MaximizingBy.OVERS);
+//		ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.OVERS);
+//		ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.OVERS);
+//		
+//		ArrayList<FinalEntry> withTH5 = Utils.withBestThreshold(byLeagueYear, 1, MaximizingBy.BOTH);
+//		ArrayList<FinalEntry> withTH6 = Utils.withBestThreshold(byLeagueYear, 2, MaximizingBy.BOTH);
+//		ArrayList<FinalEntry> withTH7 = Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.BOTH);
+//		ArrayList<FinalEntry> withTH8 = Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.BOTH);
+		
+		
+
+		Utils.fullAnalysys(all, 3000);
+//		Utils.fullAnalysys(withTHU, 0);
+//		Utils.fullAnalysys(withTH1, 1);
+//		Utils.fullAnalysys(withTH2, 2);
+//		Utils.fullAnalysys(withTH3, 3);
+//		Utils.fullAnalysys(withTH4, 4);
+//		Utils.fullAnalysys(withTH5, 5);
+//		Utils.fullAnalysys(withTH6, 6);
+//		Utils.fullAnalysys(withTH7, 7);
+//		Utils.fullAnalysys(withTH8, 8);
 	}
+
+	// private static void accumulators(int start, int end) throws
+	// InterruptedException, ExecutionException, IOException {
+	//
+	// float[] profit = new float[8];
+	// for (int year = start; year <= end; year++) {
+	// float[] curr = finals(year, false);
+	// for (int i = 0; i < 8; i++)
+	// profit[i] += curr[i];
+	// }
+	// System.out.println("=========================================================================");
+	// for (int i = 0; i < 8; i++)
+	// System.out.println("Total from " + (i + 3) + "s: " + profit[i]);
+	//
+	// }
 
 	public static float simulationAllLines(int year, boolean parsedLeagues)
 			throws InterruptedException, ExecutionException, IOException {
@@ -132,8 +184,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("ENG"))
-			// continue;
+			if (!sh.getSheetName().equals("IT"))
+				continue;
 			// if (!Arrays.asList(MinMaxOdds.FULL).contains(sh.getSheetName()))
 			// continue;
 
@@ -454,17 +506,17 @@ public class Test {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		float totalProfit = 0.0f;
 
-		ExecutorService pool = Executors.newFixedThreadPool(1);
+		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("EC"))
+			// if (!sh.getSheetName().equals("I1"))
 			// continue;
-			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-			// continue;
-
-			if (!Arrays.asList(MinMaxOdds.PFS).contains(sh.getSheetName()))
+			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 				continue;
+
+			// if (!Arrays.asList(MinMaxOdds.PFS).contains(sh.getSheetName()))
+			// continue;
 			// if
 			// (sh.getSheetName().equals("D1")||sh.getSheetName().equals("SP1"))
 			// continue;
@@ -484,14 +536,14 @@ public class Test {
 		return totalProfit;
 	}
 
-	public static float[] finals(int year, boolean parsedLeagues)
+	public static ArrayList<FinalEntry> finals(int year, DataType type)
 			throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 		ArrayList<String> draw = new ArrayList<String>(Arrays.asList(MinMaxOdds.DRAW));
 
 		FileInputStream file;
-		if (!parsedLeagues)
+		if (type.equals(DataType.ALLEURODATA))
 			file = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 		else
 			file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
@@ -503,8 +555,8 @@ public class Test {
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-				continue;
+//			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+//				continue;
 			// if
 			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
 			// continue;
@@ -522,22 +574,22 @@ public class Test {
 		file.close();
 		pool.shutdown();
 
-		Utils.predictionCorrelation(all);
+		// Utils.predictionCorrelation(all);
 
-		Utils.analysys(all, year);
+		// Utils.analysys(all, year);
 		// Utils.drawAnalysis(all);
 		// ArrayList<FinalEntry> overs = Utils.onlyOvers(all);
 		// Utils.analysys(overs, year);
 		// Utils.hyperReal(overs, year, 1000f, 0.05f);
 		// Utils.evaluateRecord(all);
-		 LineChart.draw(Utils.createProfitMovementData(all), year);
+		// LineChart.draw(Utils.createProfitMovementData(all), year);
 
 		float[] profits = new float[8];
-		System.out.println(year);
-		for (int i = 3; i <= 10; i++)
-			profits[i - 3] = Utils.bestNperWeek(all, i);
+		// System.out.println(year);
+		// for (int i = 3; i <= 10; i++)
+		// profits[i - 3] = Utils.bestNperWeek(all, i);
 
-		return profits;
+		return all;
 
 	}
 
@@ -897,4 +949,9 @@ public class Test {
 		// Collections.sort(entries, Collections.reverseOrder());
 		System.out.println(entries);
 	}
+
+	public enum DataType {
+		ALLEURODATA, ODDSPORTAL
+	}
+
 }
