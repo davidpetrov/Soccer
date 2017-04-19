@@ -99,6 +99,13 @@ public class Settings {
 		return this;
 	}
 
+	public Settings withTHandBounds(float f) {
+		this.threshold = f;
+		this.lowerBound = f;
+		this.upperBound = f;
+		return this;
+	}
+
 	public static Settings shots(String league) {
 		return new Settings(league, 0f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(1f);
 	}
@@ -135,4 +142,5 @@ public class Settings {
 	private String format(float d) {
 		return String.format("%.2f", d);
 	}
+
 }

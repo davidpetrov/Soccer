@@ -953,7 +953,7 @@ public class Utils {
 
 	}
 
-	private static void printStats(ArrayList<FinalEntry> all, String name) {
+	public static void printStats(ArrayList<FinalEntry> all, String name) {
 		float profit = Utils.getProfit(all);
 		System.out.println(all.size() + " " + name + " with rate: " + format(100 * Utils.getSuccessRate(all))
 				+ " profit: " + format(profit) + " yield: " + String.format("%.2f%%", 100 * profit / all.size())
@@ -2388,6 +2388,15 @@ public class Utils {
 		return result;
 	}
 
+	public static ArrayList<ExtendedFixture> pending(ArrayList<ExtendedFixture> all) {
+		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		for (ExtendedFixture i : all) {
+			if (i.getTotalGoals() < 0)
+				result.add(i);
+		}
+		return result;
+	}
+
 	public static ArrayList<PlayerFixture> removeRepeats(ArrayList<PlayerFixture> all) {
 		ArrayList<PlayerFixture> result = new ArrayList<>();
 
@@ -2471,8 +2480,26 @@ public class Utils {
 	 */
 	private static ArrayList<FinalEntry> deepCopy(ArrayList<FinalEntry> finals) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-		for(FinalEntry i :  finals)
+		for (FinalEntry i : finals)
 			result.add(new FinalEntry(i));
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> notPendingFinals(ArrayList<FinalEntry> all) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : all) {
+			if (i.fixture.getTotalGoals() >= 0)
+				result.add(i);
+		}
+		return result;
+	}
+
+	public static ArrayList<FinalEntry> pendingFinals(ArrayList<FinalEntry> all) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : all) {
+			if (i.fixture.getTotalGoals() < 0)
+				result.add(i);
+		}
 		return result;
 	}
 

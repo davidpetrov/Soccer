@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,12 +19,15 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 
 import entries.FinalEntry;
+import main.Test.DataType;
 import runner.RunnerAsianPredictions;
 import runner.RunnerPredictions;
 import scraper.Scraper;
+import settings.Settings;
+import utils.Utils;
+import xls.XlSUtils;
 
 public class Predictions {
-	
 
 	public static final ArrayList<String> CHECKLIST = new ArrayList<>();
 
@@ -58,22 +63,22 @@ public class Predictions {
 		CHECKLIST.add("CRO");
 		CHECKLIST.add("SLO");
 
-		 Scraper.updateInParallel(CHECKLIST, 2, true, UpdateType.AUTOMATIC);
+		// Scraper.updateInParallel(CHECKLIST, 2, true, UpdateType.AUTOMATIC);
 
-//		predictions(2016, true, UpdateType.AUTOMATIC);
+		predictions(2016, DataType.ODDSPORTAL, UpdateType.MANUAL);
 
 		// asianPredictions(2016, true);
 
 	}
 
-	public static ArrayList<FinalEntry> predictions(int year, boolean parsedLeagues, UpdateType automatic)
+	public static ArrayList<FinalEntry> predictions(int year, DataType type, UpdateType automatic)
 			throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 
-		FileInputStream file;
-		if (!parsedLeagues)
+		FileInputStream file = null;
+		if (type.equals(DataType.ALLEURODATA))
 			file = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
-		else
+		else if (type.equals(DataType.ODDSPORTAL))
 			file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
 
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
@@ -112,7 +117,50 @@ public class Predictions {
 				return ((Float) o1.prediction).compareTo((Float) o2.prediction);
 			}
 		});
-		System.out.println(all);
+
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);
+
+		for (Entry<String, ArrayList<FinalEntry>> i : byLeague.entrySet()) {
+			System.out.println(i.getKey());
+			ArrayList<FinalEntry> data = Utils.notPendingFinals(i.getValue());
+			ArrayList<FinalEntry> equilibriumsData = Utils.equilibriums(data);
+			ArrayList<FinalEntry> dataProper = Utils.noequilibriums(data);
+
+			ArrayList<FinalEntry> pending = Utils.pendingFinals(i.getValue());
+			ArrayList<FinalEntry> equilibriumsPending = Utils.equilibriums(pending);
+			ArrayList<FinalEntry> pendingProper = Utils.noequilibriums(pending);
+
+			boolean allUnders = false;
+			boolean allOvers = false;
+			if (Utils.getProfit(Utils.allUnders(Utils.onlyFixtures(equilibriumsData))) > 0f) {
+				allUnders = true;
+				Utils.printStats(Utils.allUnders(Utils.onlyFixtures(equilibriumsData)), "Equilibriums as unders");
+			} else if (Utils.getProfit(Utils.allOvers(Utils.onlyFixtures(equilibriumsData))) > 0f) {
+				allOvers = true;
+				Utils.printStats(Utils.allOvers(Utils.onlyFixtures(equilibriumsData)), "Equilibriums as overs");
+			} else {
+				System.out.println("No value in equilibriums");
+			}
+
+			if (allUnders) {
+				System.out.println(equilibriumsPending);
+			} else if (allOvers) {
+				equilibriumsPending = XlSUtils.restrict(equilibriumsPending,
+						Settings.shots(i.getKey()).withTHandBounds(0.45f));
+				System.out.println(equilibriumsPending);
+			}
+
+			Utils.printStats(dataProper, "all");
+			Utils.printStats(Utils.onlyUnders(dataProper), "unders");
+			System.out.println(Utils.onlyUnders(pendingProper));
+			Utils.printStats(Utils.onlyOvers(dataProper), "overs");
+			System.out.println(Utils.onlyOvers(pendingProper));
+			System.out
+					.println("---------------------------------------------------------------------------------------");
+		}
+
+		// System.out.println(all);
 
 		return all;
 	}

@@ -5439,7 +5439,6 @@ public class XlSUtils {
 		if (matchedOdds.size() != teamsOdds.size())
 			System.err.println("Deducing dictionary failed");
 
-		dictionary.put("CSKA Moscow", "CSKA Moskva");
 		return dictionary;
 
 	}
@@ -5449,9 +5448,9 @@ public class XlSUtils {
 
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<ExtendedFixture> all = selectAll(sheet, 1);
+		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
 		float th = 0.55f;
-		Settings temp = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th, th, th, 0.5f, 0f).withShots(1f);
+		Settings temp = Settings.shots(sheet.getSheetName());
 
 		ArrayList<FinalEntry> pending = new ArrayList<>();
 
@@ -5464,65 +5463,31 @@ public class XlSUtils {
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
 			finals = runWithSettingsList(sheet, current, temp);
-
-			// finals = Utils.cotRestrict(finals, 0.1f);
-			// finals = Utils.allUnders(current);
-			// finals = Utils.higherOdds(current);
-
-			// finals = runBestTH(sheet, current, "I1", year, 3,
-			// "shots", temp);
-			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
-			// year, 3, "shots");
-			// finals = Utils.noequilibriums(finals);
-			// finals = Utils.intersectDiff( weights,finals);
-			// if(shotSetts.doNotPlay)
-			// finals = new ArrayList<>();
-			// else if(shotSetts.onlyUnders)
-			// finals = Utils.onlyUnders(finals);
-			// else if(shotSetts.onlyOvers)
-			// finals = Utils.onlyOvers(finals);
-			// finals = Utils.cotRestrict(finals, 0.1f);
-			// finals = Utils.onlyOvers(finals);
-
-			// finals = runWithSettingsList(sheet, data, temp, table);
-			// temp = findThreshold(sheet, finals, temp);
-			// finals = restrict(finals, temp);
-
-			float trprofit = 0f;
-			for (FinalEntry f : finals) {
-				if (f.result.goalsHomeTeam == -1)
-					pending.add(f);
-				if (f.result.goalsHomeTeam != -1) {
-					played++;
-					trprofit += f.getProfit();
-				}
-			}
-
-			profit += trprofit;
+			pending.addAll(finals);
 
 		}
 
-		pending.sort(new Comparator<FinalEntry>() {
+//		pending.sort(new Comparator<FinalEntry>() {
+//
+//			@Override
+//			public int compare(FinalEntry o1, FinalEntry o2) {
+//				return ((Float) o1.prediction).compareTo((Float) o2.prediction);
+//			}
+//		});
 
-			@Override
-			public int compare(FinalEntry o1, FinalEntry o2) {
-				return ((Float) o1.prediction).compareTo((Float) o2.prediction);
-			}
-		});
+//		float yield = (profit / played) * 100f;
+//		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
+//				+ " yield is: " + String.format("%.2f%%", yield));
+//
+//		ArrayList<FinalEntry> todayGames = new ArrayList<>();
+//		for (FinalEntry p : pending) {
+//			if (Utils.isToday(p.fixture.date))
+//				todayGames.add(p);
+//		}
+//
+//		System.out.println(todayGames);
 
-		float yield = (profit / played) * 100f;
-		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
-				+ " yield is: " + String.format("%.2f%%", yield));
-
-		ArrayList<FinalEntry> todayGames = new ArrayList<>();
-		for (FinalEntry p : pending) {
-			if (Utils.isToday(p.fixture.date))
-				todayGames.add(p);
-		}
-
-		System.out.println(todayGames);
-
-		return todayGames;
+		return pending;
 	}
 
 	/**
