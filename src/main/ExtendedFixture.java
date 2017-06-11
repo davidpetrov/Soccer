@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public Date date;
+	public int year;
 	public String homeTeam;
 	public String awayTeam;
 	public Result result;
@@ -25,6 +26,7 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public float asianAway;
 	public int redHome;
 	public int redAway;
+	
 
 	public ExtendedFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		this.date = date;
@@ -60,6 +62,11 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 
 	public ExtendedFixture withStatus(String status) {
 		this.status = status;
+		return this;
+	}
+	
+	public ExtendedFixture withYear(int year) {
+		this.year = year;
 		return this;
 	}
 

@@ -9,9 +9,14 @@ import org.omg.CORBA.Current;
 public class EntryPoints {
 	public static final int CURRENT = 2016;
 
-	public static final String[] TRACKING = { "ENG", "ENG2", "ENG3", "ENG4", "ENG5", "IT", "IT2", "FR", "FR2", "SPA",
-			"SPA2", "GER", "GER2", "SCO", "NED", "BEL", "SWI", "POR", "GRE", "TUR", "BUL", "RUS", "AUS", "DEN", "CZE",
-			"ARG", "POL", "CRO", "SLO" };
+	public static final int SUMMERCURRENT = 2017;
+
+	public static final String[] TRACKING = { "ENG",
+			/* "ENG2", "ENG3", "ENG4", "ENG5", */ "IT", "IT2", "FR", "FR2", "SPA", "SPA2", "GER", "GER2", "SCO", "NED",
+			/* "BEL", */ "SWI", "POR", "GRE", "TUR", "BUL", "RUS", "AUS", "DEN", "CZE", "ARG", "POL", "CRO", "SLO",
+			"SWE", "USA" };
+
+	public static final String[] SUMMER = { "SWE", "USA" };
 
 	public static final String[] MERGED = { "FR2", "BEL", "SWI", "E0", "ENG", "SPA", "SPA2", "GER", "GER2", "FR", "IT",
 			"SCO", "IT2", "TUR", "ENG2", "ENG3", "ENG4", "ENG5", "ARG", "GRE", "POR", "NED", "BUL", "RUS", "AUS", "DEN",
@@ -21,11 +26,13 @@ public class EntryPoints {
 			"CRO", "SLO", "SLK" };
 
 	public static final String[] EXCEPTIONS = { "SCO" };
+	public static final String[] SECONDSTAGES = { /* "BEL" */ "SCO", "BUL" };
 
 	public static HashMap<String, String> map = new HashMap<>();
 	public static HashMap<String, String> odds = new HashMap<>();
 
 	public static final String SOCCERBASE = "http://int.soccerway.com";
+	public static final String ODDSBASE = "http://www.oddsportal.com/soccer/";
 
 	static {
 
@@ -74,49 +81,52 @@ public class EntryPoints {
 
 	// oddsportal links
 	static {
-		odds.put("SWE", "http://www.oddsportal.com/soccer/sweden/allsvenskan");
-		odds.put("NOR", "http://www.oddsportal.com/soccer/norway/tippeligaen");
-		odds.put("BRB", "http://www.oddsportal.com/soccer/brazil/serie-b");
-		odds.put("BRA", "http://www.oddsportal.com/soccer/brazil/serie-a");
-		odds.put("ARG", "http://www.oddsportal.com/soccer/argentina/primera-division");
-		odds.put("ARG2", "http://www.oddsportal.com/soccer/argentina/primera-b-nacional");
-		odds.put("ICE", "http://www.oddsportal.com/soccer/iceland/pepsideild");
-		odds.put("FIN", "http://www.oddsportal.com/soccer/finland/veikkausliiga");
-		odds.put("JP", "http://www.oddsportal.com/soccer/japan/j-league");
-		odds.put("USA", "http://www.oddsportal.com/soccer/usa/mls");
-		odds.put("FR2", "http://www.oddsportal.com/soccer/france/ligue-2");
-		odds.put("BEL", "http://www.oddsportal.com/soccer/belgium/jupiler-league");
-		odds.put("SWI", "http://www.oddsportal.com/soccer/switzerland/super-league");
-		odds.put("ENG", "http://www.oddsportal.com/soccer/england/premier-league");
-		odds.put("SPA", "http://www.oddsportal.com/soccer/spain/laliga");
-		odds.put("SPA2", "http://www.oddsportal.com/soccer/spain/laliga2");
-		odds.put("GER", "http://www.oddsportal.com/soccer/germany/bundesliga");
-		odds.put("FR", "http://www.oddsportal.com/soccer/france/ligue-1");
-		odds.put("IT", "http://www.oddsportal.com/soccer/italy/serie-a");
-		odds.put("SCO", "http://www.oddsportal.com/soccer/scotland/premiership");
-		odds.put("IT2", "http://www.oddsportal.com/soccer/italy/serie-b");
-		odds.put("TUR", "http://www.oddsportal.com/soccer/turkey/super-lig");
-		odds.put("ENG2", "http://www.oddsportal.com/soccer/england/championship");
-		odds.put("ENG3", "http://www.oddsportal.com/soccer/england/league-one");
-		odds.put("ENG4", "http://www.oddsportal.com/soccer/england/league-two");
-		odds.put("ENG5", "http://www.oddsportal.com/soccer/england/vanarama-national-league");
-		odds.put("GRE", "http://www.oddsportal.com/soccer/greece/super-league");
-		odds.put("POR", "http://www.oddsportal.com/soccer/portugal/primeira-liga");
-		odds.put("NED", "http://www.oddsportal.com/soccer/netherlands/eredivisie");
-		odds.put("BUL", "http://www.oddsportal.com/soccer/bulgaria/parva-liga");
-		odds.put("RUS", "http://www.oddsportal.com/soccer/russia/premier-league");
-		odds.put("AUS", "http://www.oddsportal.com/soccer/austria/tipico-bundesliga");
-		odds.put("DEN", "http://www.oddsportal.com/soccer/denmark/superliga");
-		odds.put("CZE", "http://www.oddsportal.com/soccer/czech-republic/1-liga");
-		odds.put("GER2", "http://www.oddsportal.com/soccer/germany/2-bundesliga");
-		odds.put("POL", "http://www.oddsportal.com/soccer/poland/ekstraklasa");
-		odds.put("CRO", "http://www.oddsportal.com/soccer/croatia/1-hnl");
-		odds.put("SLO", "http://www.oddsportal.com/soccer/slovenia/prva-liga");
-		odds.put("SLK", "http://www.oddsportal.com/soccer/slovakia/fortuna-liga");
+		odds.put("SWE", "sweden/allsvenskan");
+		odds.put("NOR", "norway/tippeligaen");
+		odds.put("BRB", "brazil/serie-b");
+		odds.put("BRA", "brazil/serie-a");
+		odds.put("ARG", "argentina/primera-division");
+		odds.put("ARG2", "argentina/primera-b-nacional");
+		odds.put("ICE", "iceland/pepsideild");
+		odds.put("FIN", "finland/veikkausliiga");
+		odds.put("JP", "japan/j-league");
+		odds.put("USA", "usa/mls");
+		odds.put("FR2", "france/ligue-2");
+		odds.put("BEL", "belgium/jupiler-league");
+		odds.put("SWI", "switzerland/super-league");
+		odds.put("ENG", "england/premier-league");
+		odds.put("SPA", "spain/laliga");
+		odds.put("SPA2", "spain/laliga2");
+		odds.put("GER", "germany/bundesliga");
+		odds.put("FR", "france/ligue-1");
+		odds.put("IT", "italy/serie-a");
+		odds.put("SCO", "scotland/premiership");
+		odds.put("IT2", "italy/serie-b");
+		odds.put("TUR", "turkey/super-lig");
+		odds.put("ENG2", "england/championship");
+		odds.put("ENG3", "england/league-one");
+		odds.put("ENG4", "england/league-two");
+		odds.put("ENG5", "england/vanarama-national-league");
+		odds.put("GRE", "greece/super-league");
+		odds.put("POR", "portugal/primeira-liga");
+		odds.put("NED", "netherlands/eredivisie");
+		odds.put("BUL", "bulgaria/parva-liga");
+		odds.put("RUS", "russia/premier-league");
+		odds.put("AUS", "austria/tipico-bundesliga");
+		odds.put("DEN", "denmark/superliga");
+		odds.put("CZE", "czech-republic/1-liga");
+		odds.put("GER2", "germany/2-bundesliga");
+		odds.put("POL", "poland/ekstraklasa");
+		odds.put("CRO", "croatia/1-hnl");
+		odds.put("SLO", "slovenia/prva-liga");
+		odds.put("SLK", "slovakia/fortuna-liga");
 	}
 
 	public static String getLink(String competition, int year) {
 		String result = SOCCERBASE + map.get(competition);
+
+		if (Arrays.asList(SECONDSTAGES).contains(competition) && year == CURRENT)
+			return result;
 
 		if (Arrays.asList(MERGED).contains(competition))
 			result += year + (year <= 2011 ? "-" : "") + (year + 1);
@@ -128,7 +138,13 @@ public class EntryPoints {
 	}
 
 	public static String getOddsLink(String competition, int year) {
-		String result = odds.get(competition);
+
+		String result = ODDSBASE + odds.get(competition);
+
+		if (Arrays.asList(SUMMER).contains(competition) && SUMMERCURRENT == year) {
+			return result;
+		}
+
 		if (year != CURRENT) {
 			if (Arrays.asList(HYPHENODDS).contains(competition))
 				result += "-" + year + "-" + (year + 1);

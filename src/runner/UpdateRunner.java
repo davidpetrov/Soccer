@@ -3,15 +3,16 @@ package runner;
 import java.io.IOException;
 import java.text.ParseException;
 
+import predictions.Predictions.OnlyTodayMatches;
 import scraper.Scraper;
 
 public class UpdateRunner implements Runnable {
 	public String competition;
-	public boolean onlyTodaysMatches;
+	public OnlyTodayMatches onlyTodaysMatches;
 
-	public UpdateRunner(String competition, boolean onlyTodaysMatches) {
+	public UpdateRunner(String competition, OnlyTodayMatches onlyToday) {
 		this.competition = competition;
-		this.onlyTodaysMatches = onlyTodaysMatches;
+		this.onlyTodaysMatches = onlyToday;
 	}
 
 	@Override

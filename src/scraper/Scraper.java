@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,8 +33,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 import main.AsianLines;
 import main.ExtendedFixture;
@@ -42,6 +42,7 @@ import main.Line;
 import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
+import predictions.Predictions.OnlyTodayMatches;
 import predictions.UpdateType;
 import runner.RunnerOdds;
 import runner.UpdateRunner;
@@ -61,32 +62,33 @@ public class Scraper {
 
 		// =================================================================
 
-//		for (int i = 2016; i <= 2016; i++) {
-//			ArrayList<PlayerFixture> list = collectFull("IT", i, null);
-//			// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
-//			// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
-//			SQLiteJDBC.storePlayerFixtures(list, i, "IT");
-//		}
+		// for (int i = 2016; i <= 2016; i++) {
+		// ArrayList<PlayerFixture> list = collectFull("IT", i, null);
+		// //
+		// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
+		// //
+		// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
+		// SQLiteJDBC.storePlayerFixtures(list, i, "IT");
+		// }
 
-//		 collectAndStoreSinglePFS("IT", 2012,
-//		 "http://int.soccerway.com/matches/2012/09/23/italy/serie-a/cagliari-calcio/as-roma/1351284/");
+		// collectAndStoreSinglePFS("IT", 2012,
+		// "http://int.soccerway.com/matches/2012/09/23/italy/serie-a/cagliari-calcio/as-roma/1351284/");
 
 		// ArrayList<PlayerFixture> list =
 		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
 		// System.out.println(list.size());
 		// ====================================================================
 
-		// ArrayList<ExtendedFixture> list = collect("GER", 2011,
-		// "http://int.soccerway.com/national/germany/bundesliga/2011-2012/regular-season/r14759/");
+//		 ArrayList<ExtendedFixture> list = collect("USA", 2017, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		// XlSUtils.storeInExcel(list, "GER", 2011, "manual");
+//		 XlSUtils.storeInExcel(list, "USA", 2017, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-		// ArrayList<ExtendedFixture> list = odds("SLK", 2016, null);
-		// XlSUtils.storeInExcel(list, "SLK", 2016, "odds");
+//		 ArrayList<ExtendedFixture> list = odds("USA", 2017, null);
+//		 XlSUtils.storeInExcel(list, "USA", 2017, "odds");
 		// nextMatches("GER", null);
 		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
@@ -95,19 +97,21 @@ public class Scraper {
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-		// XlSUtils.combine("SLK", 2016, "manual");
+//		 XlSUtils.combine("USA", 2017, "manual");
 		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
-		// XlSUtils.fillMissingShotsData("CZE", 2016, false);
+//		 XlSUtils.fillMissingShotsData("USA", 2017, false);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		 checkAndUpdate("IT2", true);
+		checkAndUpdate("SPA2", OnlyTodayMatches.FALSE);	
+//		checkAndUpdate("ARG", OnlyTodayMatches.FALSE);	
 		// updateInParallel();
 
 		// fastOdds("SPA", 2016, null);
-
+		
+		
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
 
@@ -151,12 +155,14 @@ public class Scraper {
 	 *            - list of leagues to be updated
 	 * @param n
 	 *            - number of leagues updating in parallel
-	 * @param onlyTodaysMatches
+	 * @param onlyToday
 	 *            - flag for getting next matches only for today (for speed up)
-	 * @param automatic - type of update - manual - hardcoded leagues, automatic - tracking leagues that have games today
+	 * @param automatic
+	 *            - type of update - manual - hardcoded leagues, automatic -
+	 *            tracking leagues that have games today
 	 * @throws IOException
 	 */
-	public static void updateInParallel(ArrayList<String> list, int n, boolean onlyTodaysMatches, UpdateType automatic)
+	public static void updateInParallel(ArrayList<String> list, int n, OnlyTodayMatches onlyToday, UpdateType automatic)
 			throws IOException {
 
 		ExecutorService executor = Executors.newFixedThreadPool(n);
@@ -164,7 +170,7 @@ public class Scraper {
 		System.out.println("Updating for: ");
 		System.out.println(leagues);
 		for (String i : leagues) {
-			Runnable worker = new UpdateRunner(i, onlyTodaysMatches);
+			Runnable worker = new UpdateRunner(i, onlyToday);
 			executor.execute(worker);
 		}
 		// This will make the executor accept no new threads
@@ -193,11 +199,13 @@ public class Scraper {
 		return result;
 	}
 
-	public static void checkAndUpdate(String competition, boolean onlyTodaysMatches)
+	public static void checkAndUpdate(String competition, OnlyTodayMatches onlyTodaysMatches)
 			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
+		int collectYear = Arrays.asList(EntryPoints.SUMMER).contains(competition) ? EntryPoints.SUMMERCURRENT
+				: EntryPoints.CURRENT;
 
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + CURRENT_YEAR + ".xls"));
+		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + collectYear + ".xls"));
 
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sh = workbook.getSheet(competition);
@@ -207,7 +215,7 @@ public class Scraper {
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
 
-		ArrayList<ExtendedFixture> odds = oddsUpToDate(competition, CURRENT_YEAR, Utils.getYesterday(oldestTocheck),
+		ArrayList<ExtendedFixture> odds = oddsUpToDate(competition, collectYear, Utils.getYesterday(oldestTocheck),
 				null);
 		System.out.println(odds.size() + " odds ");
 
@@ -216,7 +224,7 @@ public class Scraper {
 		int maxTries = 10;
 		while (true) {
 			try {
-				list = collectUpToDate(competition, CURRENT_YEAR, Utils.getYesterday(oldestTocheck), null);
+				list = collectUpToDate(competition, collectYear, Utils.getYesterday(oldestTocheck), null);
 				break;
 			} catch (Exception e) {
 				if (++count == maxTries)
@@ -282,8 +290,11 @@ public class Scraper {
 
 		withNext.addAll(next);
 
-		if (withNext.size() >= all.size())
+		if (withNext.size() >= all.size()) {
 			XlSUtils.storeInExcel(withNext, competition, CURRENT_YEAR, "odds");
+			XlSUtils.fillMissingShotsData(competition, CURRENT_YEAR, false);
+		}
+
 		System.out.println(competition + " successfully updated");
 
 	}
@@ -293,7 +304,6 @@ public class Scraper {
 		String address;
 		if (add == null) {
 			address = EntryPoints.getOddsLink(competition, currentYear);
-			System.out.println(address);
 		} else
 			address = add;
 		System.out.println(address);
@@ -328,12 +338,13 @@ public class Scraper {
 				for (WebElement i : list) {
 					// better logic here?
 					Thread.sleep(100);
-					if (i.getText().contains("-") && isFixtureLink(i.getAttribute("href")))
-						links.add(i.getAttribute("href"));
+					if (i.getText().contains("-"))
+						if (isFixtureLink(i.getAttribute("href")))
+							links.add(i.getAttribute("href"));
 				}
 
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, false);
+					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 
 					if (ef != null) {
 						if (ef.date.before(yesterday)) {
@@ -385,15 +396,16 @@ public class Scraper {
 		driver.manage().window().maximize();
 		driver.navigate().to(address);
 
-		try {
-			WebDriverWait wait = new WebDriverWait(driver, 10);
-			wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("hstp_14536_interstitial_pub"))).click();
-			System.out.println("Successfully closed efbet add");
-		} catch (Exception e) {
-			System.out.println("Problem closing efbet add");
-		}
+		// try {
+		// WebDriverWait wait = new WebDriverWait(driver, 10);
+		// wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("hstp_14536_interstitial_pub"))).click();
+		// System.out.println("Successfully closed efbet add");
+		// } catch (Exception e) {
+		// System.out.println("Problem closing efbet add");
+		// }
 
 		while (true) {
+			int setSize = set.size();
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
 
@@ -427,6 +439,10 @@ public class Scraper {
 			if (html.equals(htmlAfter))
 				break;
 
+			// Additional stopping condition - no new entries
+			if (set.size() == setSize)
+				break;
+
 		}
 
 		driver.close();
@@ -440,8 +456,8 @@ public class Scraper {
 		return setlist;
 	}
 
-	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object, boolean onlyTodaysMatches)
-			throws ParseException, InterruptedException, IOException {
+	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object,
+			OnlyTodayMatches onlyTodaysMatches) throws ParseException, InterruptedException, IOException {
 		String address = EntryPoints.getOddsLink(competition, 2016);
 		System.out.println(address);
 
@@ -468,7 +484,7 @@ public class Scraper {
 			if (i.getText().contains("-")) {
 				String href = i.getAttribute("href");
 				links.add(href);
-				System.out.println(i.getText());
+				// System.out.println(i.getText());
 				texts.put(href, i.getText());
 			}
 		}
@@ -479,7 +495,7 @@ public class Scraper {
 			if (teams.contains(homeTeam) && teams.contains(awayTeam))
 				continue;
 
-			ExtendedFixture ef = getOddsFixture(driver, i, competition, true, true);
+			ExtendedFixture ef = getOddsFixture(driver, i, competition, true, onlyTodaysMatches);
 			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
 					&& !teams.contains(ef.awayTeam)) {
 				result.add(ef);
@@ -524,6 +540,7 @@ public class Scraper {
 		while (true) {
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
+			int setSize = set.size();
 
 			Elements linksM = matches.select("a[href]");
 			for (Element linkM : linksM) {
@@ -542,6 +559,9 @@ public class Scraper {
 			if (html.equals(htmlAfter))
 				break;
 
+			// Additional stopping condition - no new entries
+			if (set.size() == setSize)
+				break;
 		}
 
 		driver.close();
@@ -1051,7 +1071,6 @@ public class Scraper {
 		String address;
 		if (add == null) {
 			address = EntryPoints.getOddsLink(competition, year);
-			System.out.println(address);
 		} else
 			address = add;
 		System.out.println(address);
@@ -1105,7 +1124,7 @@ public class Scraper {
 
 				System.out.println(links);
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, false);
+					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 					if (ef != null)
 						result.add(ef);
 
@@ -1248,7 +1267,7 @@ public class Scraper {
 
 				// System.out.println(links);
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, false);
+					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 					if (ef != null)
 						result.add(ef);
 
@@ -1430,7 +1449,7 @@ public class Scraper {
 	 * @param competition
 	 * @param liveMatchesFlag
 	 *            - flag for matches that are currently live - true in this case
-	 * @param onlyTodaysMathces
+	 * @param onlyToday
 	 *            - true if we want to update only todays matches (to be played)
 	 * @return
 	 * @throws ParseException
@@ -1438,7 +1457,7 @@ public class Scraper {
 	 * @throws IOException
 	 */
 	public static ExtendedFixture getOddsFixture(WebDriver driver, String i, String competition,
-			boolean liveMatchesFlag, boolean onlyTodaysMathces)
+			boolean liveMatchesFlag, OnlyTodayMatches onlyToday)
 					throws ParseException, InterruptedException, IOException {
 		// System.out.println(i);
 		int count = 0;
@@ -1464,7 +1483,7 @@ public class Scraper {
 
 		// skipping to update matches that are played later than today (for
 		// performance in nextMatches())
-		if (onlyTodaysMathces && !Utils.isToday(date))
+		if (onlyToday.equals(OnlyTodayMatches.TRUE) && !Utils.isToday(date))
 			return null;
 
 		// --------------------------

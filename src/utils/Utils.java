@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -794,7 +795,7 @@ public class Utils {
 	}
 
 	public static void fullAnalysys(ArrayList<FinalEntry> all, int year) {
-		analysys(all, year);
+		analysys(all, year, true);
 		LineChart.draw(Utils.createProfitMovementData(Utils.noequilibriums(all)), 3000);
 
 		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
@@ -821,15 +822,28 @@ public class Utils {
 
 	}
 
-	public static void analysys(ArrayList<FinalEntry> all, int year) {
+	public static void analysys(ArrayList<FinalEntry> all, int year, boolean verbose) {
+
+		ArrayList<Stats> stats = new ArrayList<>();
+
 		ArrayList<FinalEntry> noEquilibriums = Utils.noequilibriums(all);
 		ArrayList<FinalEntry> equilibriums = Utils.equilibriums(all);
 
-		printStats(allUnders(onlyFixtures(equilibriums)), "Equilibriums as unders");
-		printStats(allOvers(onlyFixtures(equilibriums)), "Equilibriums as overs");
+		Stats equilibriumsAsUnders = new Stats(allUnders(onlyFixtures(equilibriums)), "Equilibriums as unders");
+		Stats equilibriumsAsOvers = new Stats(allOvers(onlyFixtures(equilibriums)), "Equilibriums as overs");
+		stats.add(equilibriumsAsOvers);
+		stats.add(equilibriumsAsUnders);
+		if (verbose) {
+			System.out.println(equilibriumsAsUnders);
+			System.out.println(equilibriumsAsOvers);
+		}
 
-		System.out.println("Avg return: " + avgReturn(onlyFixtures(noEquilibriums)));
-		printStats(noEquilibriums, "all");
+		if (verbose)
+			System.out.println("Avg return: " + avgReturn(onlyFixtures(noEquilibriums)));
+		Stats allStats = new Stats(noEquilibriums, "all");
+		stats.add(allStats);
+		if (verbose)
+			System.out.println(allStats);
 
 		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
 		// 0.5f, 0f).withShots(1f);
@@ -846,36 +860,70 @@ public class Utils {
 		ArrayList<FinalEntry> overs = Utils.onlyOvers(noEquilibriums);
 		ArrayList<FinalEntry> unders = Utils.onlyUnders(noEquilibriums);
 
-		System.err.println(year);
-		System.out.println();
+		if (verbose) {
+			System.err.println(year);
+			System.out.println();
+		}
+
+		if (verbose)
+			System.out.println();
+		ArrayList<Stats> byCertaintyandCOT = byCertaintyandCOT(noEquilibriums, "", verbose);
+		stats.addAll(byCertaintyandCOT);
+
+		if (verbose)
+			System.out.println();
+		ArrayList<Stats> byOdds = byOdds(noEquilibriums, "", verbose);
+		stats.addAll(byOdds);
+
+		Stats underStats = new Stats(unders, "unders");
+		if (verbose)
+			System.out.println(underStats);
+		stats.add(underStats);
+
+		if (verbose)
+			System.out.println();
+		ArrayList<Stats> byCertaintyandCOTUnders = byCertaintyandCOT(unders, "unders", verbose);
+		stats.addAll(byCertaintyandCOTUnders);
+
+		if (verbose)
+			System.out.println();
+		ArrayList<Stats> byOddsUnders = byOdds(unders, "unders", verbose);
+		stats.addAll(byOddsUnders);
+
+		Stats overStats = new Stats(overs, "overs");
+		if (verbose)
+			System.out.println(overStats);
+		stats.add(overStats);
 
 		System.out.println();
-		byCertaintyandCOT(noEquilibriums);
+		ArrayList<Stats> byCertaintyandCOTover = byCertaintyandCOT(overs, "overs", verbose);
+		stats.addAll(byCertaintyandCOTover);
 
 		System.out.println();
-		byOdds(noEquilibriums);
+		ArrayList<Stats> byOddsOvers = byOdds(overs, "overs", verbose);
+		stats.addAll(byOddsOvers);
 
-		printStats(unders, "unders");
-		System.out.println();
-		byCertaintyandCOT(unders);
+		Stats allOvers = new Stats(allOvers(Utils.onlyFixtures(noEquilibriums)), "all Overs");
+		stats.add(allOvers);
+		if (verbose) {
+			System.out.println();
+			System.out.println(allOvers);
+		}
 
-		System.out.println();
-		byOdds(unders);
+		Stats allUnders = new Stats(allUnders(Utils.onlyFixtures(noEquilibriums)), "all Unders");
+		if (verbose)
+			System.out.println(allUnders);
+		stats.add(allUnders);
 
-		printStats(overs, "overs");
-		System.out.println();
-		byCertaintyandCOT(overs);
-
-		System.out.println();
-		byOdds(overs);
-
-		System.out.println();
-		printStats(allOvers(Utils.onlyFixtures(noEquilibriums)), "all Overs");
-		printStats(allUnders(Utils.onlyFixtures(noEquilibriums)), "all Unders");
-
-		System.out.println();
-		printStats(higherOdds(Utils.onlyFixtures(noEquilibriums)), "higher Odds");
-		printStats(lowerOdds(Utils.onlyFixtures(noEquilibriums)), "lower Odds");
+		Stats higherOdds = new Stats(higherOdds(Utils.onlyFixtures(noEquilibriums)), "higher Odds");
+		Stats lowerOdds = new Stats(lowerOdds(Utils.onlyFixtures(noEquilibriums)), "lower Odds");
+		stats.add(higherOdds);
+		stats.add(lowerOdds);
+		if (verbose) {
+			System.out.println();
+			System.out.println(higherOdds);
+			System.out.println(lowerOdds);
+		}
 
 		System.out.println();
 		int wins = 0;
@@ -894,11 +942,17 @@ public class Utils {
 			}
 		}
 
-		System.out.println("Soft lines wins: " + format((float) wins / certs) + " draws: "
-				+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
+		if (verbose)
+			System.out.println("Soft lines wins: " + format((float) wins / certs) + " draws: "
+					+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
+
+		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
+		stats.stream().filter(v -> verbose ? true : (v.getProfit() > 0 && !v.all.isEmpty()))
+				.forEach(System.out::println);
 	}
 
-	private static void byCertaintyandCOT(ArrayList<FinalEntry> all) {
+	private static ArrayList<Stats> byCertaintyandCOT(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
+		ArrayList<Stats> result = new ArrayList<>();
 		ArrayList<FinalEntry> cot5 = new ArrayList<>();
 		ArrayList<FinalEntry> cot10 = new ArrayList<>();
 		ArrayList<FinalEntry> cot15 = new ArrayList<>();
@@ -938,18 +992,34 @@ public class Utils {
 
 		}
 
-		printStats(cer80, "cer80");
-		printStats(cer70, "cer70");
-		printStats(cer60, "cer60");
-		printStats(cer50, "cer50");
-		printStats(cer40, "cer40");
+		if (verbose) {
+			System.out.println(new Stats(cer80, prefix + " " + "cer80"));
+			System.out.println(new Stats(cer70, prefix + " " + "cer70"));
+			System.out.println(new Stats(cer60, prefix + " " + "cer60"));
+			System.out.println(new Stats(cer50, prefix + " " + "cer50"));
+			System.out.println(new Stats(cer40, prefix + " " + "cer40"));
+		}
+		result.add(new Stats(cer80, prefix + " " + "cer80"));
+		result.add(new Stats(cer70, prefix + " " + "cer70"));
+		result.add(new Stats(cer60, prefix + " " + "cer60"));
+		result.add(new Stats(cer50, prefix + " " + "cer50"));
+		result.add(new Stats(cer40, prefix + " " + "cer40"));
 
-		System.out.println();
-		printStats(cot25, "cot25");
-		printStats(cot20, "cot20");
-		printStats(cot15, "cot15");
-		printStats(cot10, "cot10");
-		printStats(cot5, "cot5");
+		if (verbose) {
+			System.out.println();
+			System.out.println(new Stats(cot25, prefix + " " + "cot25"));
+			System.out.println(new Stats(cot20, prefix + " " + "cot20"));
+			System.out.println(new Stats(cot15, prefix + " " + "cot15"));
+			System.out.println(new Stats(cot10, prefix + " " + "cot10"));
+			System.out.println(new Stats(cot5, prefix + " " + "cot5"));
+		}
+		result.add(new Stats(cot25, prefix + " " + "cot25"));
+		result.add(new Stats(cot20, prefix + " " + "cot20"));
+		result.add(new Stats(cot15, prefix + " " + "cot15"));
+		result.add(new Stats(cot10, prefix + " " + "cot10"));
+		result.add(new Stats(cot5, prefix + " " + "cot5"));
+
+		return result;
 
 	}
 
@@ -960,8 +1030,8 @@ public class Utils {
 				+ ((profit >= 0f && !all.isEmpty()) ? (" 1 in " + format(evaluateRecord(all))) : ""));
 	}
 
-	private static void byOdds(ArrayList<FinalEntry> all) {
-
+	private static ArrayList<Stats> byOdds(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
+		ArrayList<Stats> result = new ArrayList<>();
 		ArrayList<FinalEntry> under14 = new ArrayList<>();
 		ArrayList<FinalEntry> under18 = new ArrayList<>();
 		ArrayList<FinalEntry> under22 = new ArrayList<>();
@@ -979,10 +1049,19 @@ public class Utils {
 				over22.add(i);
 			}
 		}
-		printStats(under14, "1.00 - 1.40");
-		printStats(under18, "1.41 - 1.80");
-		printStats(under22, "1.81 - 2.20");
-		printStats(over22, " > 2.21");
+
+		if (verbose) {
+			System.out.println(new Stats(under14, prefix + " " + "1.00 - 1.40"));
+			System.out.println(new Stats(under18, prefix + " " + "1.41 - 1.80"));
+			System.out.println(new Stats(under22, prefix + " " + "1.81 - 2.20"));
+			System.out.println(new Stats(over22, prefix + " " + " > 2.21"));
+		}
+		result.add(new Stats(under14, prefix + " " + "1.00 - 1.40"));
+		result.add(new Stats(under18, prefix + " " + "1.41 - 1.80"));
+		result.add(new Stats(under22, prefix + " " + "1.81 - 2.20"));
+		result.add(new Stats(over22, prefix + " " + " > 2.21"));
+
+		return result;
 
 	}
 
@@ -2473,16 +2552,13 @@ public class Utils {
 	}
 
 	/**
-	 * Deep copie list of finals
+	 * Deep copy list of finals
 	 * 
 	 * @param arrayList
 	 * @return
 	 */
 	private static ArrayList<FinalEntry> deepCopy(ArrayList<FinalEntry> finals) {
-		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (FinalEntry i : finals)
-			result.add(new FinalEntry(i));
-		return result;
+		return (ArrayList<FinalEntry>) finals.stream().map(i -> new FinalEntry(i)).collect(Collectors.toList());
 	}
 
 	public static ArrayList<FinalEntry> notPendingFinals(ArrayList<FinalEntry> all) {
@@ -2501,6 +2577,22 @@ public class Utils {
 				result.add(i);
 		}
 		return result;
+	}
+
+	public static ArrayList<FinalEntry> todayGames(ArrayList<FinalEntry> value) {
+		return (ArrayList<FinalEntry>) value.stream().filter(i -> isToday(i.fixture.date)).collect(Collectors.toList());
+	}
+
+	public static void byYear(ArrayList<FinalEntry> all, String description) {
+		System.out.println(description);
+		Map<Object, List<FinalEntry>> map = noequilibriums(all).stream().collect(Collectors.groupingBy(
+				p -> (Integer) p.fixture.year, Collectors.mapping(Function.identity(), Collectors.toList())));
+
+		for (Entry<Object, List<FinalEntry>> i : map.entrySet()) {
+			System.out.println(new Stats((ArrayList<FinalEntry>) i.getValue(), ((Integer) i.getKey()).toString()));
+		}
+
+		System.out.println(new Stats(noequilibriums(all), description));
 	}
 
 }

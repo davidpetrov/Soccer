@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 
 import entries.FinalEntry;
 import main.Test.DataType;
+import predictions.Predictions.OnlyTodayMatches;
 import runner.RunnerAsianPredictions;
 import runner.RunnerPredictions;
 import scraper.Scraper;
@@ -32,47 +33,50 @@ public class Predictions {
 	public static final ArrayList<String> CHECKLIST = new ArrayList<>();
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
-
-		CHECKLIST.add("ENG");
-		CHECKLIST.add("ENG2");
-		CHECKLIST.add("ENG3");
-		CHECKLIST.add("ENG4");
-		CHECKLIST.add("ENG5");
-		CHECKLIST.add("IT");
-		CHECKLIST.add("IT2");
-		CHECKLIST.add("FR");
-		CHECKLIST.add("FR2");
-		CHECKLIST.add("SPA");
-		CHECKLIST.add("SPA2");
+		//
+		 CHECKLIST.add("ENG");
+//		 CHECKLIST.add("ENG2");
+//		 CHECKLIST.add("ENG3");
+//		 CHECKLIST.add("ENG4");
+//		 CHECKLIST.add("ENG5");
+		 CHECKLIST.add("IT");
+//		 CHECKLIST.add("IT2");
+		 CHECKLIST.add("FR");
+		 CHECKLIST.add("FR2");
+		 CHECKLIST.add("SPA");
+		 CHECKLIST.add("SPA2");
 		CHECKLIST.add("GER");
 		CHECKLIST.add("GER2");
 		CHECKLIST.add("SCO");
-		CHECKLIST.add("NED");
-		CHECKLIST.add("BEL");
+//		CHECKLIST.add("NED");
+		// CHECKLIST.add("BEL");---------------
 		CHECKLIST.add("SWI");
 		CHECKLIST.add("POR");
 		CHECKLIST.add("GRE");
 		CHECKLIST.add("TUR");
-		CHECKLIST.add("BUL");
+		// CHECKLIST.add("BUL");------------------
 		CHECKLIST.add("RUS");
 		CHECKLIST.add("AUS");
-		CHECKLIST.add("DEN");
+		// CHECKLIST.add("DEN");-----------------
 		CHECKLIST.add("CZE");
 		CHECKLIST.add("ARG");
-		CHECKLIST.add("POL");
+		// CHECKLIST.add("POL");-----------------
 		CHECKLIST.add("CRO");
 		CHECKLIST.add("SLO");
+//		CHECKLIST.add("USA");
+//		CHECKLIST.add("SWE");
 
-		// Scraper.updateInParallel(CHECKLIST, 2, true, UpdateType.AUTOMATIC);
+//		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.TRUE,
+//		 UpdateType.AUTOMATIC);
 
-		predictions(2016, DataType.ODDSPORTAL, UpdateType.MANUAL);
+		predictions(2016, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE);
 
 		// asianPredictions(2016, true);
 
 	}
 
-	public static ArrayList<FinalEntry> predictions(int year, DataType type, UpdateType automatic)
-			throws InterruptedException, ExecutionException, IOException {
+	public static ArrayList<FinalEntry> predictions(int year, DataType type, UpdateType automatic,
+			OnlyTodayMatches onlyToday) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 
 		FileInputStream file = null;
@@ -110,24 +114,32 @@ public class Predictions {
 		file.close();
 		pool.shutdown();
 
-		all.sort(new Comparator<FinalEntry>() {
-
-			@Override
-			public int compare(FinalEntry o1, FinalEntry o2) {
-				return ((Float) o1.prediction).compareTo((Float) o2.prediction);
-			}
-		});
+		all.sort(Comparator.comparing(FinalEntry::getPrediction));
+//		all.sort(new Comparator<FinalEntry>() {
+//
+//			@Override
+//			public int compare(FinalEntry o1, FinalEntry o2) {
+//				return ((Float) o1.prediction).compareTo((Float) o2.prediction);
+//			}
+//		});
 
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);
 
 		for (Entry<String, ArrayList<FinalEntry>> i : byLeague.entrySet()) {
-			System.out.println(i.getKey());
+
 			ArrayList<FinalEntry> data = Utils.notPendingFinals(i.getValue());
 			ArrayList<FinalEntry> equilibriumsData = Utils.equilibriums(data);
 			ArrayList<FinalEntry> dataProper = Utils.noequilibriums(data);
 
 			ArrayList<FinalEntry> pending = Utils.pendingFinals(i.getValue());
+			if (onlyToday.equals(OnlyTodayMatches.TRUE))
+				pending = Utils.todayGames(pending);
+
+			if (pending.isEmpty())
+				continue;
+
+			System.out.println(i.getKey());
 			ArrayList<FinalEntry> equilibriumsPending = Utils.equilibriums(pending);
 			ArrayList<FinalEntry> pendingProper = Utils.noequilibriums(pending);
 
@@ -145,22 +157,34 @@ public class Predictions {
 
 			if (allUnders) {
 				System.out.println(equilibriumsPending);
+				result.addAll(equilibriumsPending);
 			} else if (allOvers) {
 				equilibriumsPending = XlSUtils.restrict(equilibriumsPending,
 						Settings.shots(i.getKey()).withTHandBounds(0.45f));
 				System.out.println(equilibriumsPending);
+				result.addAll(equilibriumsPending);
 			}
 
 			Utils.printStats(dataProper, "all");
 			Utils.printStats(Utils.onlyUnders(dataProper), "unders");
 			System.out.println(Utils.onlyUnders(pendingProper));
+			result.addAll(pendingProper);
 			Utils.printStats(Utils.onlyOvers(dataProper), "overs");
 			System.out.println(Utils.onlyOvers(pendingProper));
 			System.out
 					.println("---------------------------------------------------------------------------------------");
 		}
 
-		// System.out.println(all);
+		result.sort(new Comparator<FinalEntry>() {
+
+			@Override
+			public int compare(FinalEntry o1, FinalEntry o2) {
+
+				return ((Float) o2.prediction).compareTo((Float) o1.prediction);
+			}
+
+		});
+		System.out.println(result);
 
 		return all;
 	}
@@ -202,6 +226,10 @@ public class Predictions {
 		file.close();
 		pool.shutdown();
 		return totalProfit;
+	}
+
+	public enum OnlyTodayMatches {
+		TRUE, FALSE
 	}
 
 }

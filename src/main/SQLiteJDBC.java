@@ -760,8 +760,9 @@ public class SQLiteJDBC {
 						+ addQuotes(format.format(f.fixture.date)) + "," + addQuotes(competition) + ","
 						+ f.fixture.matchday + "," + addQuotes(f.fixture.homeTeam) + "," + addQuotes(f.fixture.awayTeam)
 						+ "," + f.fixture.result.goalsHomeTeam + "," + f.fixture.result.goalsAwayTeam + ","
-						+ f.fixture.maxOver + "," + f.fixture.maxUnder + "," + f.prediction + "," + f.threshold + ","
-						+ f.lower + "," + f.upper + "," + f.value + " );";
+						+ f.fixture.maxOver + "," + f.fixture.maxUnder + ","
+						+ (float) Math.round(f.prediction * 100000f) / 100000f + "," + f.threshold + "," + f.lower + ","
+						+ f.upper + "," + f.value + " );";
 				try {
 					if (!Float.isNaN(f.prediction))
 						stmt.executeUpdate(sql);
@@ -792,8 +793,8 @@ public class SQLiteJDBC {
 			Class.forName("org.sqlite.JDBC");
 			c = DriverManager.getConnection("jdbc:sqlite:test.db");
 			c.setAutoCommit(false);
-			
-			int success  = 0;
+
+			int success = 0;
 			int fails = 0;
 			stmt = c.createStatement();
 			for (PlayerFixture f : finals) {
@@ -806,14 +807,15 @@ public class SQLiteJDBC {
 						+ "," + (f.substitute ? 1 : 0) + "," + f.goals + "," + f.assists + " );";
 				try {
 					stmt.executeUpdate(sql);
-//					success++;
+					// success++;
 				} catch (SQLException e) {
 					fails++;
 					e.printStackTrace();
-//					System.out.println(success + " succ " + fails + " failed");
-//					System.out.println(sql);
-//					break;
-					
+					// System.out.println(success + " succ " + fails + "
+					// failed");
+					// System.out.println(sql);
+					// break;
+
 				}
 			}
 
@@ -909,8 +911,8 @@ public class SQLiteJDBC {
 				float value = rs.getFloat("value");
 
 				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competition).withMatchday(matchday).withOdds(0f, 0f, over,
-								under);
+						new Result(homeGoals, awayGoals), competition).withMatchday(matchday)
+								.withOdds(0f, 0f, over, under).withYear(year);
 				FinalEntry f = new FinalEntry(ef, score, new Result(homeGoals, awayGoals), thold, lower, upper);
 				f.value = value;
 

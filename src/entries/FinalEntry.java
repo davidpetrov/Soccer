@@ -37,6 +37,10 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		this.lower = i.lower;
 		this.value = i.value;
 	}
+	
+	public float getPrediction() {
+		return prediction;
+	}
 
 	public float getCertainty() {
 		return prediction > threshold ? prediction : (1f - prediction);
