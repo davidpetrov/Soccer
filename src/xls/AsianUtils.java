@@ -21,6 +21,7 @@ import main.Result;
 import main.SQLiteJDBC;
 import settings.Settings;
 import settings.SettingsAsian;
+import utils.FixtureUtils;
 import utils.Lines;
 import utils.Pair;
 import utils.Utils;
@@ -266,7 +267,7 @@ public class AsianUtils {
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 14; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Utils.fairValue(current);
 			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
 			// i);
@@ -356,8 +357,8 @@ public class AsianUtils {
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 30; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<AsianEntry> finals = runAllLines(sheet, data);
 
@@ -590,8 +591,8 @@ public class AsianUtils {
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<AsianEntry> finals = new ArrayList<>();
 			ArrayList<AsianEntry> homes = new ArrayList<>();
@@ -668,7 +669,7 @@ public class AsianUtils {
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 10; i <= maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 
 			ArrayList<AsianEntry> bets = new ArrayList<>();
 			for (ExtendedFixture f : current) {

@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -449,34 +450,25 @@ public class Utils {
 		return (float) success / list.size();
 	}
 
-	public static ArrayList<FinalEntry> filterByOdds(ArrayList<FinalEntry> finals, float minOdds, float maxOdds,
-			float threshold) {
+	/**
+	 * Filter by min and max odds
+	 * 
+	 * @param finals
+	 * @param minOdds
+	 * @param maxOdds
+	 * @param threshold
+	 * @return
+	 */
+	public static ArrayList<FinalEntry> filterByOdds(ArrayList<FinalEntry> finals, float minOdds, float maxOdds) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
-			float coeff = fe.prediction > threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			if (coeff >= minOdds && coeff <= maxOdds)
+			float coeff = fe.isOver() ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			if (coeff > minOdds && coeff <= maxOdds)
 				filtered.add(fe);
 		}
 		return filtered;
 	}
 
-	public static ArrayList<ExtendedFixture> getByMatchday(ArrayList<ExtendedFixture> all, int i) {
-		ArrayList<ExtendedFixture> filtered = new ArrayList<>();
-		for (ExtendedFixture f : all) {
-			if (f.matchday == i)
-				filtered.add(f);
-		}
-		return filtered;
-	}
-
-	public static ArrayList<ExtendedFixture> getBeforeMatchday(ArrayList<ExtendedFixture> all, int i) {
-		ArrayList<ExtendedFixture> filtered = new ArrayList<>();
-		for (ExtendedFixture f : all) {
-			if (f.matchday < i)
-				filtered.add(f);
-		}
-		return filtered;
-	}
 
 	public static float[] getScaledProfit(ArrayList<FinalEntry> finals, float f) {
 		float profit = 0.0f;
@@ -565,14 +557,15 @@ public class Utils {
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
 	}
 
-	public static ArrayList<ExtendedFixture> filterByOdds(ArrayList<ExtendedFixture> data, float min, float max) {
-		ArrayList<ExtendedFixture> filtered = new ArrayList<>();
-		for (ExtendedFixture i : data) {
-			if (i.maxOver <= max && i.maxOver >= min)
-				filtered.add(i);
-		}
-		return filtered;
-	}
+	// public static ArrayList<ExtendedFixture>
+	// filterByOdds(ArrayList<ExtendedFixture> data, float min, float max) {
+	// ArrayList<ExtendedFixture> filtered = new ArrayList<>();
+	// for (ExtendedFixture i : data) {
+	// if (i.maxOver <= max && i.maxOver >= min)
+	// filtered.add(i);
+	// }
+	// return filtered;
+	// }
 
 	public static float countOversWhenDraw(ArrayList<ExtendedFixture> all) {
 		int count = 0;
@@ -947,9 +940,11 @@ public class Utils {
 					+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
 
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
-		stats.stream().filter(v -> verbose ? true : (v.getProfit() > 0 && !v.all.isEmpty()))
+		stats.stream().filter(v -> verbose ? true : (v.getPvalueOdds() > 4 && !v.all.isEmpty()))
 				.forEach(System.out::println);
 	}
+	
+	
 
 	private static ArrayList<Stats> byCertaintyandCOT(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
 		ArrayList<Stats> result = new ArrayList<>();
@@ -1682,6 +1677,14 @@ public class Utils {
 		return profit;
 	}
 
+	public static float getNormalizedProfit(ArrayList<FinalEntry> all) {
+		float profit = 0f;
+		for (FinalEntry i : all) {
+			profit += i.getNormalizedProfit();
+		}
+		return profit;
+	}
+
 	public static float getAvgOdds(ArrayList<FinalEntry> finals) {
 		float total = 0f;
 		for (FinalEntry i : finals) {
@@ -1704,9 +1707,24 @@ public class Utils {
 	public static float evaluateRecord(ArrayList<FinalEntry> all) {
 		return pValueCalculator(all.size(), Utils.getYield(all), Utils.getAvgOdds(all));
 	}
+	
+	public static float evaluateRecordNormalized(ArrayList<FinalEntry> all) {
+		return pValueCalculator(all.size(), Utils.getNormalizedYield(all), Utils.getAvgOdds(all));
+	}
 
-	private static float getYield(ArrayList<FinalEntry> all) {
+	public static float getYield(ArrayList<FinalEntry> all) {
 		return getProfit(all) / all.size();
+	}
+
+	public static float getNormalizedYield(ArrayList<FinalEntry> all) {
+		float stakeSum = 0f;
+		for (FinalEntry i : all) {
+			float coeff = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+			float betUnit = 1f / (coeff - 1);
+			stakeSum += betUnit;
+		}
+
+		return getNormalizedProfit(all) / stakeSum;
 	}
 
 	public static float[] createProfitMovementData(ArrayList<FinalEntry> all) {
@@ -1722,7 +1740,7 @@ public class Utils {
 		float[] result = new float[all.size() + 1];
 		result[0] = 0f;
 		for (int i = 0; i < all.size(); i++) {
-			profit += all.get(i).getProfit();
+			profit += all.get(i).getNormalizedProfit();
 			result[i + 1] = profit;
 		}
 		return result;
@@ -1802,7 +1820,7 @@ public class Utils {
 				lastNotPending = all.get(i).date;
 		}
 
-		return noPendings ? new Date() : lastNotPending;
+		return /*noPendings ? new Date() :*/ lastNotPending;
 
 	}
 
@@ -2551,6 +2569,128 @@ public class Utils {
 		return withTH;
 	}
 
+	public static ArrayList<FinalEntry> withBestSettings(
+			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, int offset) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		int start = Integer.MAX_VALUE;
+		int end = Integer.MIN_VALUE;
+
+		for (java.util.Map.Entry<String, HashMap<Integer, ArrayList<FinalEntry>>> league : byLeagueYear.entrySet()) {
+			start = Math.min(start, league.getValue().keySet().stream().min(Integer::compareTo).get());
+			end = Math.max(start, league.getValue().keySet().stream().max(Integer::compareTo).get());
+		}
+
+		float optimalOneIn = evaluateForBestSettingsWithParameters(start, end, offset, byLeagueYear, 2f, 200f, 0.5f);
+		System.out.println("Optimal 1 in is: " + optimalOneIn);
+		for (int i = start + offset; i <= end; i++) {
+			for (java.util.Map.Entry<String, HashMap<Integer, ArrayList<FinalEntry>>> league : byLeagueYear
+					.entrySet()) {
+				ArrayList<FinalEntry> current = Utils.deepCopy(league.getValue().get(i));
+
+				ArrayList<FinalEntry> data = new ArrayList<>();
+				for (int j = i - offset; j < i; j++)
+					if (league.getValue().containsKey(j))
+						data.addAll(league.getValue().get(j));
+
+				// analysys(data, -1, false);
+				result.addAll(filterByPastResults(current, data, optimalOneIn));
+
+				// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f,
+				// 0.55f, 0.5f, 0f).withShots(1f);
+				// initial = XlSUtils.findThreshold(data, initial, maxBy);
+				// ArrayList<FinalEntry> toAdd = XlSUtils.restrict(current,
+				// initial);
+
+				// if (maxBy.equals(MaximizingBy.UNDERS))
+				// toAdd = onlyUnders(toAdd);
+				// else if (maxBy.equals(MaximizingBy.OVERS))
+				// toAdd = onlyOvers(toAdd);
+
+				// withTH.addAll(toAdd);
+
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Helper function for finding optimal value for withBestSettings method
+	 * 
+	 * @param start
+	 * @param end
+	 * @param offset
+	 * @param byLeagueYear
+	 * @param lowerValue
+	 * @param upperValue
+	 */
+	private static float evaluateForBestSettingsWithParameters(int start, int end, int offset,
+			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, float lowerValue, float upperValue,
+			float step) {
+		float optimalValue = Float.NEGATIVE_INFINITY;
+		float optimalResult = Float.NEGATIVE_INFINITY;
+
+		for (float curr = lowerValue; curr <= upperValue; curr += step) {
+			ArrayList<FinalEntry> result = new ArrayList<>();
+
+			for (int i = start + offset; i <= end; i++) {
+				for (java.util.Map.Entry<String, HashMap<Integer, ArrayList<FinalEntry>>> league : byLeagueYear
+						.entrySet()) {
+					ArrayList<FinalEntry> current = Utils.deepCopy(league.getValue().get(i));
+
+					ArrayList<FinalEntry> data = new ArrayList<>();
+					for (int j = i - offset; j < i; j++)
+						if (league.getValue().containsKey(j))
+							data.addAll(league.getValue().get(j));
+
+					// analysys(data, -1, false);
+					result.addAll(filterByPastResults(current, data, curr));
+
+					// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f,
+					// 0.55f,
+					// 0.55f, 0.5f, 0f).withShots(1f);
+					// initial = XlSUtils.findThreshold(data, initial, maxBy);
+					// ArrayList<FinalEntry> toAdd = XlSUtils.restrict(current,
+					// initial);
+
+					// if (maxBy.equals(MaximizingBy.UNDERS))
+					// toAdd = onlyUnders(toAdd);
+					// else if (maxBy.equals(MaximizingBy.OVERS))
+					// toAdd = onlyOvers(toAdd);
+
+					// withTH.addAll(toAdd);
+
+				}
+			}
+
+			float currentEvaluation = evaluateRecord(result);
+			if (currentEvaluation > optimalResult) {
+				optimalResult = currentEvaluation;
+				optimalValue = curr;
+			}
+		}
+
+		return optimalValue;
+	}
+
+	// just all unders or overs for now
+	private static Collection<? extends FinalEntry> filterByPastResults(ArrayList<FinalEntry> current,
+			ArrayList<FinalEntry> data, float onein) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		boolean both = evaluateRecord(data) > onein;
+		boolean onlyUnders = evaluateRecord(onlyUnders(data)) > onein;
+		boolean onlyOvers = evaluateRecord(onlyOvers(data)) > onein;
+
+		// if (both)
+		// result.addAll(current);
+		// if (onlyUnders)
+		// result.addAll(onlyUnders(current));
+		if (onlyOvers)
+			result.addAll(onlyOvers(current));
+
+		return result;
+	}
+
 	/**
 	 * Deep copy list of finals
 	 * 
@@ -2585,14 +2725,16 @@ public class Utils {
 
 	public static void byYear(ArrayList<FinalEntry> all, String description) {
 		System.out.println(description);
-		Map<Object, List<FinalEntry>> map = noequilibriums(all).stream().collect(Collectors.groupingBy(
-				p -> (Integer) p.fixture.year, Collectors.mapping(Function.identity(), Collectors.toList())));
+		Map<Object, List<FinalEntry>> map = all.stream().collect(Collectors.groupingBy(p -> (Integer) p.fixture.year,
+				Collectors.mapping(Function.identity(), Collectors.toList())));
 
 		for (Entry<Object, List<FinalEntry>> i : map.entrySet()) {
 			System.out.println(new Stats((ArrayList<FinalEntry>) i.getValue(), ((Integer) i.getKey()).toString()));
 		}
 
-		System.out.println(new Stats(noequilibriums(all), description));
+		System.out.println(new Stats(all, description));
 	}
+
+	
 
 }

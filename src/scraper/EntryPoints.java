@@ -12,11 +12,11 @@ public class EntryPoints {
 	public static final int SUMMERCURRENT = 2017;
 
 	public static final String[] TRACKING = { "ENG",
-			/* "ENG2", "ENG3", "ENG4", "ENG5", */ "IT", "IT2", "FR", "FR2", "SPA", "SPA2", "GER", "GER2", "SCO", "NED",
-			/* "BEL", */ "SWI", "POR", "GRE", "TUR", "BUL", "RUS", "AUS", "DEN", "CZE", "ARG", "POL", "CRO", "SLO",
-			"SWE", "USA" };
+			/* "ENG2", "ENG3", "ENG4", "ENG5", */ "IT", "IT2", "FR", "FR2", "SPA"/* , "SPA2" */, "GER", "GER2", "SCO",
+			"NED", /* "BEL", */ "SWI", "POR", "GRE", "TUR", "BUL", "RUS", "AUS", "DEN", "CZE", "ARG", "POL", "CRO",
+			"SLO", "SWE", "USA", "FIN", "ICE", "BRA", "BRB", "NOR" };
 
-	public static final String[] SUMMER = { "SWE", "USA" };
+	public static final String[] SUMMER = { "SWE", "USA", "FIN", "ICE", "BRA", "BRB", "NOR" };
 
 	public static final String[] MERGED = { "FR2", "BEL", "SWI", "E0", "ENG", "SPA", "SPA2", "GER", "GER2", "FR", "IT",
 			"SCO", "IT2", "TUR", "ENG2", "ENG3", "ENG4", "ENG5", "ARG", "GRE", "POR", "NED", "BUL", "RUS", "AUS", "DEN",

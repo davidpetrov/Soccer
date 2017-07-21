@@ -34,42 +34,44 @@ public class Predictions {
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
 		//
-		 CHECKLIST.add("ENG");
-//		 CHECKLIST.add("ENG2");
-//		 CHECKLIST.add("ENG3");
-//		 CHECKLIST.add("ENG4");
-//		 CHECKLIST.add("ENG5");
-		 CHECKLIST.add("IT");
-//		 CHECKLIST.add("IT2");
-		 CHECKLIST.add("FR");
-		 CHECKLIST.add("FR2");
-		 CHECKLIST.add("SPA");
-		 CHECKLIST.add("SPA2");
-		CHECKLIST.add("GER");
-		CHECKLIST.add("GER2");
-		CHECKLIST.add("SCO");
-//		CHECKLIST.add("NED");
+		// CHECKLIST.add("ENG");
+		// CHECKLIST.add("ENG2");
+		// CHECKLIST.add("ENG3");
+		// CHECKLIST.add("ENG4");
+		// CHECKLIST.add("ENG5");
+		// CHECKLIST.add("IT");
+		// CHECKLIST.add("IT2");
+		// CHECKLIST.add("FR");
+		// CHECKLIST.add("FR2");
+		// CHECKLIST.add("SPA");
+		// CHECKLIST.add("SPA2");
+		// CHECKLIST.add("GER");
+		// CHECKLIST.add("GER2");
+		// CHECKLIST.add("SCO");
+		// CHECKLIST.add("NED");
 		// CHECKLIST.add("BEL");---------------
-		CHECKLIST.add("SWI");
-		CHECKLIST.add("POR");
-		CHECKLIST.add("GRE");
-		CHECKLIST.add("TUR");
+		// CHECKLIST.add("SWI");
+		// CHECKLIST.add("POR");
+		// CHECKLIST.add("GRE");
+		// CHECKLIST.add("TUR");
 		// CHECKLIST.add("BUL");------------------
-		CHECKLIST.add("RUS");
-		CHECKLIST.add("AUS");
+		// CHECKLIST.add("RUS");
+		// CHECKLIST.add("AUS");
 		// CHECKLIST.add("DEN");-----------------
-		CHECKLIST.add("CZE");
-		CHECKLIST.add("ARG");
+		// CHECKLIST.add("CZE");
+//		CHECKLIST.add("ARG");
 		// CHECKLIST.add("POL");-----------------
-		CHECKLIST.add("CRO");
-		CHECKLIST.add("SLO");
-//		CHECKLIST.add("USA");
-//		CHECKLIST.add("SWE");
+		// CHECKLIST.add("CRO");
+		// CHECKLIST.add("SLO");
+		 CHECKLIST.add("USA");
+		// CHECKLIST.add("SWE");
+		 CHECKLIST.add("BRA");
+//		CHECKLIST.add("BRB");
 
 //		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.TRUE,
 //		 UpdateType.AUTOMATIC);
 
-		predictions(2016, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE);
+		predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL, OnlyTodayMatches.FALSE);
 
 		// asianPredictions(2016, true);
 
@@ -115,13 +117,13 @@ public class Predictions {
 		pool.shutdown();
 
 		all.sort(Comparator.comparing(FinalEntry::getPrediction));
-//		all.sort(new Comparator<FinalEntry>() {
-//
-//			@Override
-//			public int compare(FinalEntry o1, FinalEntry o2) {
-//				return ((Float) o1.prediction).compareTo((Float) o2.prediction);
-//			}
-//		});
+		// all.sort(new Comparator<FinalEntry>() {
+		//
+		// @Override
+		// public int compare(FinalEntry o1, FinalEntry o2) {
+		// return ((Float) o1.prediction).compareTo((Float) o2.prediction);
+		// }
+		// });
 
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);

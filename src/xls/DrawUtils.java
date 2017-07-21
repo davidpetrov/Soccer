@@ -15,6 +15,7 @@ import entries.DrawEntry;
 import main.ExtendedFixture;
 import settings.SettingsAsian;
 import settings.SettingsDraws;
+import utils.FixtureUtils;
 import utils.Pair;
 import utils.Utils;
 
@@ -55,8 +56,8 @@ public class DrawUtils {
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			// SettingsDraws set = runForLeague(sheet, data, year);
 

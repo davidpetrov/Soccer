@@ -43,6 +43,7 @@ import settings.Settings;
 import settings.SettingsAsian;
 import settings.ShotsSettings;
 import tables.Table;
+import utils.FixtureUtils;
 import utils.LinearRegression;
 import utils.Pair;
 import utils.Triple;
@@ -2088,7 +2089,7 @@ public class XlSUtils {
 					bestWinPercent, bestProfit).withValue(0.9f);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit += Utils.getProfit(finals);
 
@@ -2110,7 +2111,7 @@ public class XlSUtils {
 					bestWinPercent, bestProfit).withValue(0.9f);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit += Utils.getProfit(finals);
 
@@ -2132,7 +2133,7 @@ public class XlSUtils {
 					bestWinPercent, bestProfit).withValue(0.9f).withHT(0.5f, y * 0.05f);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit += Utils.getProfit(finals);
 
@@ -2167,7 +2168,7 @@ public class XlSUtils {
 			trset.upperBound = current;
 
 			for (int day = 11; day < maxDay; day++) {
-				ArrayList<ExtendedFixture> currentEntries = Utils.getByMatchday(Utils.onlyFixtures(finals), day);
+				ArrayList<ExtendedFixture> currentEntries = FixtureUtils.getByMatchday(Utils.onlyFixtures(finals), day);
 				ArrayList<FinalEntry> finalEntries = runWithSettingsList(sheet, currentEntries, trset);
 				profit += Utils.getProfit(finalEntries);
 
@@ -2199,9 +2200,9 @@ public class XlSUtils {
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			Settings temp = predictivePower(sheet, data, i - 1, year);
 
@@ -2234,7 +2235,7 @@ public class XlSUtils {
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
 			// cal.set(year + 1, 1, 1);
 			// if (!current.isEmpty() &&
@@ -2242,7 +2243,7 @@ public class XlSUtils {
 			// return profit;
 			// }
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
 			Settings temp = runForLeagueWithOdds(sheet, data, year,
 					0.55f) /* runWithTH(sheet, data, year) */;
@@ -2296,7 +2297,7 @@ public class XlSUtils {
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
 			// cal.set(year + 1, 1, 1);
 			// if (!current.isEmpty() &&
@@ -2304,7 +2305,7 @@ public class XlSUtils {
 			// return profit;
 			// }
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
 			Settings temp = runForLeagueWithOdds(sheet, data, year,
 					0.55f) /* runWithTH(sheet, data, year) */;
@@ -2419,7 +2420,7 @@ public class XlSUtils {
 			dictionary = XlSUtils.deduceDictionary(Utils.notPending(all), allPfs);
 
 		for (int i = 14; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
@@ -2490,7 +2491,7 @@ public class XlSUtils {
 		// HashMap<ExtendedFixture, Float> shots = SQLiteJDBC.selectScores(all,
 		// "SHOTS", year, sheet.getSheetName());
 		float th = 0.55f;
-		Settings temp = Settings.basic(sheet.getSheetName());
+		Settings temp = Settings.shots(sheet.getSheetName());
 		// temp.value = 0.86f;
 		// temp.minOver = 1.9f;
 
@@ -2502,7 +2503,7 @@ public class XlSUtils {
 		// bestTH = pair.home;
 		// bestCot = pair.away;
 		// System.out.println(bestCot);
-		int maxMatchDay = addMatchDay(sheet, all);
+		int maxMatchDay = FixtureUtils.addMatchDay(all);
 		// ArrayList<PlayerFixture> pfs = SQLiteJDBC
 		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
 		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :
@@ -2513,18 +2514,20 @@ public class XlSUtils {
 		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
 		// allPfs);
 
-		for (int i = /* dictionary == null ? 100 : */ maxMatchDay; i <= maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+		for (int i = /* dictionary == null ? 100 : */14; i <= maxMatchDay; i++) {
+			
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Utils.fairValue(current);
 			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
 			// i);
 
-			// Table table = Utils.createTable(data, sheet.getSheetName(), year,
+			// Table table = Utils.createTable(data, sheet.getSheetName(), year,s
 			// i);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
-			 finals = Utils.allOvers(current);
-//			finals = runWithSettingsList(sheet, current, temp);
-//			finals = Utils.onlyOvers(finals);
+			// finals = Utils.allUnders(current);
+//			finals = FixtureUtils.runWithSettingsList(all, current, temp);
+			finals = runWithSettingsList(sheet, current, temp);
+			// finals = Utils.onlyUnders(finals);
 			// finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3,
 			// "shots", temp);
 			// finals = runWithSettingsList(sheet, current, temp, pfs,
@@ -2551,7 +2554,7 @@ public class XlSUtils {
 			// "shots", temp);
 			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
 			// year, 3, "shots");
-			// finals = Utils.noequilibriums(finals);
+			 finals = Utils.noequilibriums(finals);
 
 			// finals = Utils.intersectDiff(finals, finalsPFS);
 			// if(shotSetts.doNotPlay)
@@ -2631,7 +2634,7 @@ public class XlSUtils {
 			// "poisson");
 			played += finals.size();
 
-			// System.out.println(finals);
+			 System.out.println(finals);
 			float trprofit = Utils.getProfit(finals);
 			// System.out.println(i + " " + trprofit);
 			// System.out.println(String.format("%.3f",
@@ -2878,9 +2881,11 @@ public class XlSUtils {
 		//
 		// int maxMatchDay = addMatchDay(sheet, all);
 		// for (int i = 15; i < maxMatchDay; i++) {
-		// ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+		// ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all,
+		// i);
 		//
-		// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+		// ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all,
+		// i);
 		//
 		// Settings temp = runForLeagueWithOdds(sheet, data, year, null, basics,
 		// poissons, weighted, ht1, ht2, 0.55f,
@@ -3018,7 +3023,7 @@ public class XlSUtils {
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
 			// cal.set(year + 1, 1, 1);
 			// if (!current.isEmpty() &&
@@ -3026,7 +3031,7 @@ public class XlSUtils {
 			// return profit;
 			// }
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
 			Settings temp = SQLiteJDBC.getSettings(sheet.getSheetName(), year, period);
 			// System.out.println("match " + i + temp);
@@ -3504,7 +3509,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit_curr += Utils.getProfit(finals);
 
@@ -3528,7 +3533,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit_curr += Utils.getProfit(finals);
 
@@ -3552,7 +3557,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit_curr += Utils.getProfit(finals);
 
@@ -3585,9 +3590,9 @@ public class XlSUtils {
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			Settings temp = /*
 							 * runForLeagueWithOdds(sheet, data, year, basics,
 							 * poissons, weighted, ht1, ht2, 0.55f)
@@ -3633,9 +3638,9 @@ public class XlSUtils {
 		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 11; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// ------------------------------------------------------------
 			// ArrayList<FinalEntry> finals = intersectAllClassifier(sheet,
 			// data, year);
@@ -3855,7 +3860,7 @@ public class XlSUtils {
 		int bestminx = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
-			ArrayList<FinalEntry> filtered = Utils.filterByOdds(unders, currentMin, 10f, initial.threshold);
+			ArrayList<FinalEntry> filtered = Utils.filterByOdds(unders, currentMin, 10f);
 			float currentProfit = Utils.getProfit(filtered);
 
 			if (currentProfit > profitUnders) {
@@ -3868,8 +3873,7 @@ public class XlSUtils {
 
 		for (int x = bestminx; 1.3f + x * 0.02 < 2.5f; x++) {
 			float currentMax = 1.3f + x * 0.02f;
-			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(unders, underSetts.minUnder, currentMax,
-					initial.threshold);
+			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(unders, underSetts.minUnder, currentMax);
 			float currentProfit = Utils.getProfit(filteredMax);
 
 			if (currentProfit > profitUnders) {
@@ -3888,7 +3892,7 @@ public class XlSUtils {
 		int bestminy = 0;
 		for (int x = 0; x < 50; x++) {
 			float currentMin = 1.3f + x * 0.02f;
-			ArrayList<FinalEntry> filtered = Utils.filterByOdds(overs, currentMin, 10f, initial.threshold);
+			ArrayList<FinalEntry> filtered = Utils.filterByOdds(overs, currentMin, 10f);
 			float currentProfit = Utils.getProfit(filtered);
 
 			if (currentProfit > profitOvers) {
@@ -3901,8 +3905,7 @@ public class XlSUtils {
 
 		for (int x = bestminy; 1.3f + x * 0.02 < 2.5f; x++) {
 			float currentMax = 1.3f + x * 0.02f;
-			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(overs, overSetts.minOver, currentMax,
-					initial.threshold);
+			ArrayList<FinalEntry> filteredMax = Utils.filterByOdds(overs, overSetts.minOver, currentMax);
 			float currentProfit = Utils.getProfit(filteredMax);
 
 			if (currentProfit > profitOvers) {
@@ -3936,7 +3939,7 @@ public class XlSUtils {
 
 			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
 			for (ArrayList<FinalEntry> under : unders)
-				filtered.add(Utils.filterByOdds(under, currentMin, 10f, initial.threshold));
+				filtered.add(Utils.filterByOdds(under, currentMin, 10f));
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filtered)
@@ -3954,7 +3957,7 @@ public class XlSUtils {
 			float currentMax = 1.3f + x * 0.02f;
 			ArrayList<ArrayList<FinalEntry>> filteredMax = new ArrayList<>();
 			for (ArrayList<FinalEntry> under : unders)
-				filteredMax.add(Utils.filterByOdds(under, newSetts.minUnder, currentMax, initial.threshold));
+				filteredMax.add(Utils.filterByOdds(under, newSetts.minUnder, currentMax));
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filteredMax)
@@ -3976,7 +3979,7 @@ public class XlSUtils {
 
 			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
 			for (ArrayList<FinalEntry> under : unders)
-				filtered.add(Utils.filterByOdds(under, currentMin, 10f, initial.threshold));
+				filtered.add(Utils.filterByOdds(under, currentMin, 10f));
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filtered)
@@ -3994,7 +3997,7 @@ public class XlSUtils {
 			float currentMax = 1.3f + x * 0.02f;
 			ArrayList<ArrayList<FinalEntry>> filteredMax = new ArrayList<>();
 			for (ArrayList<FinalEntry> under : unders)
-				filteredMax.add(Utils.filterByOdds(under, newSetts.minUnder, currentMax, initial.threshold));
+				filteredMax.add(Utils.filterByOdds(under, newSetts.minUnder, currentMax));
 
 			float currentProfit = 0f;
 			for (ArrayList<FinalEntry> filter : filteredMax)
@@ -4425,6 +4428,8 @@ public class XlSUtils {
 
 	}
 
+	// needs checking of filterbyodds related code if ever actually used
+	@Deprecated
 	public static ArrayList<FinalEntry> bestCot(String league, int year, int period, String description)
 			throws InterruptedException {
 
@@ -4437,8 +4442,8 @@ public class XlSUtils {
 		ArrayList<FinalEntry> oddsList = new ArrayList<>();
 		Settings oddsSetts = bestOdds(league, year, period, description);
 
-		oddsList.addAll(Utils.filterByOdds(unders, oddsSetts.minUnder, oddsSetts.maxUnder, 1f));
-		oddsList.addAll(Utils.filterByOdds(overs, oddsSetts.minOver, oddsSetts.maxOver, 0f));
+		oddsList.addAll(Utils.filterByOdds(unders, oddsSetts.minUnder, oddsSetts.maxUnder));
+		oddsList.addAll(Utils.filterByOdds(overs, oddsSetts.minOver, oddsSetts.maxOver));
 
 		result = Utils.cotRestrict(result, bestCot);
 
@@ -4491,7 +4496,7 @@ public class XlSUtils {
 			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
 			for (ArrayList<FinalEntry> under : unders) {
 				float th = 1f;
-				filtered.add(Utils.filterByOdds(under, currentMin, 10f, th));
+				filtered.add(Utils.filterByOdds(under, currentMin, 10f));
 			}
 
 			float currentProfit = 0f;
@@ -4511,7 +4516,7 @@ public class XlSUtils {
 			ArrayList<ArrayList<FinalEntry>> filteredMax = new ArrayList<>();
 			for (ArrayList<FinalEntry> under : unders) {
 				float th = 1f;
-				filteredMax.add(Utils.filterByOdds(under, underSetts.minUnder, currentMax, th));
+				filteredMax.add(Utils.filterByOdds(under, underSetts.minUnder, currentMax));
 			}
 
 			float currentProfit = 0f;
@@ -4537,7 +4542,7 @@ public class XlSUtils {
 			ArrayList<ArrayList<FinalEntry>> filtered = new ArrayList<>();
 			for (ArrayList<FinalEntry> over : overs) {
 				float th = 0f;
-				filtered.add(Utils.filterByOdds(over, currentMin, 10f, th));
+				filtered.add(Utils.filterByOdds(over, currentMin, 10f));
 			}
 
 			float currentProfit = 0f;
@@ -4558,7 +4563,7 @@ public class XlSUtils {
 			for (ArrayList<FinalEntry> over : overs) {
 				float th = 0f;
 
-				filteredMax.add(Utils.filterByOdds(over, overSetts.minOver, currentMax, th));
+				filteredMax.add(Utils.filterByOdds(over, overSetts.minOver, currentMax));
 			}
 
 			float currentProfit = 0f;
@@ -4612,10 +4617,9 @@ public class XlSUtils {
 
 		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
 
-		// Settings temp = new Settings(sheet.getSheetName(), 0f, 0f, 1f, 0.55f,
-		// 0.55f, 0.55f, 0.5f, 0f).withShots(0f);
-		Settings temp = Settings.shots(sheet.getSheetName());
-//		Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
+		Settings temp = new Settings(sheet.getSheetName(), 0f, 0.5f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(0.5f);
+		Settings shotSets = Settings.shots(sheet.getSheetName());
+		// Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
 
 		// Settings poisson = new Settings(sheet.getSheetName(), 0f, 0f, 1f,
 		// 0.55f, 0.55f, 0.55f, 0.5f, 0f);
@@ -4631,18 +4635,22 @@ public class XlSUtils {
 		// allPfs);
 
 		for (int i = /* dictionary == null ? 100 : */ 14; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-//			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
-			
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			// ArrayList<ExtendedFixture> data =
+			// FixtureUtils.getBeforeMatchday(all, i);
+
 			ArrayList<FinalEntry> finals = new ArrayList<>();
-//			ArrayList<FinalEntry> hts = runWithSettingsList(sheet, current, ht);
-			
-//			finals = runWithSettingsList(sheet, data, temp);
-			
-//			temp = findThreshold(Utils.noequilibriums(finals), temp, MaximizingBy.BOTH);
-			
+			ArrayList<FinalEntry> shots = runWithSettingsList(sheet, current, shotSets);
+			shots = Utils.noequilibriums(shots);
+
+			// finals = runWithSettingsList(sheet, data, temp);
+
+			// temp = findThreshold(Utils.noequilibriums(finals), temp,
+			// MaximizingBy.BOTH);
+
 			finals = runWithSettingsList(sheet, current, temp);
-//			SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(), "shots");
+			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
+			// "shots");
 			// finals = Utils.allUnders(current);
 			// finals = Utils.higherOdds(current);
 
@@ -4658,16 +4666,16 @@ public class XlSUtils {
 			// finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary,
 			// sheet, 0.525f);
 			// finals = finalsPFS;
-//			finals = Utils.noequilibriums(finals);
-//			finals = Utils.intersectDiff(finals, hts);
+			// finals = Utils.noequilibriums(finals);
+			finals = Utils.intersectDiff(finals, shots);
 			// if (shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.removePending(finals);
 			// finals = Utils.certaintyRestrict(finals, 0.9f);
 			// finals = Utils.intersectDiff(finals, ps);
 			// if (shotSetts.onlyUnders)
-//			finals = Utils.onlyUnders(finals);
-//			finals = Utils.cotRestrict(finals, 0.25f);
+			// finals = Utils.onlyUnders(finals);
+			// finals = Utils.cotRestrict(finals, 0.25f);
 
 			// finals = Utils.intersectDiff(finals, hts);
 
@@ -4675,7 +4683,6 @@ public class XlSUtils {
 			// System.out.println(finals);
 		}
 
-		
 		return result;
 	}
 
@@ -5452,9 +5459,9 @@ public class XlSUtils {
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = maxMatchDay >= 14 ? 14 : 5; i <= maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
-			// i);
+			// i);	
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 

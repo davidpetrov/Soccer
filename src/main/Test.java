@@ -9,10 +9,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -21,6 +23,7 @@ import org.json.JSONException;
 
 import algorithms.Algorithm;
 import algorithms.Basic1;
+import charts.LineChart;
 import constants.MinMaxOdds;
 import entries.AsianEntry;
 import entries.Entry;
@@ -38,6 +41,7 @@ import runner.RunnerOptimals;
 import settings.Settings;
 import settings.SettingsAsian;
 import utils.Api;
+import utils.Stats;
 import utils.Utils;
 import xls.AsianUtils;
 import xls.XlSUtils;
@@ -67,19 +71,19 @@ public class Test {
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-		// float total = 0f;
-		// int startY = 2005;
-		// int end = 2015;
-		// for (int year = startY; year <= end; year++)
-		// total += simulation(year, false);
-		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		float total = 0f;
+		int startY = 2005;
+		int end = 2005;
+		for (int year = startY; year <= end; year++)
+			total += simulation(year, false);
+		System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
 		// accumulators(2015, 2015);
 
-		analysis(2005, 2015, DataType.ALLEURODATA);
+		// analysis(2005, 2016, DataType.ALLEURODATA);
 
 		// aggregateInterval();
 
@@ -100,61 +104,80 @@ public class Test {
 		ArrayList<FinalEntry> all = new ArrayList<>();
 		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
 
-//		populateForAnalysis(start, end, all, byLeagueYear, type);
+		// populateForAnalysis(start, end, all, byLeagueYear, type);
 		populateForAnalysisFromDB(start, end, all, byLeagueYear, type);
 
-//		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);
-//		for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i : byLeague.entrySet()) {
-//			System.out.println(i.getKey());
-//			System.out.println(i.getValue().size());
-//			Utils.analysys(i.getValue(), 3000, false);
-//		}
+		// ArrayList<FinalEntry> ita = (ArrayList<FinalEntry>)
+		// byLeagueYear.get("I1").values().stream()
+		// .flatMap(List::stream).collect(Collectors.toList());
+
+		// HashMap<String, ArrayList<FinalEntry>> byLeague =
+		// Utils.byLeague(all);
+		// for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i :
+		// byLeague.entrySet()) {
+		// System.out.println(i.getKey());
+		// System.out.println(i.getValue().size());
+		// Utils.analysys(i.getValue(), 3000, false);
+		// }
 		// ArrayList<FinalEntry> withTHU = Utils.withBestThreshold(byLeagueYear,
 		// 3, MaximizingBy.UNDERS);
 
-//		 ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
-//		 1, MaximizingBy.OVERS);
-//		 ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear,
-//		 2, MaximizingBy.OVERS);
-//		 ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear,
-//		 3, MaximizingBy.OVERS);
-//		 ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear,
-//		 4, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
+		// 1, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear,
+		// 2, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear,
+		// 3, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear,
+		// 4, MaximizingBy.OVERS);
 		//
-//		 ArrayList<FinalEntry> withTH5 = Utils.withBestThreshold(byLeagueYear,
-//		 1, MaximizingBy.BOTH);
-//		 ArrayList<FinalEntry> withTH6 = Utils.withBestThreshold(byLeagueYear,
-//		 2, MaximizingBy.BOTH);
-//		 ArrayList<FinalEntry> withTH7 = Utils.withBestThreshold(byLeagueYear,
-//		 3, MaximizingBy.BOTH);
-//		 ArrayList<FinalEntry> withTH8 = Utils.withBestThreshold(byLeagueYear,
-//		 4, MaximizingBy.BOTH);
-		
-		 ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
-		 1, MaximizingBy.UNDERS);
-		 ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear,
-		 2, MaximizingBy.UNDERS);
-		 ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear,
-		 3, MaximizingBy.UNDERS);
-		 ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear,
-		 4, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH5 = Utils.withBestThreshold(byLeagueYear,
+		// 1, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH6 = Utils.withBestThreshold(byLeagueYear,
+		// 2, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH7 = Utils.withBestThreshold(byLeagueYear,
+		// 3, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH8 = Utils.withBestThreshold(byLeagueYear,
+		// 4, MaximizingBy.BOTH);
 
-//		Utils.fullAnalysys(all, 3000);
+		// ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
+		// 1, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear,
+		// 2, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear,
+		// 3, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear,
+		// 4, MaximizingBy.UNDERS);
+
+		ArrayList<FinalEntry> restricted = Utils.filterByOdds(Utils.cotRestrict(Utils.onlyUnders(all), 0.175f), 1f,
+				2.2f);
+		Utils.fullAnalysys(all, 3000);
+		Utils.byYear(all, "all");
+
+		all = Utils.filterByOdds(Utils.onlyUnders(Utils.noequilibriums(all)), 1.55f, 1.87f);
+		System.out.println("from " + all.size());
+		System.out.println(Utils.getNormalizedProfit(all));
+		System.out.println(Utils.getNormalizedYield(all));
+		System.out.println("1 in " + Utils.evaluateRecordNormalized(all));
+		LineChart.draw(Utils.createProfitMovementData(all), 3000);
+
+		// ArrayList<FinalEntry> withTH1 = Utils.withBestSettings(byLeagueYear,
+		// 4);
 		// Utils.fullAnalysys(withTHU, 0);
 		// Utils.fullAnalysys(withTH1, 1);
 		// Utils.fullAnalysys(withTH2, 2);
 		// Utils.fullAnalysys(withTH3, 3);
 		// Utils.fullAnalysys(withTH4, 4);
-//		 Utils.fullAnalysys(withTH5, 5);
-//		 Utils.fullAnalysys(withTH6, 6);
-//		 Utils.fullAnalysys(withTH7, 7);
-//		 Utils.fullAnalysys(withTH8, 8);
-		 
-		 Utils.byYear(Utils.onlyUnders(all), "all");
-		 Utils.byYear(withTH1,"th(1)");
-		 Utils.byYear(withTH2,"th(2)");
-		 Utils.byYear(withTH3,"th(3)");
-		 Utils.byYear(withTH4,"th(4)");
+		// Utils.fullAnalysys(withTH5, 5);
+		// Utils.fullAnalysys(withTH6, 6);
+		// Utils.fullAnalysys(withTH7, 7);
+		// Utils.fullAnalysys(withTH8, 8);
+		// Utils.byYear(withTH1, "equilibriums");
+
+		// Utils.byYear(withTH1,"th(1)");
+		// Utils.byYear(withTH2,"th(2)");
+		// Utils.byYear(withTH3,"th(3)");
+		// Utils.byYear(withTH4,"th(4)");
 	}
 
 	private static void populateForAnalysisFromDB(int start, int end, ArrayList<FinalEntry> all,
@@ -559,8 +582,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!sh.getSheetName().equals("I2"))
-			// continue;
+			if (!sh.getSheetName().equals("I1"))
+				continue;
 			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
 

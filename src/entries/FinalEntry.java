@@ -37,7 +37,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		this.lower = i.lower;
 		this.value = i.value;
 	}
-	
+
 	public float getPrediction() {
 		return prediction;
 	}
@@ -98,8 +98,20 @@ public class FinalEntry implements Comparable<FinalEntry> {
 
 	}
 
+	public float getNormalizedProfit() {
+		if (fixture.getTotalGoals() < 0)
+			return 0f;
+		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
+		float betUnit = 1f / (coeff - 1);
+		if (success())
+			return 1f;
+		else
+			return -betUnit;
+	}
+
 	@Override
 	public int compareTo(FinalEntry o) {
 		return prediction.compareTo(o.prediction);
 	}
+
 }

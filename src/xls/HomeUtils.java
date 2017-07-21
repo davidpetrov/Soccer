@@ -8,6 +8,7 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 
 import entries.HomeEntry;
 import main.ExtendedFixture;
+import utils.FixtureUtils;
 import utils.Utils;
 
 public class HomeUtils {
@@ -19,8 +20,8 @@ public class HomeUtils {
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 5; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = Utils.getByMatchday(all, i);
-			ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all, i);
+			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<HomeEntry> finals = new ArrayList<>();
 			for (int j = 0; j < current.size(); j++) {

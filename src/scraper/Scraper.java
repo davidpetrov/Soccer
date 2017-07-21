@@ -54,7 +54,7 @@ public class Scraper {
 	public static final DateFormat FORMATFULL = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
 	public static final String BASE = "http://int.soccerway.com/";
 	public static final String OUSUFFIX = "#over-under;2;2.50;0";
-	public static final int CURRENT_YEAR = 2016;
+	public static final int CURRENT_YEAR = 2017;
 
 	public static void main(String[] args)
 			throws IOException, ParseException, InterruptedException, ExecutionException {
@@ -79,16 +79,16 @@ public class Scraper {
 		// System.out.println(list.size());
 		// ====================================================================
 
-//		 ArrayList<ExtendedFixture> list = collect("USA", 2017, null);
+		// ArrayList<ExtendedFixture> list = collect("BRB", 2017, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-//		 XlSUtils.storeInExcel(list, "USA", 2017, "manual");
+		// XlSUtils.storeInExcel(list, "BRB", 2017, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-//		 ArrayList<ExtendedFixture> list = odds("USA", 2017, null);
-//		 XlSUtils.storeInExcel(list, "USA", 2017, "odds");
+//		ArrayList<ExtendedFixture> list = odds("NOR", 2017, null);
+//		XlSUtils.storeInExcel(list, "NOR", 2017, "odds");
 		// nextMatches("GER", null);
 		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
@@ -97,21 +97,20 @@ public class Scraper {
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-//		 XlSUtils.combine("USA", 2017, "manual");
+		// XlSUtils.combine("BRB", 2017, "manual");
 		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
-//		 XlSUtils.fillMissingShotsData("USA", 2017, false);
+		// XlSUtils.fillMissingShotsData("BRB", 2017, false);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		checkAndUpdate("SPA2", OnlyTodayMatches.FALSE);	
-//		checkAndUpdate("ARG", OnlyTodayMatches.FALSE);	
+		 checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
+//		 checkAndUpdate("USA", OnlyTodayMatches.FALSE);
 		// updateInParallel();
 
 		// fastOdds("SPA", 2016, null);
-		
-		
+
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
 
@@ -211,7 +210,7 @@ public class Scraper {
 		HSSFSheet sh = workbook.getSheet(competition);
 
 		ArrayList<ExtendedFixture> all = XlSUtils.selectAll(sh, 0);
-		// problem when no pending fixtures?
+		// problem when no pendingma fixtures?
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
 
@@ -1118,8 +1117,12 @@ public class Scraper {
 				ArrayList<String> links = new ArrayList<>();
 				for (WebElement i : list) {
 					// better logic here?
-					if (i.getText().contains("-") && isFixtureLink(i.getAttribute("href")))
-						links.add(i.getAttribute("href"));
+					String href = i.getAttribute("href");
+					System.out.println(href);
+					if (i.getText().contains("-") && isFixtureLink(href)) {
+						links.add(href);
+
+					}
 				}
 
 				System.out.println(links);
