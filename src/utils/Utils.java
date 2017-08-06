@@ -36,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import charts.LineChart;
+import constants.MinMaxOdds;
 import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.FullEntry;
@@ -469,7 +470,6 @@ public class Utils {
 		return filtered;
 	}
 
-
 	public static float[] getScaledProfit(ArrayList<FinalEntry> finals, float f) {
 		float profit = 0.0f;
 		float staked = 0f;
@@ -685,6 +685,28 @@ public class Utils {
 		return result;
 	}
 
+	/**
+	 * Combines two list of finals whit ratio weighted predictions
+	 * 
+	 * @param finals1
+	 * @param finals2
+	 * @param ratio
+	 * @return
+	 */
+	public static ArrayList<FinalEntry> combineDiff(ArrayList<FinalEntry> finals1, ArrayList<FinalEntry> finals2,
+			float ratio) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry fe : finals1) {
+			FinalEntry other = Utils.getFE(finals2, fe);
+			if (other != null) {
+				FinalEntry combined = new FinalEntry(fe);
+				fe.prediction = ratio * fe.prediction + (1f - ratio) * other.prediction;
+				result.add(new FinalEntry(combined));
+			}
+		}
+		return result;
+	}
+
 	private static FinalEntry getFE(ArrayList<FinalEntry> finals2, FinalEntry fe) {
 		for (FinalEntry i : finals2) {
 			if (i.fixture.equals(fe.fixture))
@@ -791,8 +813,7 @@ public class Utils {
 		analysys(all, year, true);
 		LineChart.draw(Utils.createProfitMovementData(Utils.noequilibriums(all)), 3000);
 
-		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
-		// 0.5f, 0f).withShots(1f);
+		Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(1f);
 		//
 		// initial = XlSUtils.findValueByEvaluation(all, initial);
 		// System.out.println("=======================================================================");
@@ -800,11 +821,12 @@ public class Utils {
 		// ArrayList<FinalEntry> values = XlSUtils.restrict(all, initial);
 		// analysys(values, year);
 		//
-		// initial = XlSUtils.findThreshold(all, initial);
-		// ArrayList<FinalEntry> withTH = XlSUtils.restrict(all, initial);
-		// System.out.println("=======================================================================");
-		// System.out.println("Optimal th is " + initial.threshold);
-		// analysys(withTH, year);
+		initial = XlSUtils.findThreshold(all, initial, MaximizingBy.UNDERS);
+		ArrayList<FinalEntry> withTH = XlSUtils.restrict(all, initial);
+		System.out.println("=======================================================================");
+		System.out.println("Optimal th is " + initial.threshold);
+		analysys(onlyUnders(withTH), year, true);
+		LineChart.draw(Utils.createProfitMovementData(onlyUnders(withTH)), 3000);
 		//
 		// initial = XlSUtils.findValueByEvaluation(withTH, initial);
 		// System.out.println("=======================================================================");
@@ -868,6 +890,11 @@ public class Utils {
 		ArrayList<Stats> byOdds = byOdds(noEquilibriums, "", verbose);
 		stats.addAll(byOdds);
 
+		if (verbose)
+			System.out.println();
+		ArrayList<Stats> byValue = byValue(noEquilibriums, "", verbose);
+		stats.addAll(byValue);
+
 		Stats underStats = new Stats(unders, "unders");
 		if (verbose)
 			System.out.println(underStats);
@@ -895,6 +922,9 @@ public class Utils {
 		System.out.println();
 		ArrayList<Stats> byOddsOvers = byOdds(overs, "overs", verbose);
 		stats.addAll(byOddsOvers);
+
+		System.out.println();
+		Utils.byYear(noEquilibriums, "all");
 
 		Stats allOvers = new Stats(allOvers(Utils.onlyFixtures(noEquilibriums)), "all Overs");
 		stats.add(allOvers);
@@ -939,12 +969,19 @@ public class Utils {
 			System.out.println("Soft lines wins: " + format((float) wins / certs) + " draws: "
 					+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
 
+		System.out.println("Normalized bet size: ");
+		System.out.println(
+				all.size() + " normalized all with rate: " + String.format("%.2f", 100 * Utils.getSuccessRate(all))
+						+ " profit: " + String.format("%.2f", getNormalizedProfit(all)) + " yield: "
+						+ String.format("%.2f%%", 100 * getNormalizedYield(all))
+						+ ((getNormalizedProfit(all) >= 0f && !all.isEmpty())
+								? (" 1 in " + String.format("%.2f", evaluateRecordNormalized(all))) : ""));
+
+		System.out.println();
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
 		stats.stream().filter(v -> verbose ? true : (v.getPvalueOdds() > 4 && !v.all.isEmpty()))
 				.forEach(System.out::println);
 	}
-	
-	
 
 	private static ArrayList<Stats> byCertaintyandCOT(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
 		ArrayList<Stats> result = new ArrayList<>();
@@ -1055,6 +1092,67 @@ public class Utils {
 		result.add(new Stats(under18, prefix + " " + "1.41 - 1.80"));
 		result.add(new Stats(under22, prefix + " " + "1.81 - 2.20"));
 		result.add(new Stats(over22, prefix + " " + " > 2.21"));
+
+		return result;
+
+	}
+
+	private static ArrayList<Stats> byValue(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
+		ArrayList<Stats> result = new ArrayList<>();
+		ArrayList<FinalEntry> under09 = new ArrayList<>();
+		ArrayList<FinalEntry> under1 = new ArrayList<>();
+		ArrayList<FinalEntry> under110 = new ArrayList<>();
+		ArrayList<FinalEntry> under120 = new ArrayList<>();
+		ArrayList<FinalEntry> under130 = new ArrayList<>();
+		ArrayList<FinalEntry> under140 = new ArrayList<>();
+		ArrayList<FinalEntry> under150 = new ArrayList<>();
+		ArrayList<FinalEntry> under160 = new ArrayList<>();
+		ArrayList<FinalEntry> over160 = new ArrayList<>();
+
+		for (FinalEntry i : all) {
+			float value = i.getValue();
+			if (value <= 0.9f) {
+				under09.add(i);
+			} else if (value <= 1f) {
+				under1.add(i);
+			} else if (value <= 1.10f) {
+				under110.add(i);
+			} else if (value <= 1.20f) {
+				under120.add(i);
+			} else if (value <= 1.30f) {
+				under130.add(i);
+			} else if (value <= 1.40f) {
+				under140.add(i);
+			} else if (value <= 1.50f) {
+				under150.add(i);
+			} else if (value <= 1.60f) {
+				under160.add(i);
+			} else {
+				over160.add(i);
+			}
+		}
+
+		if (verbose) {
+			System.out.println(new Stats(under09, prefix + " " + "< 0.9"));
+			System.out.println(new Stats(under1, prefix + " " + "0.9 - 1.0"));
+			System.out.println(new Stats(under110, prefix + " " + "1.00 - 1.10"));
+			System.out.println(new Stats(under120, prefix + " " + "1.10 - 1.2"));
+			System.out.println(new Stats(under130, prefix + " " + "1.2 - 1.3"));
+			System.out.println(new Stats(under140, prefix + " " + "1.3 - 1.4"));
+			System.out.println(new Stats(under150, prefix + " " + "1.4 - 1.5"));
+			System.out.println(new Stats(under160, prefix + " " + "1.5 - 1.6"));
+			System.out.println(new Stats(over160, prefix + " " + " > 1.6"));
+		}
+
+		result.add(new Stats(under09, prefix + " " + "< 0.9"));
+		result.add(new Stats(under1, prefix + " " + "0.9 - 1.0"));
+		result.add(new Stats(under110, prefix + " " + "1.0 - 1.10"));
+		result.add(new Stats(under120, prefix + " " + "1.1 - 1.2"));
+		result.add(new Stats(under130, prefix + " " + "1.2 - 1.3"));
+		result.add(new Stats(under140, prefix + " " + "1.3 - 1.4"));
+		result.add(new Stats(under150, prefix + " " + "1.4 - 1.5"));
+		result.add(new Stats(under160, prefix + " " + "1.5 - 1.6"));
+		result.add(new Stats(over160, prefix + " " + "> 1.6"));
 
 		return result;
 
@@ -1707,7 +1805,7 @@ public class Utils {
 	public static float evaluateRecord(ArrayList<FinalEntry> all) {
 		return pValueCalculator(all.size(), Utils.getYield(all), Utils.getAvgOdds(all));
 	}
-	
+
 	public static float evaluateRecordNormalized(ArrayList<FinalEntry> all) {
 		return pValueCalculator(all.size(), Utils.getNormalizedYield(all), Utils.getAvgOdds(all));
 	}
@@ -1820,7 +1918,7 @@ public class Utils {
 				lastNotPending = all.get(i).date;
 		}
 
-		return /*noPendings ? new Date() :*/ lastNotPending;
+		return /* noPendings ? new Date() : */ lastNotPending;
 
 	}
 
@@ -2253,11 +2351,11 @@ public class Utils {
 	}
 
 	public static ArrayList<FinalEntry> runWithPlayersData(ArrayList<ExtendedFixture> current,
-			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary, HSSFSheet sheet, float th)
+			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary, ArrayList<ExtendedFixture> all, float th)
 					throws ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (ExtendedFixture i : current) {
-			float eval = evaluatePlayers(i, pfs, dictionary, sheet);
+			float eval = evaluatePlayers(i, pfs, dictionary, all);
 			FinalEntry fe = new FinalEntry(i, eval/* >=0.55f ? 0f : 1f */, i.result, th, th, th);
 			// fe.prediction = fe.isOver() ? 0f : 1f;
 			if (fe.getValue() > 1.05f)
@@ -2267,32 +2365,33 @@ public class Utils {
 	}
 
 	public static float evaluatePlayers(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
-			HashMap<String, String> dictionary, HSSFSheet sheet) throws ParseException {
+			HashMap<String, String> dictionary, ArrayList<ExtendedFixture> all) throws ParseException {
+		// The shots data from soccerway(opta) does not add the goals as shots,
+		// must be added for more accurate predictions and equivalancy with
+		// alleurodata
+		boolean manual = Arrays.asList(MinMaxOdds.MANUAL).contains(ef.competition);
 
-		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true, sheet);
-		float awayEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, false, sheet);
+		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true, all);
+		float awayEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, false, all);
 
 		// -----------------------------------------------
-		// poisson weighted adjusted with pfs team expectancy)
-		float avgHome = XlSUtils.selectAvgShotsHome(sheet, ef.date);
-		float avgAway = XlSUtils.selectAvgShotsAway(sheet, ef.date);
-		float homeShotsFor = XlSUtils.selectAvgHomeShotsFor(sheet, ef.homeTeam, ef.date);
-		float homeShotsAgainst = XlSUtils.selectAvgHomeShotsAgainst(sheet, ef.homeTeam, ef.date);
-		float awayShotsFor = XlSUtils.selectAvgAwayShotsFor(sheet, ef.awayTeam, ef.date);
-		float awayShotsAgainst = XlSUtils.selectAvgAwayShotsAgainst(sheet, ef.awayTeam, ef.date);
+		// shots adjusted with pfs team expectancy)
+		Pair avgShotsGeneral = FixtureUtils.selectAvgShots(all, ef.date, manual);
+		float avgHome = avgShotsGeneral.home;
+		float avgAway = avgShotsGeneral.away;
+		Pair avgShotsHomeTeam = FixtureUtils.selectAvgShotsHome(all, ef.homeTeam, ef.date, manual);
+		float homeShotsFor = avgShotsHomeTeam.home;
+		float homeShotsAgainst = avgShotsHomeTeam.away;
+		Pair avgShotsAwayTeam = FixtureUtils.selectAvgShotsAway(all, ef.awayTeam, ef.date, manual);
+		float awayShotsFor = avgShotsAwayTeam.home;
+		float awayShotsAgainst = avgShotsAwayTeam.away;
 
 		float lambda = avgAway == 0 ? 0 : homeShotsFor * awayShotsAgainst / avgAway;
 		float mu = avgHome == 0 ? 0 : awayShotsFor * homeShotsAgainst / avgHome;
 
-		// float homeAvgFor = selectAvgHomeTeamFor(sheet, f.homeTeam, f.date);
-		// float awayAvgFor = selectAvgAwayTeamFor(sheet, f.awayTeam, f.date);
-
-		// float homeRatio = homeAvgFor / homeShotsFor;
-		// float awayRatio = awayAvgFor / awayShotsFor;
-
-		// return Utils.poissonOver(homeRatio * lambda, awayRatio * mu);
-		float avgShotsUnder = XlSUtils.AvgShotsWhenUnder(sheet, ef.date);
-		float avgShotsOver = XlSUtils.AvgShotsWhenOver(sheet, ef.date);
+		Pair avgShotsByType = FixtureUtils.selectAvgShotsByType(all, ef.date, manual);
+		float avgShotsUnder = avgShotsByType.home;
+		float avgShotsOver = avgShotsByType.away;
 		float expected = homeEstimate * lambda + awayEstimate * mu;
 
 		float dist = avgShotsOver - avgShotsUnder;
@@ -2319,15 +2418,19 @@ public class Utils {
 	}
 
 	private static float estimateGoalFromPlayerStats(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
-			HashMap<String, String> dictionary, boolean home, HSSFSheet sheet) throws ParseException {
+			HashMap<String, String> dictionary, boolean home, ArrayList<ExtendedFixture> all) throws ParseException {
 		ArrayList<PlayerFixture> homePlayers = getPlayers(ef, home, pfs, dictionary);
+		if (!Utils.validatePlayers(homePlayers))
+			System.out.println("Not a valid squad for " + ef);
 		// printPlayers(homePlayers);
 		ArrayList<Player> playerStatsHome = createStatistics(ef, home, pfs, dictionary);
 		HashMap<String, Player> homeHash = (HashMap<String, Player>) playerStatsHome.stream()
 				.collect(Collectors.toMap(Player::getName, Function.identity()));
 
-		float homeAvgFor = home ? XlSUtils.selectAvgHomeTeamFor(sheet, ef.homeTeam, ef.date)
-				: XlSUtils.selectAvgAwayTeamFor(sheet, ef.awayTeam, ef.date);
+		float avgGoalsHome = FixtureUtils.selectAvgHomeTeamFor(all, ef.homeTeam, ef.date);
+		float avgGoalsAway = FixtureUtils.selectAvgAwayTeamFor(all, ef.awayTeam, ef.date);
+
+		float homeAvgFor = home ? avgGoalsHome : avgGoalsAway;
 		// float homeAvgFor = XlSUtils.selectAvgFor(sheet, home ? ef.homeTeam :
 		// ef.awayTeam, ef.date);
 		ArrayList<Player> keyAttackingPlayers = new ArrayList<>();
@@ -2362,6 +2465,24 @@ public class Utils {
 		// }
 
 		return homeEstimate / homeAvgFor;
+	}
+
+	private static boolean validatePlayers(ArrayList<PlayerFixture> players) {
+		int lineups = 0;
+		int subs = 0;
+
+		for (PlayerFixture i : players) {
+			if (i.lineup)
+				lineups++;
+			if (i.substitute)
+				subs++;
+		}
+
+		boolean result = lineups == 11 && subs <= 3;
+		if (!result)
+			System.out.println("Not a valid squad for " + (players.isEmpty() ? " " : players.get(0).team));
+
+		return result;
 	}
 
 	private static ArrayList<Player> createStatistics(ExtendedFixture i, boolean home, ArrayList<PlayerFixture> pfs,
@@ -2735,6 +2856,19 @@ public class Utils {
 		System.out.println(new Stats(all, description));
 	}
 
-	
+	/**
+	 * Mutably changes the predictions of a list of finals to (prediction +
+	 * x*impliedProb)/(x+1) where x is the weight of the implied probability of
+	 * the odds
+	 * 
+	 * @param all
+	 * @param oddsImpliedProbabilityWeight
+	 */
+	public static void weightedPredictions(ArrayList<FinalEntry> all, float oddsImpliedProbabilityWeight) {
+		for (FinalEntry i : all) {
+			float gain = i.prediction > i.threshold ? i.fixture.maxOver : i.fixture.maxUnder;
+			i.prediction = (i.prediction + oddsImpliedProbabilityWeight / gain) / (oddsImpliedProbabilityWeight + 1f);
+		}
+	}
 
 }

@@ -52,15 +52,10 @@ public class Test {
 	public static void main(String[] args) throws JSONException, IOException, InterruptedException, ExecutionException {
 		long start = System.currentTimeMillis();
 
-		// simplePredictions();
-
 		// Results.eval("estimateBoth");
 		// Results.eval("smooth");
 		// Results.eval("test");
 
-		// stored24();
-
-		// makePredictions();
 		// asianPredictions();
 
 		// float total = 0f;
@@ -72,10 +67,10 @@ public class Test {
 		// makePredictions();
 
 		float total = 0f;
-		int startY = 2005;
-		int end = 2005;
+		int startY = 2013;
+		int end = 2016;
 		for (int year = startY; year <= end; year++)
-			total += simulation(year, false);
+			total += simulation(year, DataType.ALLEURODATA);
 		System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
@@ -83,17 +78,11 @@ public class Test {
 
 		// accumulators(2015, 2015);
 
-		// analysis(2005, 2016, DataType.ALLEURODATA);
+		// analysis(2005, 2015, DataType.ALLEURODATA);
 
 		// aggregateInterval();
 
 		// stats();
-
-		// optimals();
-		// for (int year = 2013; year <= 2013; year++)
-		// aggregate(year, 5);
-
-		// optimalsbyCompetition();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -105,7 +94,7 @@ public class Test {
 		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
 
 		// populateForAnalysis(start, end, all, byLeagueYear, type);
-		populateForAnalysisFromDB(start, end, all, byLeagueYear, type);
+		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "pfs");
 
 		// ArrayList<FinalEntry> ita = (ArrayList<FinalEntry>)
 		// byLeagueYear.get("I1").values().stream()
@@ -149,17 +138,19 @@ public class Test {
 		// ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear,
 		// 4, MaximizingBy.UNDERS);
 
-		ArrayList<FinalEntry> restricted = Utils.filterByOdds(Utils.cotRestrict(Utils.onlyUnders(all), 0.175f), 1f,
-				2.2f);
+		// ArrayList<FinalEntry> restricted =
+		// Utils.filterByOdds(Utils.cotRestrict(Utils.onlyUnders(all), 0.175f),
+		// 1f,
+		// 2.2f);
 		Utils.fullAnalysys(all, 3000);
-		Utils.byYear(all, "all");
-
-		all = Utils.filterByOdds(Utils.onlyUnders(Utils.noequilibriums(all)), 1.55f, 1.87f);
-		System.out.println("from " + all.size());
-		System.out.println(Utils.getNormalizedProfit(all));
-		System.out.println(Utils.getNormalizedYield(all));
-		System.out.println("1 in " + Utils.evaluateRecordNormalized(all));
-		LineChart.draw(Utils.createProfitMovementData(all), 3000);
+		//
+		// all = Utils.filterByOdds(Utils.onlyUnders(Utils.noequilibriums(all)),
+		// 1.55f, 1.87f);
+		// System.out.println("from " + all.size());
+		// System.out.println(Utils.getNormalizedProfit(all));
+		// System.out.println(Utils.getNormalizedYield(all));
+		// System.out.println("1 in " + Utils.evaluateRecordNormalized(all));
+		// LineChart.draw(Utils.createProfitMovementData(all), 3000);
 
 		// ArrayList<FinalEntry> withTH1 = Utils.withBestSettings(byLeagueYear,
 		// 4);
@@ -181,12 +172,12 @@ public class Test {
 	}
 
 	private static void populateForAnalysisFromDB(int start, int end, ArrayList<FinalEntry> all,
-			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, DataType type)
+			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, DataType type, String description)
 					throws InterruptedException {
 		for (int i = start; i <= end; i++) {
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (String comp : Arrays.asList(MinMaxOdds.SHOTS)) {
-				finals.addAll(SQLiteJDBC.selectFinals(comp, i, "shots"));
+				finals.addAll(SQLiteJDBC.selectFinals(comp, i, description));
 			}
 
 			HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(finals);
@@ -562,14 +553,14 @@ public class Test {
 		}
 	}
 
-	public static float simulation(int year, boolean parsedLeagues)
+	public static float simulation(int year, DataType alleurodata)
 			throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 		// ArrayList<String> dont = new
 		// ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
 
 		FileInputStream file;
-		if (!parsedLeagues)
+		if (alleurodata.equals(DataType.ALLEURODATA))
 			file = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 		else
 			file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
@@ -582,7 +573,7 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!sh.getSheetName().equals("I1"))
+			if (!sh.getSheetName().equals("E0"))
 				continue;
 			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;

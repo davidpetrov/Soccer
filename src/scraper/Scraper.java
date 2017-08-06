@@ -62,17 +62,17 @@ public class Scraper {
 
 		// =================================================================
 
-		// for (int i = 2016; i <= 2016; i++) {
-		// ArrayList<PlayerFixture> list = collectFull("IT", i, null);
-		// //
-		// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
-		// //
-		// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
-		// SQLiteJDBC.storePlayerFixtures(list, i, "IT");
-		// }
+		for (int i = 2013	; i <= 2013; i++) {
+			ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
+			// //
+			// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
+			// //
+			// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
+			SQLiteJDBC.storePlayerFixtures(list, i, "BRA");
+		}
 
-		// collectAndStoreSinglePFS("IT", 2012,
-		// "http://int.soccerway.com/matches/2012/09/23/italy/serie-a/cagliari-calcio/as-roma/1351284/");
+//		 collectAndStoreSinglePFS("BRA", 2016,
+//		 "http://int.soccerway.com/matches/2016/06/23/brazil/serie-a/clube-atletico-mineiro/sport-club-corinthians-paulista/2217995/");
 
 		// ArrayList<PlayerFixture> list =
 		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
@@ -87,8 +87,8 @@ public class Scraper {
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-//		ArrayList<ExtendedFixture> list = odds("NOR", 2017, null);
-//		XlSUtils.storeInExcel(list, "NOR", 2017, "odds");
+		// ArrayList<ExtendedFixture> list = odds("NOR", 2017, null);
+		// XlSUtils.storeInExcel(list, "NOR", 2017, "odds");
 		// nextMatches("GER", null);
 		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
@@ -105,8 +105,8 @@ public class Scraper {
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		 checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
-//		 checkAndUpdate("USA", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("USA", OnlyTodayMatches.FALSE);
 		// updateInParallel();
 
 		// fastOdds("SPA", 2016, null);
@@ -755,7 +755,7 @@ public class Scraper {
 
 		ArrayList<PlayerFixture> playerFixtures = new ArrayList<>();
 
-		Element divLineups = fixture.select("div[id*=match_lineups").first();
+		Element divLineups = fixture.getElementsByClass("combined-lineups-container").first();
 		if (divLineups != null) {
 			Element tableHome = divLineups.select("div.container.left").first();
 			Element tableAway = divLineups.select("div.container.right").first();
@@ -804,7 +804,8 @@ public class Scraper {
 		// Substitutes
 		// ==========================================================
 
-		Element divSubstitutes = fixture.select("div[id*=match_substitutes").first();
+		Elements divsPlayers = fixture.getElementsByClass("combined-lineups-container");
+		Element divSubstitutes  = divsPlayers.size() > 1 ? divsPlayers.get(1) :  null; 
 		if (divSubstitutes != null) {
 			Element tableHome = divSubstitutes.select("div.container.left").first();
 			Element tableAway = divSubstitutes.select("div.container.right").first();
@@ -939,7 +940,7 @@ public class Scraper {
 								updatePlayer(goalScorer, playerFixtures, true);
 
 							if (splitByMinute.length > 1) {
-								// Extra info like assisted by, PG or OG
+								// Extra info like assistedS by, PG or OG
 								String extraString = splitByMinute[1];
 
 								if (extraString.contains("assist by")) {

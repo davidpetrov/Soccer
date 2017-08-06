@@ -203,10 +203,11 @@ public class FixtureUtils {
 	 * 
 	 * @param all
 	 * @param date
+	 * @param manual
 	 * @return
 	 * 
 	 */
-	public static Pair selectAvgShots(ArrayList<ExtendedFixture> all, Date date) {
+	public static Pair selectAvgShots(ArrayList<ExtendedFixture> all, Date date, boolean manual) {
 		float sumHome = 0f;
 		float sumAway = 0f;
 		int count = 0;
@@ -215,6 +216,11 @@ public class FixtureUtils {
 			if (i.date.before(date)) {
 				sumHome += i.shotsHome;
 				sumAway += i.shotsAway;
+				if (manual) {
+					sumHome += i.result.goalsHomeTeam;
+					sumAway += i.result.goalsAwayTeam;
+				}
+
 				count++;
 			}
 
@@ -229,10 +235,11 @@ public class FixtureUtils {
 	 * 
 	 * @param all
 	 * @param date
+	 * @param manual 
 	 * @return
 	 * 
 	 */
-	public static Pair selectAvgShotsByType(ArrayList<ExtendedFixture> all, Date date) {
+	public static Pair selectAvgShotsByType(ArrayList<ExtendedFixture> all, Date date, boolean manual) {
 		float sumUnder = 0f;
 		float sumOver = 0f;
 		int countUnder = 0;
@@ -242,9 +249,13 @@ public class FixtureUtils {
 			if (i.date.before(date))
 				if (i.getTotalGoals() < 2.5) {
 					sumUnder += i.getShotsTotal();
+					if (manual)
+						sumUnder += i.getTotalGoals();
 					countUnder++;
 				} else {
 					sumOver += i.getShotsTotal();
+					if (manual)
+						sumOver += i.getTotalGoals();
 					countOver++;
 				}
 		float avgUnder = countUnder == 0 ? 0f : sumUnder / countUnder;
@@ -261,7 +272,7 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static Pair selectAvgShotsHome(ArrayList<ExtendedFixture> all, String homeTeam, Date date) {
+	public static Pair selectAvgShotsHome(ArrayList<ExtendedFixture> all, String homeTeam, Date date, boolean manual) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
@@ -270,6 +281,10 @@ public class FixtureUtils {
 			if (i.date.before(date) && i.homeTeam.equals(homeTeam)) {
 				sumFor += i.shotsHome;
 				sumAgainst += i.shotsAway;
+				if (manual) {
+					sumFor += i.result.goalsHomeTeam;
+					sumAgainst += i.result.goalsAwayTeam;
+				}
 				count++;
 			}
 
@@ -286,7 +301,7 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static Pair selectAvgShotsAway(ArrayList<ExtendedFixture> all, String awayTeam, Date date) {
+	public static Pair selectAvgShotsAway(ArrayList<ExtendedFixture> all, String awayTeam, Date date, boolean manual) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
@@ -295,12 +310,51 @@ public class FixtureUtils {
 			if (i.date.before(date) && i.awayTeam.equals(awayTeam)) {
 				sumFor += i.shotsAway;
 				sumAgainst += i.shotsHome;
+				if (manual) {
+					sumFor += i.result.goalsAwayTeam;
+					sumAgainst += i.result.goalsHomeTeam;
+				}
 				count++;
 			}
 
 		float avgHome = all.size() == 0 ? 0f : sumFor / count;
 		float avgAway = all.size() == 0 ? 0f : sumAgainst / count;
 		return Pair.of(avgHome, avgAway);
+	}
+
+	/**
+	 * Calculate the average goal for the homeTeam
+	 * 
+	 * @param all
+	 * @param homeTeam
+	 * @param date
+	 * @return
+	 */
+	public static float selectAvgHomeTeamFor(ArrayList<ExtendedFixture> all, String homeTeam, Date date) {
+		float sumFor = 0f;
+		int count = 0;
+
+		for (ExtendedFixture i : all)
+			if (i.date.before(date) && i.homeTeam.equals(homeTeam)) {
+				sumFor += i.result.goalsHomeTeam;
+				count++;
+			}
+
+		return count == 0 ? 0f : sumFor / count;
+
+	}
+
+	public static float selectAvgAwayTeamFor(ArrayList<ExtendedFixture> all, String awayTeam, Date date) {
+		float sumFor = 0f;
+		int count = 0;
+
+		for (ExtendedFixture i : all)
+			if (i.date.before(date) && i.awayTeam.equals(awayTeam)) {
+				sumFor += i.result.goalsAwayTeam;
+				count++;
+			}
+
+		return count == 0 ? 0f : sumFor / count;
 	}
 
 }
