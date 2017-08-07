@@ -44,7 +44,7 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	private static ArrayList<ExtendedFixture> selectLastAll(ArrayList<ExtendedFixture> all, String team, int count,
+	public static ArrayList<ExtendedFixture> selectLastAll(ArrayList<ExtendedFixture> all, String team, int count,
 			Date date) {
 		ArrayList<ExtendedFixture> result = new ArrayList<>();
 		for (ExtendedFixture i : all) {
@@ -140,10 +140,8 @@ public class FixtureUtils {
 			// finalScore += settings.weightedPoisson * poissonWeighted(f,
 			// sheet);
 			//
-			// if (settings.htCombo != 0f)
-			// finalScore += settings.htCombo * (settings.halfTimeOverOne *
-			// halfTimeOnly(f, sheet, 1)
-			// + (1f - settings.halfTimeOverOne) * halfTimeOnly(f, sheet, 2));
+			if (settings.htCombo != 0f)
+				finalScore += settings.htCombo * Classifiers.halfTime(f, all, settings.halfTimeOverOne);
 
 			if (settings.shots != 0f)
 				finalScore += settings.shots * Classifiers.shots(f, all);
@@ -204,10 +202,11 @@ public class FixtureUtils {
 	 * @param all
 	 * @param date
 	 * @param manual
+	 * @param goalsWeight
 	 * @return
 	 * 
 	 */
-	public static Pair selectAvgShots(ArrayList<ExtendedFixture> all, Date date, boolean manual) {
+	public static Pair selectAvgShots(ArrayList<ExtendedFixture> all, Date date, boolean manual, float goalsWeight) {
 		float sumHome = 0f;
 		float sumAway = 0f;
 		int count = 0;
@@ -217,8 +216,8 @@ public class FixtureUtils {
 				sumHome += i.shotsHome;
 				sumAway += i.shotsAway;
 				if (manual) {
-					sumHome += i.result.goalsHomeTeam;
-					sumAway += i.result.goalsAwayTeam;
+					sumHome += goalsWeight * i.result.goalsHomeTeam;
+					sumAway += goalsWeight * i.result.goalsAwayTeam;
 				}
 
 				count++;
@@ -235,11 +234,13 @@ public class FixtureUtils {
 	 * 
 	 * @param all
 	 * @param date
-	 * @param manual 
+	 * @param manual
+	 * @param goalsWeight
 	 * @return
 	 * 
 	 */
-	public static Pair selectAvgShotsByType(ArrayList<ExtendedFixture> all, Date date, boolean manual) {
+	public static Pair selectAvgShotsByType(ArrayList<ExtendedFixture> all, Date date, boolean manual,
+			float goalsWeight) {
 		float sumUnder = 0f;
 		float sumOver = 0f;
 		int countUnder = 0;
@@ -250,12 +251,12 @@ public class FixtureUtils {
 				if (i.getTotalGoals() < 2.5) {
 					sumUnder += i.getShotsTotal();
 					if (manual)
-						sumUnder += i.getTotalGoals();
+						sumUnder += goalsWeight * i.getTotalGoals();
 					countUnder++;
 				} else {
 					sumOver += i.getShotsTotal();
 					if (manual)
-						sumOver += i.getTotalGoals();
+						sumOver += goalsWeight * i.getTotalGoals();
 					countOver++;
 				}
 		float avgUnder = countUnder == 0 ? 0f : sumUnder / countUnder;
@@ -270,9 +271,11 @@ public class FixtureUtils {
 	 * @param all
 	 * @param homeTeam
 	 * @param date
+	 * @param goalsWeight
 	 * @return
 	 */
-	public static Pair selectAvgShotsHome(ArrayList<ExtendedFixture> all, String homeTeam, Date date, boolean manual) {
+	public static Pair selectAvgShotsHome(ArrayList<ExtendedFixture> all, String homeTeam, Date date, boolean manual,
+			float goalsWeight) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
@@ -282,8 +285,8 @@ public class FixtureUtils {
 				sumFor += i.shotsHome;
 				sumAgainst += i.shotsAway;
 				if (manual) {
-					sumFor += i.result.goalsHomeTeam;
-					sumAgainst += i.result.goalsAwayTeam;
+					sumFor += goalsWeight * i.result.goalsHomeTeam;
+					sumAgainst += goalsWeight * i.result.goalsAwayTeam;
 				}
 				count++;
 			}
@@ -299,9 +302,11 @@ public class FixtureUtils {
 	 * @param all
 	 * @param homeTeam
 	 * @param date
+	 * @param goalsWeight
 	 * @return
 	 */
-	public static Pair selectAvgShotsAway(ArrayList<ExtendedFixture> all, String awayTeam, Date date, boolean manual) {
+	public static Pair selectAvgShotsAway(ArrayList<ExtendedFixture> all, String awayTeam, Date date, boolean manual,
+			float goalsWeight) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
@@ -311,8 +316,8 @@ public class FixtureUtils {
 				sumFor += i.shotsAway;
 				sumAgainst += i.shotsHome;
 				if (manual) {
-					sumFor += i.result.goalsAwayTeam;
-					sumAgainst += i.result.goalsHomeTeam;
+					sumFor += goalsWeight * i.result.goalsAwayTeam;
+					sumAgainst += goalsWeight * i.result.goalsHomeTeam;
 				}
 				count++;
 			}

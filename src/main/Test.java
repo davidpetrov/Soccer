@@ -54,7 +54,7 @@ public class Test {
 
 		// Results.eval("estimateBoth");
 		// Results.eval("smooth");
-		// Results.eval("test");
+//		 Results.eval("test");
 
 		// asianPredictions();
 
@@ -66,12 +66,12 @@ public class Test {
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-		float total = 0f;
-		int startY = 2013;
-		int end = 2016;
-		for (int year = startY; year <= end; year++)
-			total += simulation(year, DataType.ALLEURODATA);
-		System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		 float total = 0f;
+		 int startY = 2011;
+		 int end = 2016;
+		 for (int year = startY; year <= end; year++)
+		 total += simulation(year, DataType.ODDSPORTAL);
+		 System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -83,6 +83,8 @@ public class Test {
 		// aggregateInterval();
 
 		// stats();
+
+//		Utils.optimalHTSettings(2005, 2016, DataType.ALLEURODATA, MaximizingBy.BOTH);
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -573,8 +575,8 @@ public class Test {
 		ArrayList<Future<Float>> threadArray = new ArrayList<Future<Float>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!sh.getSheetName().equals("E0"))
-				continue;
+			// if (!sh.getSheetName().equals("E0"))
+			// continue;
 			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
 			// continue;
 

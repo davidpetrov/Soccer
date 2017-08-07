@@ -6,7 +6,11 @@ public class MinMaxOdds {
 
 	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1", "B1" };
 	public static final String[] DRAW = { "I1", "I2", "F2", "P1", "D1", "D2", "SP2" };
+	public static final String[] ALLEURODATA = { "E0", "E1", "E2", "E3", "EC", "SC0", "SC1", "SC2", "SC3", "D1", "D2",
+			"SP1", "SP2", "I1", "I2", "F1", "F2", "N1", "B1", "P1", "T1", "G1" };
 	public static final String[] SHOTS = { "E0", "E1", "E2", "E3", "EC", "SC0", "D1", "SP1", "I1", "F1" };
+	public static final String[] REST = { "SC1", "SC2", "SC3", "D2", "SP2", "I2", "F2", "N1", "B1", "P1", "T1", "G1" };
+	public static final String[] NBPTG = { "N1", "B1", "P1", "T1", "G1" };
 	public static final String[] PFS = { "E0", "E1", "E2", "E3", "EC", "SC0", "SP1", "D1", "I1", "F1" };
 	public static final String[] SHOTSEQUIVALENTS = { "ENG", "ENG2", "ENG3", "ENG4", "ENG5", "SC0", "GER", "SPA", "IT",
 			"FR" };

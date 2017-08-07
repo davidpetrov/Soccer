@@ -62,7 +62,7 @@ public class Scraper {
 
 		// =================================================================
 
-		for (int i = 2013	; i <= 2013; i++) {
+		for (int i = 2012; i <= 2012; i++) {
 			ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
 			// //
 			// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");

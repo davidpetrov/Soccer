@@ -14,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import entries.FinalEntry;
+import entries.HTEntry;
 import settings.Settings;
 import utils.Lines;
 import utils.Utils;
@@ -929,6 +930,60 @@ public class SQLiteJDBC {
 		return result;
 	}
 
+	public static synchronized ArrayList<HTEntry> selectHTData(String competition, int year, String description)
+			throws InterruptedException {
+
+		ArrayList<HTEntry> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from halftimedata" + " where year=" + year + " AND competition="
+					+ addQuotes(competition) + " AND description=" + addQuotes(description) + ";");
+			while (rs.next()) {
+				String date = rs.getString("date");
+				int matchday = rs.getInt("matchday");
+				String homeTeamName = rs.getString("hometeamname");
+				String awayTeamName = rs.getString("awayteamname");
+				int homeGoals = rs.getInt("homeGoals");
+				int awayGoals = rs.getInt("awayGoals");
+				float over = rs.getFloat("over");
+				float under = rs.getFloat("under");
+				Float score = rs.getFloat("score");
+				float thold = rs.getFloat("thold");
+				float lower = rs.getFloat("lower");
+				float upper = rs.getFloat("upper");
+				float value = rs.getFloat("value");
+				float zero = rs.getFloat("zero");
+				float one = rs.getFloat("one");
+				float two = rs.getFloat("two");
+				float more = rs.getFloat("more");
+
+				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals), competition).withMatchday(matchday)
+								.withOdds(0f, 0f, over, under).withYear(year);
+				FinalEntry f = new FinalEntry(ef, score, new Result(homeGoals, awayGoals), thold, lower, upper);
+				f.value = value;
+				HTEntry hte = new HTEntry(f, zero, one, two, more);
+
+				result.add(hte);
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
+	}
+
 	public static Lines closestLine(ExtendedFixture f) {
 		ArrayList<Lines> result = new ArrayList<>();
 		Connection c = null;
@@ -970,6 +1025,51 @@ public class SQLiteJDBC {
 		if (result.isEmpty())
 			System.out.println("NO LINE FOUND for " + f.asianHome);
 		return result.get(0);
+	}
+
+	public static synchronized void storeHTData(ArrayList<HTEntry> halftimeData, int year, String competition,
+			String description) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			for (HTEntry f : halftimeData) {
+
+				String sql = "INSERT INTO HALFTIMEDATA "
+						+ "(DESCRIPTION,YEAR,DATE,COMPETITION,MATCHDAY,HOMETEAMNAME,AWAYTEAMNAME,HOMEGOALS,AWAYGOALS,OVER,UNDER,SCORE,THOLD,LOWER,UPPER,VALUE,ZERO,ONE,TWO,MORE)"
+						+ "VALUES (" + addQuotes(description) + "," + year + ","
+						+ addQuotes(format.format(f.fe.fixture.date)) + "," + addQuotes(competition) + ","
+						+ f.fe.fixture.matchday + "," + addQuotes(f.fe.fixture.homeTeam) + ","
+						+ addQuotes(f.fe.fixture.awayTeam) + "," + f.fe.fixture.result.goalsHomeTeam + ","
+						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.maxOver + "," + f.fe.fixture.maxUnder
+						+ "," + (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
+						+ f.fe.lower + "," + f.fe.upper + "," + f.fe.value + "," + f.zero + "," + f.one + "," + f.two
+						+ "," + f.more + " );";
+				try {
+					if (!Float.isNaN(f.fe.prediction))
+						stmt.executeUpdate(sql);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					System.out.println("tuka");
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
 	}
 
 }

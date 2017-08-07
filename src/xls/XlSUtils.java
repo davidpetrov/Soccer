@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import constants.MinMaxOdds;
 import entries.AsianEntry;
 import entries.FinalEntry;
+import entries.HTEntry;
 import main.AsianLines;
 import main.ExtendedFixture;
 import main.FullFixture;
@@ -2427,8 +2428,8 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
-			 finals = runWithSettingsList(sheet, current, temp);
-//			finals = FixtureUtils.runWithSettingsList(all, current, temp);
+			finals = runWithSettingsList(sheet, current, temp);
+			// finals = FixtureUtils.runWithSettingsList(all, current, temp);
 
 			// finals = runBestTH(sheet, current, "IT", year, 3,
 			// "shots", temp);
@@ -2495,8 +2496,11 @@ public class XlSUtils {
 		// "HALFTIME2", year, sheet.getSheetName());
 		// HashMap<ExtendedFixture, Float> shots = SQLiteJDBC.selectScores(all,
 		// "SHOTS", year, sheet.getSheetName());
-		float th = 0.55f;
-		Settings temp = Settings.shots(sheet.getSheetName());
+		float th = 0.21f;
+		Settings temp = Settings.halfTime(sheet.getSheetName(), 0f);
+		temp.threshold=th;
+		temp.lowerBound=th;
+		temp.upperBound=th;
 		// temp.value = 0.86f;
 		// temp.minOver = 1.9f;
 
@@ -2509,15 +2513,17 @@ public class XlSUtils {
 		// bestCot = pair.away;
 		// System.out.println(bestCot);
 		int maxMatchDay = FixtureUtils.addMatchDay(all);
-		ArrayList<PlayerFixture> pfs = SQLiteJDBC
-				.selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
-						? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) : sheet.getSheetName(), year);
-		ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
-		HashMap<String, String> dictionary = null;
-		if (!allPfs.isEmpty())
-			dictionary = XlSUtils.deduceDictionary(Utils.notPending(all), allPfs);
+		// ArrayList<PlayerFixture> pfs = SQLiteJDBC
+		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
+		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :
+		// sheet.getSheetName(), year);
+		// ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
+		// HashMap<String, String> dictionary = null;
+		// if (!allPfs.isEmpty())
+		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
+		// allPfs);
 
-		for (int i = /*dictionary == null ? 100 : */14; i < maxMatchDay; i++) {
+		for (int i = /* dictionary == null ? 100 : */14; i < maxMatchDay; i++) {
 
 			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Utils.fairValue(current);
@@ -2529,17 +2535,37 @@ public class XlSUtils {
 			// i);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			// finals = Utils.allUnders(current);
-			 finals = FixtureUtils.runWithSettingsList(all, current, temp);
-//			 finals = runWithSettingsList(sheet, current, temp);
+			finals = FixtureUtils.runWithSettingsList(all, current, temp);
+//			ArrayList<HTEntry> halftimeData = new ArrayList<>();
+//			for (FinalEntry j : finals) {
+//				ArrayList<ExtendedFixture> lastHomeTeam = FixtureUtils.selectLastAll(all, j.fixture.homeTeam, 50,
+//						j.fixture.date);
+//				ArrayList<ExtendedFixture> lastAwayTeam = FixtureUtils.selectLastAll(all, j.fixture.awayTeam, 50,
+//						j.fixture.date);
+//				float zero = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 0)
+//						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 0)) / 2;
+//				float one = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 1)
+//						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 1)) / 2;
+//				float two = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 2)
+//						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 2)) / 2;
+//				float more = (Utils.countOverHalfTime(lastHomeTeam, 3) + Utils.countOverHalfTime(lastHomeTeam, 3)) / 2;
+//				HTEntry hte = new HTEntry(j, zero, one, two, more);
+//				halftimeData.add(hte);
+//			}
+//			
+//			SQLiteJDBC.storeHTData(halftimeData, year, sheet.getSheetName(),"ht");
+
+			// finals = runWithSettingsList(sheet, current, temp);
 			// finals = Utils.onlyUnders(finals);
 			// finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3,
 			// "shots", temp);
 			// finals = runWithSettingsList(sheet, current, temp, pfs,
 			// dictionary);
 
-//			ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
-//			finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary, all, 0.525f);
-//			finals = finalsPFS;
+			// ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
+			// finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary,
+			// all, 0.525f);
+			// finals = finalsPFS;
 			// finals = Utils.similarRanking(finals, table);
 
 			// Settings we = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th,
@@ -2557,13 +2583,13 @@ public class XlSUtils {
 			// "shots", temp);
 			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
 			// year, 3, "shots");
-			finals = Utils.noequilibriums(finals);
+			// finals = Utils.noequilibriums(finals);
 
 			// finals = Utils.intersectDiff(finals, finalsPFS);
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-			// finals = Utils.onlyUnders(finals);
+			 finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);

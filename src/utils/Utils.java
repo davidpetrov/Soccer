@@ -40,6 +40,7 @@ import constants.MinMaxOdds;
 import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.FullEntry;
+import entries.HTEntry;
 import main.ExtendedFixture;
 import main.FullFixture;
 import main.GoalLines;
@@ -48,6 +49,7 @@ import main.Player;
 import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
+import main.Test.DataType;
 import results.Results;
 import scraper.Names;
 import scraper.Scraper;
@@ -551,6 +553,17 @@ public class Utils {
 		int count = 0;
 		for (ExtendedFixture f : fixtures) {
 			if (f.getHalfTimeGoals() >= i)
+				count++;
+		}
+
+		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
+	}
+
+	public static float countHalfTimeGoalAvgExact(ArrayList<ExtendedFixture> fixtures, int i) {
+
+		int count = 0;
+		for (ExtendedFixture f : fixtures) {
+			if (f.getHalfTimeGoals() == i)
 				count++;
 		}
 
@@ -2370,26 +2383,27 @@ public class Utils {
 		// must be added for more accurate predictions and equivalancy with
 		// alleurodata
 		boolean manual = Arrays.asList(MinMaxOdds.MANUAL).contains(ef.competition);
+		float goalsWeight = 1f;
 
 		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true, all);
 		float awayEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, false, all);
 
 		// -----------------------------------------------
 		// shots adjusted with pfs team expectancy)
-		Pair avgShotsGeneral = FixtureUtils.selectAvgShots(all, ef.date, manual);
+		Pair avgShotsGeneral = FixtureUtils.selectAvgShots(all, ef.date, manual, goalsWeight);
 		float avgHome = avgShotsGeneral.home;
 		float avgAway = avgShotsGeneral.away;
-		Pair avgShotsHomeTeam = FixtureUtils.selectAvgShotsHome(all, ef.homeTeam, ef.date, manual);
+		Pair avgShotsHomeTeam = FixtureUtils.selectAvgShotsHome(all, ef.homeTeam, ef.date, manual, goalsWeight);
 		float homeShotsFor = avgShotsHomeTeam.home;
 		float homeShotsAgainst = avgShotsHomeTeam.away;
-		Pair avgShotsAwayTeam = FixtureUtils.selectAvgShotsAway(all, ef.awayTeam, ef.date, manual);
+		Pair avgShotsAwayTeam = FixtureUtils.selectAvgShotsAway(all, ef.awayTeam, ef.date, manual, goalsWeight);
 		float awayShotsFor = avgShotsAwayTeam.home;
 		float awayShotsAgainst = avgShotsAwayTeam.away;
 
 		float lambda = avgAway == 0 ? 0 : homeShotsFor * awayShotsAgainst / avgAway;
 		float mu = avgHome == 0 ? 0 : awayShotsFor * homeShotsAgainst / avgHome;
 
-		Pair avgShotsByType = FixtureUtils.selectAvgShotsByType(all, ef.date, manual);
+		Pair avgShotsByType = FixtureUtils.selectAvgShotsByType(all, ef.date, manual, goalsWeight);
 		float avgShotsUnder = avgShotsByType.home;
 		float avgShotsOver = avgShotsByType.away;
 		float expected = homeEstimate * lambda + awayEstimate * mu;
@@ -2869,6 +2883,181 @@ public class Utils {
 			float gain = i.prediction > i.threshold ? i.fixture.maxOver : i.fixture.maxUnder;
 			i.prediction = (i.prediction + oddsImpliedProbabilityWeight / gain) / (oddsImpliedProbabilityWeight + 1f);
 		}
+	}
+
+	/**
+	 * Finds the best half time evaluatuan representing linear combination of
+	 * the average frequencies of 0,1,2 and more half time goals averages for
+	 * both teams The data is selected from database
+	 * 
+	 * @param start
+	 * @param end
+	 * @param dataType
+	 * @throws InterruptedException
+	 */
+	public static void optimalHTSettings(int start, int end, DataType dataType, MaximizingBy maxBy)
+			throws InterruptedException {
+		ArrayList<HTEntry> all = new ArrayList<>();
+
+		for (int i = start; i <= end; i++) {
+			ArrayList<HTEntry> finals = new ArrayList<>();
+			for (String comp : Arrays.asList(MinMaxOdds.SHOTS)) {
+				finals.addAll(SQLiteJDBC.selectHTData(comp, i, "ht"));
+			}
+
+			// HashMap<String, ArrayList<FinalEntry>> byLeague =
+			// Utils.byLeague(finals);
+			// for (java.util.Map.Entry<String, ArrayList<FinalEntry>> league :
+			// byLeague.entrySet()) {
+			// if (!byLeagueYear.containsKey(league.getKey()))
+			// byLeagueYear.put(league.getKey(), new HashMap<>());
+			//
+			// byLeagueYear.get(league.getKey()).put(i, league.getValue());
+
+			// }
+
+			all.addAll(finals);
+		}
+
+		float step = 0.02f;
+
+		float bestProfit = Float.NEGATIVE_INFINITY;
+		String bestDescription = null;
+		float bestx, besty, bestz, bestw;
+		bestx = besty = bestz = bestw = 0f;
+		float bestTH = 0.3f;
+		float bestEval = 1f;
+
+		for (int i = 0; i <= 20; i++) {
+			float currentTH = 0.18f + i * 0.01f;
+			System.out.println(currentTH);
+			for (HTEntry hte : all) {
+				hte.fe.threshold = currentTH;
+				hte.fe.lower = currentTH;
+				hte.fe.upper = currentTH;
+			}
+
+			int xmax = (int) (1f / step);
+			for (int x = 0; x <= xmax; x++) {
+				int ymax = xmax - x;
+				for (int y = 0; y <= ymax; y++) {
+					int zmax = ymax - y;
+					for (int z = 0; z <= zmax; z++) {
+						int w = zmax - z;
+						// System.out.println(x * step + " " + y * step + " " +
+						// z *
+						// step + " " + w * step);
+
+						for (HTEntry hte : all) {
+							hte.fe.prediction = x * step * hte.zero + y * step * hte.one + z * step * hte.two
+									+ w * step * hte.more;
+						}
+
+						float currentProfit;
+						float currEval = 1f;
+						if (maxBy.equals(MaximizingBy.BOTH)) {
+							if (all.size() < 100)
+								continue;
+							currentProfit = getProfitHT(all);
+							currEval = evaluateRecord(getFinals(all));
+						} else if (maxBy.equals(MaximizingBy.UNDERS)) {
+							if (onlyUnders(getFinals(all)).size() < 100)
+								continue;
+							currentProfit = getProfitHT(onlyUndersHT(all));
+							currEval = evaluateRecord(onlyUnders(getFinals(all)));
+
+						} else if (maxBy.equals(MaximizingBy.OVERS)) {
+							if (onlyOvers(getFinals(all)).size() < 100)
+								continue;
+							currentProfit = getProfitHT(onlyOversHT(all));
+							currEval = evaluateRecord(onlyOvers(getFinals(all)));
+						} else {
+							currentProfit = Float.NEGATIVE_INFINITY;
+						}
+
+						if (/* currentProfit > bestProfit */ currEval > bestEval) {
+							bestProfit = currentProfit;
+							bestEval = currEval;
+							bestx = step * x;
+							besty = step * y;
+							bestz = step * z;
+							bestw = step * w;
+							bestTH = currentTH;
+							bestDescription = x * step + "*zero + " + y * step + "*one + " + z * step + " *two+ "
+									+ w * step + " *>=3";
+							System.out.println(bestProfit);
+							System.out.println("1 in " + bestEval);
+						}
+
+					}
+				}
+			}
+		}
+
+		for (HTEntry hte : all) {
+			hte.fe.prediction = bestx * hte.zero + besty * hte.one + bestz * hte.two + bestw * hte.more;
+			hte.fe.threshold = bestTH;
+			hte.fe.lower = bestTH;
+			hte.fe.upper = bestTH;
+		}
+
+		if (maxBy.equals(MaximizingBy.UNDERS))
+			all = onlyUndersHT(all);
+		else if (maxBy.equals(MaximizingBy.OVERS))
+			all = onlyOversHT(all);
+
+		System.out.println(bestProfit);
+		System.out.println(bestTH);
+		System.out.println("1 in " + bestEval);
+		System.out.println(new Stats(getFinals(all), bestDescription));
+
+	}
+
+	private static ArrayList<HTEntry> onlyOversHT(ArrayList<HTEntry> finals) {
+		ArrayList<HTEntry> result = new ArrayList<>();
+		for (HTEntry i : finals) {
+			if (i.fe.prediction >= i.fe.threshold)
+				result.add(i);
+		}
+		return result;
+	}
+
+	private static ArrayList<HTEntry> onlyUndersHT(ArrayList<HTEntry> finals) {
+		ArrayList<HTEntry> result = new ArrayList<>();
+		for (HTEntry i : finals) {
+			if (i.fe.prediction < i.fe.threshold)
+				result.add(i);
+		}
+		return result;
+	}
+
+	/**
+	 * Returns list of final entries from list of ht entries
+	 * 
+	 * @param all
+	 * @return
+	 */
+	private static ArrayList<FinalEntry> getFinals(ArrayList<HTEntry> all) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (HTEntry i : all) {
+			result.add(i.fe);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Returns profit from a list of half time entries
+	 * 
+	 * @param all
+	 * @return
+	 */
+	private static float getProfitHT(ArrayList<HTEntry> all) {
+		float profit = 0f;
+		for (HTEntry i : all) {
+			profit += i.fe.getProfit();
+		}
+		return profit;
 	}
 
 }
