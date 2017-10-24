@@ -54,7 +54,7 @@ public class Test {
 
 		// Results.eval("estimateBoth");
 		// Results.eval("smooth");
-//		 Results.eval("test");
+		 Results.eval("test");
 
 		// asianPredictions();
 
@@ -67,10 +67,10 @@ public class Test {
 		// makePredictions();
 
 		 float total = 0f;
-		 int startY = 2011;
+		 int startY = 2005;
 		 int end = 2016;
 		 for (int year = startY; year <= end; year++)
-		 total += simulation(year, DataType.ODDSPORTAL);
+		 total += simulation(year, DataType.ALLEURODATA);
 		 System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
@@ -78,13 +78,17 @@ public class Test {
 
 		// accumulators(2015, 2015);
 
-		// analysis(2005, 2015, DataType.ALLEURODATA);
+//		analysis(2013, 2016, DataType.ALLEURODATA);
 
 		// aggregateInterval();
 
 		// stats();
 
-//		Utils.optimalHTSettings(2005, 2016, DataType.ALLEURODATA, MaximizingBy.BOTH);
+		// Utils.optimalHTSettings(2005, 2016, DataType.ALLEURODATA,
+		// MaximizingBy.BOTH);
+
+		// Utils.fastSearch(2005, 2016, DataType.ALLEURODATA,
+		// MaximizingBy.BOTH);
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
@@ -95,8 +99,9 @@ public class Test {
 		ArrayList<FinalEntry> all = new ArrayList<>();
 		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
 
-		// populateForAnalysis(start, end, all, byLeagueYear, type);
-		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "pfs");
+		populateForAnalysis(start, end, all, byLeagueYear, type);
+		// populateForAnalysisFromDB(start, end, all, byLeagueYear, type,
+		// "pfs");
 
 		// ArrayList<FinalEntry> ita = (ArrayList<FinalEntry>)
 		// byLeagueYear.get("I1").values().stream()
@@ -577,8 +582,8 @@ public class Test {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (!sh.getSheetName().equals("E0"))
 			// continue;
-			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-			// continue;
+			 if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			 continue;
 
 			// if (!Arrays.asList(MinMaxOdds.PFS).contains(sh.getSheetName()))
 			// continue;
@@ -620,8 +625,8 @@ public class Test {
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-				continue;
+			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			// continue;
 			// if
 			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
 			// continue;

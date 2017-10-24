@@ -30,46 +30,50 @@ import xls.XlSUtils;
 
 public class Predictions {
 
-	public static final ArrayList<String> CHECKLIST = new ArrayList<>();
+	public static ArrayList<String> CHECKLIST = new ArrayList<>();
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
 		//
-		// CHECKLIST.add("ENG");
-		// CHECKLIST.add("ENG2");
-		// CHECKLIST.add("ENG3");
-		// CHECKLIST.add("ENG4");
-		// CHECKLIST.add("ENG5");
-		// CHECKLIST.add("IT");
-		// CHECKLIST.add("IT2");
-		// CHECKLIST.add("FR");
-		// CHECKLIST.add("FR2");
-		// CHECKLIST.add("SPA");
-		// CHECKLIST.add("SPA2");
-		// CHECKLIST.add("GER");
-		// CHECKLIST.add("GER2");
-		// CHECKLIST.add("SCO");
-		// CHECKLIST.add("NED");
-		// CHECKLIST.add("BEL");---------------
-		// CHECKLIST.add("SWI");
-		// CHECKLIST.add("POR");
-		// CHECKLIST.add("GRE");
-		// CHECKLIST.add("TUR");
-		// CHECKLIST.add("BUL");------------------
-		// CHECKLIST.add("RUS");
-		// CHECKLIST.add("AUS");
-		// CHECKLIST.add("DEN");-----------------
-		// CHECKLIST.add("CZE");
+		CHECKLIST.add("ENG");
+//		CHECKLIST.add("ENG2");
+//		CHECKLIST.add("ENG3");
+//		CHECKLIST.add("ENG4");
+//		CHECKLIST.add("ENG5");
+//		CHECKLIST.add("IT");
+//		CHECKLIST.add("IT2");
+//		CHECKLIST.add("FR");
+//		CHECKLIST.add("FR2");
+//		CHECKLIST.add("SPA");
+//		CHECKLIST.add("SPA2");
+//		CHECKLIST.add("GER");
+//		CHECKLIST.add("GER2");
+//		CHECKLIST.add("SCO");
+//		CHECKLIST.add("NED");
+//		CHECKLIST.add("BEL");
+//		CHECKLIST.add("SWI");
+//		CHECKLIST.add("POR");
+//		CHECKLIST.add("GRE");
+//		CHECKLIST.add("TUR");
+//		CHECKLIST.add("BUL");
+//		CHECKLIST.add("RUS");
+//		CHECKLIST.add("AUS");
+//		CHECKLIST.add("DEN");
+//		CHECKLIST.add("CZE");
 //		CHECKLIST.add("ARG");
-		// CHECKLIST.add("POL");-----------------
-		// CHECKLIST.add("CRO");
-		// CHECKLIST.add("SLO");
-		 CHECKLIST.add("USA");
-		// CHECKLIST.add("SWE");
-		 CHECKLIST.add("BRA");
+//		CHECKLIST.add("POL");
+//		CHECKLIST.add("CRO");
+//		CHECKLIST.add("SLO");
+//		CHECKLIST.add("USA");
+//		CHECKLIST.add("SWE");
+//		CHECKLIST.add("NOR");
+//		CHECKLIST.add("FIN");
+		CHECKLIST.add("BRA");
 //		CHECKLIST.add("BRB");
 
 //		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.TRUE,
 //		 UpdateType.AUTOMATIC);
+
+//		 DualListBox.init(CHECKLIST);
 
 		predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL, OnlyTodayMatches.FALSE);
 

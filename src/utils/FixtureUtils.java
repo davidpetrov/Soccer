@@ -335,31 +335,75 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static float selectAvgHomeTeamFor(ArrayList<ExtendedFixture> all, String homeTeam, Date date) {
+	public static Pair selectAvgHomeTeam(ArrayList<ExtendedFixture> all, String homeTeam, Date date) {
 		float sumFor = 0f;
+		float sumAgainst = 0f;
 		int count = 0;
 
 		for (ExtendedFixture i : all)
 			if (i.date.before(date) && i.homeTeam.equals(homeTeam)) {
 				sumFor += i.result.goalsHomeTeam;
+				sumAgainst += i.result.goalsAwayTeam;
 				count++;
 			}
 
-		return count == 0 ? 0f : sumFor / count;
+		float forr = count == 0 ? 0f : sumFor / count;
+		float against = count == 0 ? 0f : sumAgainst / count;
+		return Pair.of(forr, against);
 
 	}
 
-	public static float selectAvgAwayTeamFor(ArrayList<ExtendedFixture> all, String awayTeam, Date date) {
+	/**
+	 * Calculates the averages for and against goal for the given away team
+	 * playing away
+	 * 
+	 * @param all
+	 * @param awayTeam
+	 * @param date
+	 * @return
+	 */
+	public static Pair selectAvgAwayTeam(ArrayList<ExtendedFixture> all, String awayTeam, Date date) {
 		float sumFor = 0f;
+		float sumAgainst = 0f;
 		int count = 0;
 
 		for (ExtendedFixture i : all)
 			if (i.date.before(date) && i.awayTeam.equals(awayTeam)) {
 				sumFor += i.result.goalsAwayTeam;
+				sumAgainst = i.result.goalsHomeTeam;
 				count++;
 			}
 
-		return count == 0 ? 0f : sumFor / count;
+		float forr = count == 0 ? 0f : sumFor / count;
+		float against = count == 0 ? 0f : sumAgainst / count;
+		return Pair.of(forr, against);
 	}
+
+	/**
+	 * Calculates the averages goals for home team and away team
+	 * 
+	 * @param all
+	 * @param awayTeam
+	 * @param date
+	 * @return
+	 */
+	public static Pair selectAvgHomeAway(ArrayList<ExtendedFixture> all, Date date) {
+		float sumHome = 0f;
+		float sumAway = 0f;
+		int count = 0;
+
+		for (ExtendedFixture i : all)
+			if (i.date.before(date)) {
+				sumHome += i.result.goalsHomeTeam;
+				sumAway = i.result.goalsAwayTeam;
+				count++;
+			}
+
+		float forr = count == 0 ? 0f : sumHome / count;
+		float against = count == 0 ? 0f : sumAway / count;
+		return Pair.of(forr, against);
+	}
+
+	
 
 }

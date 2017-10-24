@@ -31,6 +31,7 @@ import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.cyberneko.html.HTMLScanner.CurrentEntity;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -2441,8 +2442,8 @@ public class Utils {
 		HashMap<String, Player> homeHash = (HashMap<String, Player>) playerStatsHome.stream()
 				.collect(Collectors.toMap(Player::getName, Function.identity()));
 
-		float avgGoalsHome = FixtureUtils.selectAvgHomeTeamFor(all, ef.homeTeam, ef.date);
-		float avgGoalsAway = FixtureUtils.selectAvgAwayTeamFor(all, ef.awayTeam, ef.date);
+		float avgGoalsHome = FixtureUtils.selectAvgHomeTeam(all, ef.homeTeam, ef.date).home;
+		float avgGoalsAway = FixtureUtils.selectAvgAwayTeam(all, ef.awayTeam, ef.date).home;
 
 		float homeAvgFor = home ? avgGoalsHome : avgGoalsAway;
 		// float homeAvgFor = XlSUtils.selectAvgFor(sheet, home ? ef.homeTeam :
@@ -2919,17 +2920,18 @@ public class Utils {
 			all.addAll(finals);
 		}
 
-		float step = 0.02f;
+		float step = 0.1f;
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
+		float bestWinRatio = 0f;
 		String bestDescription = null;
 		float bestx, besty, bestz, bestw;
 		bestx = besty = bestz = bestw = 0f;
 		float bestTH = 0.3f;
 		float bestEval = 1f;
 
-		for (int i = 0; i <= 20; i++) {
-			float currentTH = 0.18f + i * 0.01f;
+		for (int i = 0; i <= 0; i++) {
+			float currentTH = 0.22f + i * 0.01f;
 			System.out.println(currentTH);
 			for (HTEntry hte : all) {
 				hte.fe.threshold = currentTH;
@@ -2944,40 +2946,51 @@ public class Utils {
 					int zmax = ymax - y;
 					for (int z = 0; z <= zmax; z++) {
 						int w = zmax - z;
-						// System.out.println(x * step + " " + y * step + " " +
-						// z *
-						// step + " " + w * step);
+						System.out.println(x * step + " " + y * step + " " + z * step + " " + w * step);
 
 						for (HTEntry hte : all) {
 							hte.fe.prediction = x * step * hte.zero + y * step * hte.one + z * step * hte.two
 									+ w * step * hte.more;
 						}
 
-						float currentProfit;
+						float currentProfit, currentWinRate = 0f;
 						float currEval = 1f;
 						if (maxBy.equals(MaximizingBy.BOTH)) {
 							if (all.size() < 100)
 								continue;
 							currentProfit = getProfitHT(all);
 							currEval = evaluateRecord(getFinals(all));
+							// currentWinRate = getSuccessRate(getFinals(all));
 						} else if (maxBy.equals(MaximizingBy.UNDERS)) {
 							if (onlyUnders(getFinals(all)).size() < 100)
 								continue;
 							currentProfit = getProfitHT(onlyUndersHT(all));
 							currEval = evaluateRecord(onlyUnders(getFinals(all)));
+							// currentWinRate
+							// =getSuccessRate(onlyUnders(getFinals(all)));
 
 						} else if (maxBy.equals(MaximizingBy.OVERS)) {
 							if (onlyOvers(getFinals(all)).size() < 100)
 								continue;
 							currentProfit = getProfitHT(onlyOversHT(all));
 							currEval = evaluateRecord(onlyOvers(getFinals(all)));
+							// currentWinRate
+							// =getSuccessRate(onlyOvers(getFinals(all)));
 						} else {
 							currentProfit = Float.NEGATIVE_INFINITY;
 						}
 
-						if (/* currentProfit > bestProfit */ currEval > bestEval) {
+						System.out.println(currentProfit);
+						System.out.println("1 in " + currEval);
+
+						if (/* currentProfit > bestProfit */ currEval > bestEval/*
+																				 * currentWinRate
+																				 * >
+																				 * bestWinRatio
+																				 */) {
 							bestProfit = currentProfit;
 							bestEval = currEval;
+							bestWinRatio = currentWinRate;
 							bestx = step * x;
 							besty = step * y;
 							bestz = step * z;
@@ -2985,8 +2998,8 @@ public class Utils {
 							bestTH = currentTH;
 							bestDescription = x * step + "*zero + " + y * step + "*one + " + z * step + " *two+ "
 									+ w * step + " *>=3";
-							System.out.println(bestProfit);
-							System.out.println("1 in " + bestEval);
+							// System.out.println(bestProfit);
+							// System.out.println("1 in " + bestEval);
 						}
 
 					}
@@ -3058,6 +3071,101 @@ public class Utils {
 			profit += i.fe.getProfit();
 		}
 		return profit;
+	}
+
+	public static void fastSearch(int start, int end, DataType dataType, MaximizingBy maxBy)
+			throws InterruptedException {
+		ArrayList<HTEntry> all = new ArrayList<>();
+
+		for (int i = start; i <= end; i++) {
+			ArrayList<HTEntry> finals = new ArrayList<>();
+			for (String comp : Arrays.asList(MinMaxOdds.SHOTS)) {
+				finals.addAll(SQLiteJDBC.selectHTData(comp, i, "ht"));
+			}
+			all.addAll(finals);
+		}
+
+		float step = 0.0005f;
+
+		float bestProfit = Float.NEGATIVE_INFINITY;
+		String bestDescription = null;
+		float bestx, besty = 0, bestz, bestw;
+		bestx = 0f;
+		float bestTH = 0.3f;
+		float bestEval = 1f;
+
+		int xmax = (int) (1f / step);
+		for (int x = 0; x <= xmax; x++) {
+			int y = xmax - x;
+
+			for (HTEntry hte : all) {
+				hte.fe.prediction = x * step * hte.zero + y * step * hte.one;
+			}
+
+			float currentProfit, currentWinRate = 0f;
+			float currEval = 1f;
+			if (maxBy.equals(MaximizingBy.BOTH)) {
+				if (all.size() < 100)
+					continue;
+				currentProfit = getProfitHT(all);
+				currEval = evaluateRecord(getFinals(all));
+				// currentWinRate = getSuccessRate(getFinals(all));
+			} else if (maxBy.equals(MaximizingBy.UNDERS)) {
+				if (onlyUnders(getFinals(all)).size() < 100)
+					continue;
+				currentProfit = getProfitHT(onlyUndersHT(all));
+				currEval = evaluateRecord(onlyUnders(getFinals(all)));
+				// currentWinRate
+				// =getSuccessRate(onlyUnders(getFinals(all)));
+
+			} else if (maxBy.equals(MaximizingBy.OVERS)) {
+				if (onlyOvers(getFinals(all)).size() < 100)
+					continue;
+				currentProfit = getProfitHT(onlyOversHT(all));
+				currEval = evaluateRecord(onlyOvers(getFinals(all)));
+				// currentWinRate
+				// =getSuccessRate(onlyOvers(getFinals(all)));
+			} else {
+				currentProfit = Float.NEGATIVE_INFINITY;
+			}
+
+			System.out.println(x * step + " " + y * step);
+			System.out.println(currentProfit);
+			System.out.println("1 in " + currEval);
+
+			if (/* currentProfit > bestProfit */ currEval > bestEval/*
+																	 * currentWinRate
+																	 * >
+																	 * bestWinRatio
+																	 */) {
+				bestProfit = currentProfit;
+				bestEval = currEval;
+				bestx = step * x;
+				besty = step * y;
+				bestDescription = x * step + "*zero + " + y * step + "*one + ";
+				// System.out.println(bestProfit);
+				// System.out.println("1 in " + bestEval);
+
+			}
+		}
+		
+		for (HTEntry hte : all) {
+			hte.fe.prediction = bestx * hte.zero + besty * hte.one;
+//			hte.fe.threshold = bestTH;
+//			hte.fe.lower = bestTH;
+//			hte.fe.upper = bestTH;
+		}
+
+		if (maxBy.equals(MaximizingBy.UNDERS))
+			all = onlyUndersHT(all);
+		else if (maxBy.equals(MaximizingBy.OVERS))
+			all = onlyOversHT(all);
+
+		System.out.println(bestProfit);
+		System.out.println(bestTH);
+		System.out.println("1 in " + bestEval);
+		System.out.println(new Stats(getFinals(all), bestDescription));
+
 	}
 
 }

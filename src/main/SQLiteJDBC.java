@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import entries.AllEntry;
 import entries.FinalEntry;
 import entries.HTEntry;
 import settings.Settings;
@@ -920,6 +921,7 @@ public class SQLiteJDBC {
 				result.add(f);
 			}
 			rs.close();
+
 			stmt.close();
 			c.close();
 		} catch (Exception e) {
@@ -1049,6 +1051,51 @@ public class SQLiteJDBC {
 						+ "," + (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
 						+ f.fe.lower + "," + f.fe.upper + "," + f.fe.value + "," + f.zero + "," + f.one + "," + f.two
 						+ "," + f.more + " );";
+				try {
+					if (!Float.isNaN(f.fe.prediction))
+						stmt.executeUpdate(sql);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					System.out.println("tuka");
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+	}
+
+	public synchronized static void storeAllData(ArrayList<AllEntry> halftimeData, int year, String competition,
+			String description) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			for (AllEntry f : halftimeData) {
+
+				String sql = "INSERT INTO ALLDATA "
+						+ "(DESCRIPTION,YEAR,DATE,COMPETITION,MATCHDAY,HOMETEAMNAME,AWAYTEAMNAME,HOMEGOALS,AWAYGOALS,OVER,UNDER,SCORE,THOLD,LOWER,UPPER,VALUE,ZERO,ONE,TWO,MORE,BASIC,POISSON,WEIGHTED,SHOTS)"
+						+ "VALUES (" + addQuotes(description) + "," + year + ","
+						+ addQuotes(format.format(f.fe.fixture.date)) + "," + addQuotes(competition) + ","
+						+ f.fe.fixture.matchday + "," + addQuotes(f.fe.fixture.homeTeam) + ","
+						+ addQuotes(f.fe.fixture.awayTeam) + "," + f.fe.fixture.result.goalsHomeTeam + ","
+						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.maxOver + "," + f.fe.fixture.maxUnder
+						+ "," + (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
+						+ f.fe.lower + "," + f.fe.upper + "," + f.fe.value + "," + f.zero + "," + f.one + "," + f.two
+						+ "," + f.more + ","+ f.basic + "," + f.poisson + "," + f.weighted + "," + f.shots + " );";
 				try {
 					if (!Float.isNaN(f.fe.prediction))
 						stmt.executeUpdate(sql);

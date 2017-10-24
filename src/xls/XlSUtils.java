@@ -30,6 +30,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
 import constants.MinMaxOdds;
+import entries.AllEntry;
 import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.HTEntry;
@@ -2496,11 +2497,11 @@ public class XlSUtils {
 		// "HALFTIME2", year, sheet.getSheetName());
 		// HashMap<ExtendedFixture, Float> shots = SQLiteJDBC.selectScores(all,
 		// "SHOTS", year, sheet.getSheetName());
-		float th = 0.21f;
-		Settings temp = Settings.halfTime(sheet.getSheetName(), 0f);
-		temp.threshold=th;
-		temp.lowerBound=th;
-		temp.upperBound=th;
+		float th = 0.55f;
+		Settings temp = Settings.shots(sheet.getSheetName());
+		temp.threshold = th;
+		temp.lowerBound = th;
+		temp.upperBound = th;
 		// temp.value = 0.86f;
 		// temp.minOver = 1.9f;
 
@@ -2536,7 +2537,7 @@ public class XlSUtils {
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			// finals = Utils.allUnders(current);
 			finals = FixtureUtils.runWithSettingsList(all, current, temp);
-//			ArrayList<HTEntry> halftimeData = new ArrayList<>();
+//			ArrayList<AllEntry> halftimeData = new ArrayList<>();
 //			for (FinalEntry j : finals) {
 //				ArrayList<ExtendedFixture> lastHomeTeam = FixtureUtils.selectLastAll(all, j.fixture.homeTeam, 50,
 //						j.fixture.date);
@@ -2549,13 +2550,19 @@ public class XlSUtils {
 //				float two = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 2)
 //						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 2)) / 2;
 //				float more = (Utils.countOverHalfTime(lastHomeTeam, 3) + Utils.countOverHalfTime(lastHomeTeam, 3)) / 2;
-//				HTEntry hte = new HTEntry(j, zero, one, two, more);
+//
+//				float basic = basic2(j.fixture, sheet, 0.6f, 0.3f, 0.1f);
+//				float poisson = poisson(j.fixture, sheet);
+//				float weighted = poissonWeighted(j.fixture, sheet);
+//				float shots = Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()) ? shots(j.fixture, sheet)
+//						: -1f;
+//				AllEntry hte = new AllEntry(j, zero, one, two, more, basic, poisson, weighted, shots);
 //				halftimeData.add(hte);
 //			}
-//			
-//			SQLiteJDBC.storeHTData(halftimeData, year, sheet.getSheetName(),"ht");
+//
+//			SQLiteJDBC.storeAllData(halftimeData, year, sheet.getSheetName(), "all");
 
-			// finals = runWithSettingsList(sheet, current, temp);
+//			finals = runWithSettingsList(sheet, current, temp);
 			// finals = Utils.onlyUnders(finals);
 			// finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3,
 			// "shots", temp);
@@ -2583,13 +2590,13 @@ public class XlSUtils {
 			// "shots", temp);
 			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
 			// year, 3, "shots");
-			// finals = Utils.noequilibriums(finals);
+			 finals = Utils.noequilibriums(finals);
 
 			// finals = Utils.intersectDiff(finals, finalsPFS);
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-			 finals = Utils.onlyUnders(finals);
+			finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);
@@ -4645,8 +4652,8 @@ public class XlSUtils {
 
 		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
 
-		Settings temp = new Settings(sheet.getSheetName(), 0f, 0.5f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(0.5f);
-		Settings shotSets = Settings.shots(sheet.getSheetName());
+		Settings temp = Settings.shots(sheet.getSheetName());
+		// Settings shotSets = Settings.shots(sheet.getSheetName());
 		// Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
 
 		// Settings poisson = new Settings(sheet.getSheetName(), 0f, 0f, 1f,
@@ -4668,8 +4675,9 @@ public class XlSUtils {
 			// FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
-			ArrayList<FinalEntry> shots = runWithSettingsList(sheet, current, shotSets);
-			shots = Utils.noequilibriums(shots);
+			// ArrayList<FinalEntry> shots = runWithSettingsList(sheet, current,
+			// shotSets);
+			// shots = Utils.noequilibriums(shots);
 
 			// finals = runWithSettingsList(sheet, data, temp);
 
@@ -4695,7 +4703,7 @@ public class XlSUtils {
 			// sheet, 0.525f);
 			// finals = finalsPFS;
 			// finals = Utils.noequilibriums(finals);
-			finals = Utils.intersectDiff(finals, shots);
+			// finals = Utils.intersectDiff(finals, shots);
 			// if (shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.removePending(finals);
@@ -5477,7 +5485,6 @@ public class XlSUtils {
 
 	public static ArrayList<FinalEntry> predictions(HSSFSheet sheet, int year)
 			throws IOException, InterruptedException, ParseException {
-		System.out.println(sheet.getSheetName());
 		float profit = 0.0f;
 		int played = 0;
 		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);

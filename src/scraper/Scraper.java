@@ -30,6 +30,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -62,34 +63,36 @@ public class Scraper {
 
 		// =================================================================
 
-		for (int i = 2012; i <= 2012; i++) {
-			ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
-			// //
-			// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
-			// //
-			// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
-			SQLiteJDBC.storePlayerFixtures(list, i, "BRA");
-		}
+		// for (int i = 2012; i <= 2012; i++) {
+		// ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
+		// // //
+		// //
+		// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
+		// // //
+		// //
+		// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
+		// SQLiteJDBC.storePlayerFixtures(list, i, "BRA");
+		// }
 
-//		 collectAndStoreSinglePFS("BRA", 2016,
-//		 "http://int.soccerway.com/matches/2016/06/23/brazil/serie-a/clube-atletico-mineiro/sport-club-corinthians-paulista/2217995/");
+		// collectAndStoreSinglePFS("BRA", 2016,
+		// "http://int.soccerway.com/matches/2016/06/23/brazil/serie-a/clube-atletico-mineiro/sport-club-corinthians-paulista/2217995/");
 
 		// ArrayList<PlayerFixture> list =
 		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
 		// System.out.println(list.size());
 		// ====================================================================
 
-		// ArrayList<ExtendedFixture> list = collect("BRB", 2017, null);
+		// ArrayList<ExtendedFixture> shotsList = collect("ENG5", 2017, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		// XlSUtils.storeInExcel(list, "BRB", 2017, "manual");
+		// XlSUtils.storeInExcel(shotsList, "ENG5", 2017, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-		// ArrayList<ExtendedFixture> list = odds("NOR", 2017, null);
-		// XlSUtils.storeInExcel(list, "NOR", 2017, "odds");
-		// nextMatches("GER", null);
+		// ArrayList<ExtendedFixture> list = odds("ENG5", 2017, null);
+		// XlSUtils.storeInExcel(list, "ENG5", 2017, "odds");
+		// nextMatches("ENG", null, OnlyTodayMatches.TRUE);
 		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
@@ -97,7 +100,7 @@ public class Scraper {
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-		// XlSUtils.combine("BRB", 2017, "manual");
+		// XlSUtils.combine("ENG5", 2017, "manual");
 		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
 		// XlSUtils.fillMissingShotsData("BRB", 2017, false);
@@ -105,11 +108,18 @@ public class Scraper {
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-//		checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
-		// checkAndUpdate("USA", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("IT2", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("GRE", OnlyTodayMatches.FALSE);
+		checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("FR2", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("RUS", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("POR", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("BUL", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("NED", OnlyTodayMatches.FALSE);
+//		checkAndUpdate("SPA", OnlyTodayMatches.FALSE);
 		// updateInParallel();
 
-		// fastOdds("SPA", 2016, null);
+		// fastOdds("SPA", 2016, null);	
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
@@ -160,9 +170,10 @@ public class Scraper {
 	 *            - type of update - manual - hardcoded leagues, automatic -
 	 *            tracking leagues that have games today
 	 * @throws IOException
+	 * @throws InterruptedException
 	 */
 	public static void updateInParallel(ArrayList<String> list, int n, OnlyTodayMatches onlyToday, UpdateType automatic)
-			throws IOException {
+			throws IOException, InterruptedException {
 
 		ExecutorService executor = Executors.newFixedThreadPool(n);
 		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? getTodaysLeagueList() : list;
@@ -209,7 +220,7 @@ public class Scraper {
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sh = workbook.getSheet(competition);
 
-		ArrayList<ExtendedFixture> all = XlSUtils.selectAll(sh, 0);
+		ArrayList<ExtendedFixture> all = sh == null ? new ArrayList<>() : XlSUtils.selectAll(sh, 0);
 		// problem when no pendingma fixtures?
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
@@ -220,7 +231,7 @@ public class Scraper {
 
 		ArrayList<ExtendedFixture> list = new ArrayList<>();
 		int count = 0;
-		int maxTries = 10;
+		int maxTries = 1;
 		while (true) {
 			try {
 				list = collectUpToDate(competition, collectYear, Utils.getYesterday(oldestTocheck), null);
@@ -418,7 +429,7 @@ public class Scraper {
 			}
 
 			for (int i = fixtures.size() - 1; i >= 0; i--) {
-				Document fixture = Jsoup.connect(BASE + fixtures.get(i).attr("href")).get();
+				Document fixture = Jsoup.connect(BASE + fixtures.get(i).attr("href")).timeout(0).get();
 				ExtendedFixture ef = getFixture(fixture, competition);
 				if (ef != null && ef.date.before(yesterday)) {
 					breakFlag = true;
@@ -431,6 +442,7 @@ public class Scraper {
 			if (breakFlag)
 				break;
 
+			((JavascriptExecutor) driver).executeScript("window.scrollBy(0,250)", "");
 			driver.findElement(By.className("previous")).click();
 			Thread.sleep(1000);
 			String htmlAfter = driver.getPageSource();
@@ -457,7 +469,7 @@ public class Scraper {
 
 	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object,
 			OnlyTodayMatches onlyTodaysMatches) throws ParseException, InterruptedException, IOException {
-		String address = EntryPoints.getOddsLink(competition, 2016);
+		String address = EntryPoints.getOddsLink(competition, EntryPoints.CURRENT);
 		System.out.println(address);
 
 		ArrayList<ExtendedFixture> result = new ArrayList<>();
@@ -680,7 +692,7 @@ public class Scraper {
 		Elements frames = fixture.select("iframe");
 		for (Element i : frames) {
 			if (i.attr("src").contains("/charts/statsplus")) {
-				Document stats = Jsoup.connect(BASE + i.attr("src")).get();
+				Document stats = Jsoup.connect(BASE + i.attr("src")).timeout(0).get();
 				try {
 					shotsHome = Integer.parseInt(
 							stats.select("tr:contains(Shots on target)").get(1).select("td.legend.left.value").text());
@@ -805,7 +817,7 @@ public class Scraper {
 		// ==========================================================
 
 		Elements divsPlayers = fixture.getElementsByClass("combined-lineups-container");
-		Element divSubstitutes  = divsPlayers.size() > 1 ? divsPlayers.get(1) :  null; 
+		Element divSubstitutes = divsPlayers.size() > 1 ? divsPlayers.get(1) : null;
 		if (divSubstitutes != null) {
 			Element tableHome = divSubstitutes.select("div.container.left").first();
 			Element tableAway = divSubstitutes.select("div.container.right").first();
@@ -1581,7 +1593,12 @@ public class Scraper {
 		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
 		for (WebElement t : tabs) {
 			if (t.getText().contains("O/U")) {
-				t.click();
+				try {
+					t.click();
+				} catch (Exception e) {
+					System.out.println("click error o/u");
+					e.printStackTrace();
+				}
 				break;
 			}
 		}
@@ -1592,7 +1609,14 @@ public class Scraper {
 			if (div.getText().contains("+2.5")) {
 				// System.out.println(div.getText());
 				div25 = div;
-				div.click();
+				try {
+					JavascriptExecutor jse = (JavascriptExecutor) driver;
+					jse.executeScript("window.scrollBy(0,250)", "");
+					div.click();
+				} catch (Exception e) {
+					System.out.println("click error o/u 2.5");
+					e.printStackTrace();
+				}
 				break;
 			}
 		}
@@ -1663,7 +1687,11 @@ public class Scraper {
 		// Asian handicap
 		for (WebElement t : tabs) {
 			if (t.getText().contains("AH")) {
-				t.click();
+				try {
+					t.click();
+				} catch (Exception e) {
+					System.out.println("click error AH");
+				}
 				break;
 			}
 		}
@@ -1689,13 +1717,16 @@ public class Scraper {
 		}
 
 		float line = -1f, asianHome = -1f, asianAway = -1f;
-		// if (home.equals("Sport Recife") && away.equals("Corinthians")){
-		// System.out.println(min);
-		// System.out.println(opt.getText());
-		// }
 
 		if (opt != null) {
-			opt.click();
+			try {
+				JavascriptExecutor jse = (JavascriptExecutor) driver;
+				jse.executeScript("window.scrollBy(0,250)", "");
+				opt.click();
+			} catch (Exception e) {
+				System.out.println("click error ah line ==");
+				e.printStackTrace();
+			}
 
 			WebElement AHTable = opt.findElement(By.xpath("//table"));
 
@@ -1708,6 +1739,7 @@ public class Scraper {
 					line = Float.parseFloat(textOdds.split("\n")[1].trim());
 					asianHome = Float.parseFloat(textOdds.split("\n")[2].trim());
 					asianAway = Float.parseFloat(textOdds.split("\n")[3].trim());
+					break;
 				}
 			}
 
