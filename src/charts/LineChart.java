@@ -9,8 +9,8 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 public class LineChart extends ApplicationFrame {
-	public LineChart(float[] data, int year) {
-		super("Profit " + year);
+	public LineChart(float[] data, String description) {
+		super("Profit " + description);
 		JFreeChart lineChart = ChartFactory.createLineChart("", "Bets", "Units", createDataset(data),
 				PlotOrientation.VERTICAL, true, true, false);
 
@@ -27,8 +27,8 @@ public class LineChart extends ApplicationFrame {
 		return dataset;
 	}
 
-	public static void draw(float[] data, int year) {
-		LineChart chart = new LineChart(data, year);
+	public static void draw(float[] data, String description) {
+		LineChart chart = new LineChart(data, description);
 
 		chart.pack();
 		RefineryUtilities.centerFrameOnScreen(chart);

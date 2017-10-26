@@ -823,11 +823,11 @@ public class Utils {
 
 	}
 
-	public static void fullAnalysys(ArrayList<FinalEntry> all, int year) {
-		analysys(all, year, true);
-		LineChart.draw(Utils.createProfitMovementData(Utils.noequilibriums(all)), 3000);
+	public static void fullAnalysys(ArrayList<FinalEntry> all, String description) {
+		analysys(all, description, true);
 
-		Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f).withShots(1f);
+		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
+		// 0.5f, 0f).withShots(1f);
 		//
 		// initial = XlSUtils.findValueByEvaluation(all, initial);
 		// System.out.println("=======================================================================");
@@ -835,12 +835,13 @@ public class Utils {
 		// ArrayList<FinalEntry> values = XlSUtils.restrict(all, initial);
 		// analysys(values, year);
 		//
-		initial = XlSUtils.findThreshold(all, initial, MaximizingBy.UNDERS);
-		ArrayList<FinalEntry> withTH = XlSUtils.restrict(all, initial);
-		System.out.println("=======================================================================");
-		System.out.println("Optimal th is " + initial.threshold);
-		analysys(onlyUnders(withTH), year, true);
-		LineChart.draw(Utils.createProfitMovementData(onlyUnders(withTH)), 3000);
+		// initial = XlSUtils.findThreshold(all, initial, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH = XlSUtils.restrict(all, initial);
+		// System.out.println("=======================================================================");
+		// System.out.println("Optimal th is " + initial.threshold);
+		// analysys(onlyUnders(withTH), year, true);
+		// LineChart.draw(Utils.createProfitMovementData(onlyUnders(withTH)),
+		// 3000);
 		//
 		// initial = XlSUtils.findValueByEvaluation(withTH, initial);
 		// System.out.println("=======================================================================");
@@ -851,8 +852,8 @@ public class Utils {
 
 	}
 
-	public static void analysys(ArrayList<FinalEntry> all, int year, boolean verbose) {
-
+	public static void analysys(ArrayList<FinalEntry> all, String description, boolean verbose) {
+		trueOddsProportional(all);
 		ArrayList<Stats> stats = new ArrayList<>();
 
 		ArrayList<FinalEntry> noEquilibriums = Utils.noequilibriums(all);
@@ -874,6 +875,11 @@ public class Utils {
 		if (verbose)
 			System.out.println(allStats);
 
+		if (verbose)
+			System.out.println(thresholdsByLeague(all));
+		if (verbose)
+			LineChart.draw(Utils.createProfitMovementData(Utils.noequilibriums(all)), description);
+
 		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
 		// 0.5f, 0f).withShots(1f);
 
@@ -890,7 +896,7 @@ public class Utils {
 		ArrayList<FinalEntry> unders = Utils.onlyUnders(noEquilibriums);
 
 		if (verbose) {
-			System.err.println(year);
+			System.err.println(description);
 			System.out.println();
 		}
 
@@ -938,7 +944,10 @@ public class Utils {
 		stats.addAll(byOddsOvers);
 
 		System.out.println();
-		Utils.byYear(noEquilibriums, "all");
+		Utils.byYear(onlyUnders(noEquilibriums), "all");
+
+		System.out.println();
+		Utils.byCompetition(onlyUnders(noEquilibriums), "all");
 
 		Stats allOvers = new Stats(allOvers(Utils.onlyFixtures(noEquilibriums)), "all Overs");
 		stats.add(allOvers);
@@ -983,18 +992,55 @@ public class Utils {
 			System.out.println("Soft lines wins: " + format((float) wins / certs) + " draws: "
 					+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
 
-		System.out.println("Normalized bet size: ");
-		System.out.println(
-				all.size() + " normalized all with rate: " + String.format("%.2f", 100 * Utils.getSuccessRate(all))
-						+ " profit: " + String.format("%.2f", getNormalizedProfit(all)) + " yield: "
-						+ String.format("%.2f%%", 100 * getNormalizedYield(all))
-						+ ((getNormalizedProfit(all) >= 0f && !all.isEmpty())
-								? (" 1 in " + String.format("%.2f", evaluateRecordNormalized(all))) : ""));
+		ArrayList<Stats> normalizedStats = new ArrayList<>();
+		for (Stats st : stats)
+			if (st.getPvalueOdds() > 4 && !st.all.isEmpty())
+				normalizedStats.add(new NormalizedStats(st.all, "norm " + st.description));
+		stats.addAll(normalizedStats);
 
 		System.out.println();
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
 		stats.stream().filter(v -> verbose ? true : (v.getPvalueOdds() > 4 && !v.all.isEmpty()))
 				.forEach(System.out::println);
+	}
+
+	private static HashMap<String, Float> thresholdsByLeague(ArrayList<FinalEntry> all) {
+		HashMap<String, Float> result = new HashMap<>();
+
+		for (FinalEntry i : all)
+			if (result.containsKey(i.fixture.competition))
+				continue;
+			else
+				result.put(i.fixture.competition, i.threshold);
+		return result;
+	}
+
+	private static void trueOddsEqual(ArrayList<FinalEntry> all) {
+		for (FinalEntry i : all) {
+			float sum = 1f / i.fixture.maxOver + 1f / i.fixture.maxUnder;
+			i.fixture.maxOver = 1f / ((1f / i.fixture.maxOver) / sum);
+			i.fixture.maxUnder = 1f / ((1f / i.fixture.maxUnder) / sum);
+
+			if (i.fixture.asianHome > 1f && i.fixture.asianAway > 1f) {
+				float sumAsian = 1f / i.fixture.asianHome + 1f / i.fixture.asianAway;
+				i.fixture.asianHome = 1f / ((1f / i.fixture.asianHome) / sumAsian);
+				i.fixture.asianAway = 1f / ((1f / i.fixture.asianAway) / sumAsian);
+			}
+		}
+	}
+
+	private static void trueOddsProportional(ArrayList<FinalEntry> all) {
+		for (FinalEntry i : all) {
+			float margin = 1f / i.fixture.maxOver + 1f / i.fixture.maxUnder - 1f;
+			i.fixture.maxOver = 2 * i.fixture.maxOver / (2f - margin * i.fixture.maxOver);
+			i.fixture.maxUnder = 2 * i.fixture.maxUnder / (2f - margin * i.fixture.maxUnder);
+
+			if (i.fixture.asianHome > 1f && i.fixture.asianAway > 1f) {
+				float marginAsian = 1f / i.fixture.asianHome + 1f / i.fixture.asianAway - 1f;
+				i.fixture.asianHome = 2 * i.fixture.asianHome / (2f - marginAsian * i.fixture.asianHome);
+				i.fixture.asianAway = 2 * i.fixture.asianAway / (2f - marginAsian * i.fixture.asianAway);
+			}
+		}
 	}
 
 	private static ArrayList<Stats> byCertaintyandCOT(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
@@ -1790,11 +1836,11 @@ public class Utils {
 	}
 
 	public static float getNormalizedProfit(ArrayList<FinalEntry> all) {
-		float profit = 0f;
-		for (FinalEntry i : all) {
-			profit += i.getNormalizedProfit();
-		}
-		return profit;
+		float sum = 0f;
+		for (FinalEntry i : all)
+			sum += i.getNormalizedProfit();
+
+		return sum / (getNormalizedStakeSum(all) / all.size());
 	}
 
 	public static float getAvgOdds(ArrayList<FinalEntry> finals) {
@@ -1829,14 +1875,18 @@ public class Utils {
 	}
 
 	public static float getNormalizedYield(ArrayList<FinalEntry> all) {
+
+		return getNormalizedProfit(all) / all.size();
+	}
+
+	private static float getNormalizedStakeSum(ArrayList<FinalEntry> all) {
 		float stakeSum = 0f;
 		for (FinalEntry i : all) {
 			float coeff = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
 			float betUnit = 1f / (coeff - 1);
 			stakeSum += betUnit;
 		}
-
-		return getNormalizedProfit(all) / stakeSum;
+		return stakeSum;
 	}
 
 	public static float[] createProfitMovementData(ArrayList<FinalEntry> all) {
@@ -1852,7 +1902,7 @@ public class Utils {
 		float[] result = new float[all.size() + 1];
 		result[0] = 0f;
 		for (int i = 0; i < all.size(); i++) {
-			profit += all.get(i).getNormalizedProfit();
+			profit += all.get(i).getProfit();
 			result[i + 1] = profit;
 		}
 		return result;
@@ -2871,6 +2921,18 @@ public class Utils {
 		System.out.println(new Stats(all, description));
 	}
 
+	public static void byCompetition(ArrayList<FinalEntry> all, String description) {
+		System.out.println(description);
+		Map<Object, List<FinalEntry>> map = all.stream().collect(Collectors.groupingBy(p -> p.fixture.competition,
+				Collectors.mapping(Function.identity(), Collectors.toList())));
+
+		for (Entry<Object, List<FinalEntry>> i : map.entrySet()) {
+			System.out.println(new Stats((ArrayList<FinalEntry>) i.getValue(), (i.getKey()).toString()));
+		}
+
+		System.out.println(new Stats(all, description));
+	}
+
 	/**
 	 * Mutably changes the predictions of a list of finals to (prediction +
 	 * x*impliedProb)/(x+1) where x is the weight of the implied probability of
@@ -3148,12 +3210,12 @@ public class Utils {
 
 			}
 		}
-		
+
 		for (HTEntry hte : all) {
 			hte.fe.prediction = bestx * hte.zero + besty * hte.one;
-//			hte.fe.threshold = bestTH;
-//			hte.fe.lower = bestTH;
-//			hte.fe.upper = bestTH;
+			// hte.fe.threshold = bestTH;
+			// hte.fe.lower = bestTH;
+			// hte.fe.upper = bestTH;
 		}
 
 		if (maxBy.equals(MaximizingBy.UNDERS))
@@ -3166,6 +3228,19 @@ public class Utils {
 		System.out.println("1 in " + bestEval);
 		System.out.println(new Stats(getFinals(all), bestDescription));
 
+	}
+
+	/**
+	 * Return exactly the oposite prediction for all finals (For testing of
+	 * significantly bad results) Mutator
+	 * 
+	 * @param finals
+	 * @return
+	 */
+	public static void theOposite(ArrayList<FinalEntry> finals) {
+		for (FinalEntry i : finals) {
+			i.prediction = i.prediction >= i.threshold ? 0f : 1f;
+		}
 	}
 
 }

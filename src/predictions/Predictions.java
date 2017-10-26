@@ -70,12 +70,12 @@ public class Predictions {
 		CHECKLIST.add("BRA");
 //		CHECKLIST.add("BRB");
 
-//		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.TRUE,
-//		 UpdateType.AUTOMATIC);
+		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.TRUE,
+		 UpdateType.AUTOMATIC);
 
 //		 DualListBox.init(CHECKLIST);
 
-		predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL, OnlyTodayMatches.FALSE);
+//		predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE);
 
 		// asianPredictions(2016, true);
 

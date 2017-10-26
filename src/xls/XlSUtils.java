@@ -2409,7 +2409,7 @@ public class XlSUtils {
 
 		// Utils.fairValue(all);
 		float th = 0.55f;
-		Settings temp = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th, th, th, 0.5f, 0f).withShots(1f);
+		Settings temp = Settings.shots(sheet.getSheetName());
 		// temp.value = 1.1f;
 		// Settings ht1 = new Settings(sheet.getSheetName(), 0f, 0f, 0f, th, th,
 		// th, 0.5f, 0f).withHT(0.2f, 1f);
@@ -2429,7 +2429,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
-			finals = runWithSettingsList(sheet, current, temp);
+			finals = FixtureUtils.runWithSettingsList(all, current, temp);
 			// finals = FixtureUtils.runWithSettingsList(all, current, temp);
 
 			// finals = runBestTH(sheet, current, "IT", year, 3,
@@ -2450,14 +2450,15 @@ public class XlSUtils {
 			// ht1s = runWithSettingsList(sheet, current, ht1);
 
 			// finals = Utils.intersectDiff(finals, ht1s);
-			// finals = Utils.onlyUnders(finals);
+			finals = Utils.onlyUnders(finals);
 			// finals = Utils.onlyOvers(finals);
 
 			// finals = Utils.certaintyRestrict(finals, 0.70f);
 			// finals = Utils.estimateOposite(current, map, sheet);
 			// finals = Utils.mainGoalLine(finals, map);
-			// finals = Utils.customGoalLine(finals, map, -0.5f);
-			finals = Utils.bestValueByDistibution(finals, map, all, sheet);
+			// Utils.theOposite(finals);
+			// finals = Utils.customGoalLine(finals, map, 0.5f);
+			// finals = Utils.bestValueByDistibution(finals, map, all, sheet);
 			// finals = Utils.specificLine(finals, map, 2f);
 
 			played += finals.size();
@@ -2524,7 +2525,7 @@ public class XlSUtils {
 		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
 		// allPfs);
 
-		for (int i = /* dictionary == null ? 100 : */14; i < maxMatchDay; i++) {
+		for (int i = /* dictionary == null ? 100 : */5; i < maxMatchDay; i++) {
 
 			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// Utils.fairValue(current);
@@ -2537,32 +2538,39 @@ public class XlSUtils {
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			// finals = Utils.allUnders(current);
 			finals = FixtureUtils.runWithSettingsList(all, current, temp);
-//			ArrayList<AllEntry> halftimeData = new ArrayList<>();
-//			for (FinalEntry j : finals) {
-//				ArrayList<ExtendedFixture> lastHomeTeam = FixtureUtils.selectLastAll(all, j.fixture.homeTeam, 50,
-//						j.fixture.date);
-//				ArrayList<ExtendedFixture> lastAwayTeam = FixtureUtils.selectLastAll(all, j.fixture.awayTeam, 50,
-//						j.fixture.date);
-//				float zero = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 0)
-//						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 0)) / 2;
-//				float one = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 1)
-//						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 1)) / 2;
-//				float two = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 2)
-//						+ Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 2)) / 2;
-//				float more = (Utils.countOverHalfTime(lastHomeTeam, 3) + Utils.countOverHalfTime(lastHomeTeam, 3)) / 2;
-//
-//				float basic = basic2(j.fixture, sheet, 0.6f, 0.3f, 0.1f);
-//				float poisson = poisson(j.fixture, sheet);
-//				float weighted = poissonWeighted(j.fixture, sheet);
-//				float shots = Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()) ? shots(j.fixture, sheet)
-//						: -1f;
-//				AllEntry hte = new AllEntry(j, zero, one, two, more, basic, poisson, weighted, shots);
-//				halftimeData.add(hte);
-//			}
-//
-//			SQLiteJDBC.storeAllData(halftimeData, year, sheet.getSheetName(), "all");
+			// ArrayList<AllEntry> halftimeData = new ArrayList<>();
+			// for (FinalEntry j : finals) {
+			// ArrayList<ExtendedFixture> lastHomeTeam =
+			// FixtureUtils.selectLastAll(all, j.fixture.homeTeam, 50,
+			// j.fixture.date);
+			// ArrayList<ExtendedFixture> lastAwayTeam =
+			// FixtureUtils.selectLastAll(all, j.fixture.awayTeam, 50,
+			// j.fixture.date);
+			// float zero = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 0)
+			// + Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 0)) / 2;
+			// float one = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 1)
+			// + Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 1)) / 2;
+			// float two = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 2)
+			// + Utils.countHalfTimeGoalAvgExact(lastAwayTeam, 2)) / 2;
+			// float more = (Utils.countOverHalfTime(lastHomeTeam, 3) +
+			// Utils.countOverHalfTime(lastHomeTeam, 3)) / 2;
+			//
+			// float basic = basic2(j.fixture, sheet, 0.6f, 0.3f, 0.1f);
+			// float poisson = poisson(j.fixture, sheet);
+			// float weighted = poissonWeighted(j.fixture, sheet);
+			// float shots =
+			// Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName()) ?
+			// shots(j.fixture, sheet)
+			// : -1f;
+			// AllEntry hte = new AllEntry(j, zero, one, two, more, basic,
+			// poisson, weighted, shots);
+			// halftimeData.add(hte);
+			// }
+			//
+			// SQLiteJDBC.storeAllData(halftimeData, year, sheet.getSheetName(),
+			// "all");
 
-//			finals = runWithSettingsList(sheet, current, temp);
+			// finals = runWithSettingsList(sheet, current, temp);
 			// finals = Utils.onlyUnders(finals);
 			// finals = runBestTH(sheet, current, sheet.getSheetName(), year, 3,
 			// "shots", temp);
@@ -2590,7 +2598,7 @@ public class XlSUtils {
 			// "shots", temp);
 			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
 			// year, 3, "shots");
-			 finals = Utils.noequilibriums(finals);
+			finals = Utils.noequilibriums(finals);
 
 			// finals = Utils.intersectDiff(finals, finalsPFS);
 			// if(shotSetts.doNotPlay)
@@ -4658,7 +4666,7 @@ public class XlSUtils {
 
 		// Settings poisson = new Settings(sheet.getSheetName(), 0f, 0f, 1f,
 		// 0.55f, 0.55f, 0.55f, 0.5f, 0f);
-		int maxMatchDay = addMatchDay(sheet, all);
+		int maxMatchDay = FixtureUtils.addMatchDay(all);
 		// ArrayList<PlayerFixture> pfs = SQLiteJDBC
 		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
 		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :

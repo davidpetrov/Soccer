@@ -133,8 +133,8 @@ public class EntryPoints {
 		else
 			result += year;
 
-		return result + (Arrays.asList(EXCEPTIONS).contains(competition) ? "/1st-phase/matches/"
-				: "/regular-season/matches/");
+		return result + (Arrays.asList(EXCEPTIONS).contains(competition) ? "/1st-phase/"
+				: "/regular-season/");
 	}
 
 	public static String getOddsLink(String competition, int year) {

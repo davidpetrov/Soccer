@@ -82,16 +82,16 @@ public class Scraper {
 		// System.out.println(list.size());
 		// ====================================================================
 
-		// ArrayList<ExtendedFixture> shotsList = collect("ENG5", 2017, null);
+//		 ArrayList<ExtendedFixture> shotsList = collect("BEL", 2017, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		// XlSUtils.storeInExcel(shotsList, "ENG5", 2017, "manual");
+//		 XlSUtils.storeInExcel(shotsList, "BEL", 2017, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-		// ArrayList<ExtendedFixture> list = odds("ENG5", 2017, null);
-		// XlSUtils.storeInExcel(list, "ENG5", 2017, "odds");
+//		ArrayList<ExtendedFixture> list = odds("BEL", 2017, null);
+//		XlSUtils.storeInExcel(list, "BEL", 2017, "odds");
 		// nextMatches("ENG", null, OnlyTodayMatches.TRUE);
 		// ArrayList<FullFixture> list = fullOdds("GER", 2016, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
@@ -100,26 +100,26 @@ public class Scraper {
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-		// XlSUtils.combine("ENG5", 2017, "manual");
+//		 XlSUtils.combine("BEL", 2017, "manual");
 		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
-		// XlSUtils.fillMissingShotsData("BRB", 2017, false);
+//		 XlSUtils.fillMissingShotsData("BEL", 2017, false);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-//		checkAndUpdate("IT2", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("GRE", OnlyTodayMatches.FALSE);
-		checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("FR2", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("RUS", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("POR", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("BUL", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("NED", OnlyTodayMatches.FALSE);
-//		checkAndUpdate("SPA", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("IT2", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("GRE", OnlyTodayMatches.FALSE);
+		 checkAndUpdate("BRB", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("FR2", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("RUS", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("POR", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("BUL", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("NED", OnlyTodayMatches.FALSE);
+		// checkAndUpdate("SPA", OnlyTodayMatches.FALSE);
 		// updateInParallel();
 
-		// fastOdds("SPA", 2016, null);	
+		// fastOdds("SPA", 2016, null);
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
@@ -442,7 +442,8 @@ public class Scraper {
 			if (breakFlag)
 				break;
 
-			((JavascriptExecutor) driver).executeScript("window.scrollBy(0,250)", "");
+			// ((JavascriptExecutor)
+			// driver).executeScript("window.scrollBy(0,250)", "");
 			driver.findElement(By.className("previous")).click();
 			Thread.sleep(1000);
 			String htmlAfter = driver.getPageSource();
@@ -1131,14 +1132,14 @@ public class Scraper {
 				for (WebElement i : list) {
 					// better logic here?
 					String href = i.getAttribute("href");
-					System.out.println(href);
+					// System.out.println(href);
 					if (i.getText().contains("-") && isFixtureLink(href)) {
 						links.add(href);
 
 					}
 				}
 
-				System.out.println(links);
+				// System.out.println(links);
 				for (String i : links) {
 					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 					if (ef != null)
@@ -1476,17 +1477,17 @@ public class Scraper {
 			boolean liveMatchesFlag, OnlyTodayMatches onlyToday)
 					throws ParseException, InterruptedException, IOException {
 		// System.out.println(i);
-		int count = 0;
-		int maxTries = 10;
-		while (true) {
-			try {
-				driver.navigate().to(i);
-				break;
-			} catch (Exception e) {
-				if (++count == maxTries)
-					throw e;
-			}
-		}
+		// int count = 0;
+		// int maxTries = 10;
+		// while (true) {
+		// try {
+		driver.navigate().to(i);
+		// break;
+		// } catch (Exception e) {
+		// if (++count == maxTries)
+		// throw e;
+		// }
+		// }
 
 		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
 		String home = title.split(" - ")[0].trim();
