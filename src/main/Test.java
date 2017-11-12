@@ -9,24 +9,18 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.json.JSONException;
 
-import algorithms.Algorithm;
-import algorithms.Basic1;
-import charts.LineChart;
 import constants.MinMaxOdds;
 import entries.AsianEntry;
-import entries.Entry;
 import entries.FinalEntry;
 import results.Results;
 import runner.Runner;
@@ -40,12 +34,9 @@ import runner.RunnerIntersect;
 import runner.RunnerOptimals;
 import settings.Settings;
 import settings.SettingsAsian;
-import utils.Api;
-import utils.Stats;
 import utils.Utils;
 import xls.AsianUtils;
 import xls.XlSUtils;
-import xls.XlSUtils.MaximizingBy;
 
 public class Test {
 
@@ -78,7 +69,7 @@ public class Test {
 
 		// accumulators(2015, 2015);
 
-		analysis(2011, 2016, DataType.ODDSPORTAL);
+		// analysis(2005, 2016, DataType.ALLEURODATA);
 
 		// aggregateInterval();
 
@@ -99,8 +90,8 @@ public class Test {
 		ArrayList<FinalEntry> all = new ArrayList<>();
 		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
 
-		 populateForAnalysis(start, end, all, byLeagueYear, type);
-//		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "shots");
+		// populateForAnalysis(start, end, all, byLeagueYear, type);
+		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "shots");
 
 		// ArrayList<FinalEntry> ita = (ArrayList<FinalEntry>)
 		// byLeagueYear.get("I1").values().stream()
@@ -115,24 +106,36 @@ public class Test {
 		// Utils.analysys(i.getValue(), 3000, false);
 		// }
 
-//		ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear, 1, MaximizingBy.OVERS);
-//		ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear, 2, MaximizingBy.OVERS);
-//		ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.OVERS);
-//		ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
+		// 1, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH2 = Utils.withBestThreshold(byLeagueYear,
+		// 2, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH3 = Utils.withBestThreshold(byLeagueYear,
+		// 3, MaximizingBy.OVERS);
+		// ArrayList<FinalEntry> withTH4 = Utils.withBestThreshold(byLeagueYear,
+		// 4, MaximizingBy.OVERS);
 
-//		ArrayList<FinalEntry> withTH5 = Utils.withBestThreshold(byLeagueYear, 1, MaximizingBy.BOTH);
-//		ArrayList<FinalEntry> withTH6 = Utils.withBestThreshold(byLeagueYear, 2, MaximizingBy.BOTH);
-//		ArrayList<FinalEntry> withTH7 = Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.BOTH);
-//		ArrayList<FinalEntry> withTH8 = Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH5 = Utils.withBestThreshold(byLeagueYear,
+		// 1, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH6 = Utils.withBestThreshold(byLeagueYear,
+		// 2, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH7 = Utils.withBestThreshold(byLeagueYear,
+		// 3, MaximizingBy.BOTH);
+		// ArrayList<FinalEntry> withTH8 = Utils.withBestThreshold(byLeagueYear,
+		// 4, MaximizingBy.BOTH);
 
-//		ArrayList<FinalEntry> withTH9 = Utils.withBestThreshold(byLeagueYear, 1, MaximizingBy.UNDERS);
-//		ArrayList<FinalEntry> withTH10 = Utils.withBestThreshold(byLeagueYear, 2, MaximizingBy.UNDERS);
-//		ArrayList<FinalEntry> withTH11 = Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.UNDERS);
-//		ArrayList<FinalEntry> withTH12 = Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH9 = Utils.withBestThreshold(byLeagueYear,
+		// 1, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH10 =
+		// Utils.withBestThreshold(byLeagueYear, 2, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH11 =
+		// Utils.withBestThreshold(byLeagueYear, 3, MaximizingBy.UNDERS);
+		// ArrayList<FinalEntry> withTH12 =
+		// Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.UNDERS);
 
-		 Utils.fullAnalysys(all, "all");
-		
-//		 Utils.fullAnalysys(withTH1, "maxByThOvers(1)");
+		Utils.fullAnalysys(all, "all");
+
+		// Utils.fullAnalysys(withTH1, "maxByThOvers(1)");
 
 		// ArrayList<FinalEntry> restricted =
 		// Utils.filterByOdds(Utils.cotRestrict(Utils.onlyUnders(all), 0.175f),
@@ -972,26 +975,6 @@ public class Test {
 		float lambda = homeAvgFor * awayAvgAgainst / leagueAvgAway;
 		float mu = awayAvgFor * homeAvgAgainst / leagueAvgHome;
 		return Utils.poissonOver(lambda, mu);
-	}
-
-	public static void simplePredictions() throws JSONException, IOException, ParseException {
-		SQLiteJDBC.update(2015);
-		ArrayList<ExtendedFixture> fixtures = Api.findFixtures(1);
-		//
-		ArrayList<Entry> entries = new ArrayList<>();
-		for (ExtendedFixture f : fixtures) {
-			Algorithm alg = new Basic1(f);
-			entries.add(new Entry(f, alg.calculate(), alg.getClass().getSimpleName()));
-		}
-		entries.sort(new Comparator<Entry>() {
-			@Override
-			public int compare(Entry o1, Entry o2) {
-				int fc = o1.fixture.competition.compareTo(o2.fixture.competition);
-				return fc != 0 ? fc : o1.compareTo(o2);
-			}
-		});
-		// Collections.sort(entries, Collections.reverseOrder());
-		System.out.println(entries);
 	}
 
 	public enum DataType {

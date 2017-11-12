@@ -604,7 +604,11 @@ public class XlSUtils {
 					&& fdate.before(date)) {
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
-					total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
+					try {
+						total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
+					} catch (Exception e) {
+						System.out.println("daasfgd");
+					}
 				}
 				count++;
 			}
@@ -4692,7 +4696,7 @@ public class XlSUtils {
 			// temp = findThreshold(Utils.noequilibriums(finals), temp,
 			// MaximizingBy.BOTH);
 
-			finals = runWithSettingsList(sheet, current, temp);
+			finals = FixtureUtils.runWithSettingsList(all, current, temp);
 			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
 			// "shots");
 			// finals = Utils.allUnders(current);
@@ -5501,7 +5505,7 @@ public class XlSUtils {
 
 		ArrayList<FinalEntry> pending = new ArrayList<>();
 
-		int maxMatchDay = addMatchDay(sheet, all);
+		int maxMatchDay = FixtureUtils.addMatchDay(all);
 		for (int i = maxMatchDay >= 14 ? 14 : 5; i <= maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
@@ -5509,7 +5513,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
-			finals = runWithSettingsList(sheet, current, temp);
+			finals = FixtureUtils.runWithSettingsList(all, current, temp);
 			pending.addAll(finals);
 
 		}

@@ -3,8 +3,10 @@ package predictions;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,56 +35,54 @@ public class Predictions {
 	public static ArrayList<String> CHECKLIST = new ArrayList<>();
 
 	public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
-		//
-		CHECKLIST.add("ENG");
-//		CHECKLIST.add("ENG2");
-//		CHECKLIST.add("ENG3");
-//		CHECKLIST.add("ENG4");
-//		CHECKLIST.add("ENG5");
-//		CHECKLIST.add("IT");
-//		CHECKLIST.add("IT2");
-//		CHECKLIST.add("FR");
-//		CHECKLIST.add("FR2");
-//		CHECKLIST.add("SPA");
-//		CHECKLIST.add("SPA2");
-//		CHECKLIST.add("GER");
-//		CHECKLIST.add("GER2");
-//		CHECKLIST.add("SCO");
-//		CHECKLIST.add("NED");
-//		CHECKLIST.add("BEL");
-//		CHECKLIST.add("SWI");
-//		CHECKLIST.add("POR");
-//		CHECKLIST.add("GRE");
-//		CHECKLIST.add("TUR");
-//		CHECKLIST.add("BUL");
-//		CHECKLIST.add("RUS");
-//		CHECKLIST.add("AUS");
-//		CHECKLIST.add("DEN");
-//		CHECKLIST.add("CZE");
-//		CHECKLIST.add("ARG");
-//		CHECKLIST.add("POL");
-//		CHECKLIST.add("CRO");
-//		CHECKLIST.add("SLO");
-//		CHECKLIST.add("USA");
-//		CHECKLIST.add("SWE");
-//		CHECKLIST.add("NOR");
-//		CHECKLIST.add("FIN");
-		CHECKLIST.add("BRA");
-//		CHECKLIST.add("BRB");
 
-		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.TRUE,
-		 UpdateType.AUTOMATIC);
+		// CHECKLIST.add("ENG");
+		// CHECKLIST.add("ENG2");
+		// CHECKLIST.add("ENG3");
+		// CHECKLIST.add("ENG4");
+		// CHECKLIST.add("ENG5");
+		// CHECKLIST.add("IT");
+		// CHECKLIST.add("IT2");
+		// CHECKLIST.add("FR");
+		// CHECKLIST.add("FR2");
+		// CHECKLIST.add("SPA");
+		// CHECKLIST.add("SPA2");
+		// CHECKLIST.add("GER");
+		// CHECKLIST.add("GER2");
+		// CHECKLIST.add("SCO");
+		// CHECKLIST.add("NED");
+		// CHECKLIST.add("BEL");
+		// CHECKLIST.add("SWI");
+		// CHECKLIST.add("POR");
+		// CHECKLIST.add("GRE");
+		// CHECKLIST.add("TUR");
+		// CHECKLIST.add("BUL");
+		// CHECKLIST.add("RUS");
+		// CHECKLIST.add("AUS");
+		// CHECKLIST.add("DEN");
+		// CHECKLIST.add("CZE");
+		// CHECKLIST.add("ARG");
+		// CHECKLIST.add("POL");
+		// CHECKLIST.add("CRO");
+		// CHECKLIST.add("SLO");
+		// CHECKLIST.add("USA");
+		// CHECKLIST.add("SWE");
+		// CHECKLIST.add("NOR");
+		// CHECKLIST.add("FIN");
+		// CHECKLIST.add("BRA");
+		CHECKLIST.add("BRB");
 
-//		 DualListBox.init(CHECKLIST);
+//		Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC, 12, 11);
 
-//		predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE);
+		predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 12, 11);
 
-		// asianPredictions(2016, true);
+		// predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
+		// OnlyTodayMatches.FALSE);
 
 	}
 
 	public static ArrayList<FinalEntry> predictions(int year, DataType type, UpdateType automatic,
-			OnlyTodayMatches onlyToday) throws InterruptedException, ExecutionException, IOException {
+			OnlyTodayMatches onlyToday, int day, int month) throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 
 		FileInputStream file = null;
@@ -97,7 +97,8 @@ public class Predictions {
 
 		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
-		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? Scraper.getTodaysLeagueList() : CHECKLIST;
+		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? Scraper.getTodaysLeagueList(day, month)
+				: CHECKLIST;
 		System.out.println(leagues);
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
@@ -139,8 +140,9 @@ public class Predictions {
 			ArrayList<FinalEntry> dataProper = Utils.noequilibriums(data);
 
 			ArrayList<FinalEntry> pending = Utils.pendingFinals(i.getValue());
-			if (onlyToday.equals(OnlyTodayMatches.TRUE))
-				pending = Utils.todayGames(pending);
+			if (onlyToday.equals(OnlyTodayMatches.TRUE)){
+				pending = Utils.gamesForDay(pending,LocalDate.of(2017, month, day));
+			}
 
 			if (pending.isEmpty())
 				continue;

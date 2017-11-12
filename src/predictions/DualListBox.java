@@ -286,18 +286,18 @@ public class DualListBox extends JPanel {
 	private class RunListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			ArrayList<String> list = getDestinationList();
-			if (predictOrUpdate)
-				try {
-					Predictions.predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE);
-				} catch (InterruptedException | ExecutionException | IOException e1) {
-					e1.printStackTrace();
-				}
-			else
-				try {
-					Scraper.updateInParallel(list, 1, OnlyTodayMatches.TRUE, UpdateType.AUTOMATIC);
-				} catch (IOException | InterruptedException e1) {
-					e1.printStackTrace();
-				}
+//			if (predictOrUpdate)
+//				try {
+//					Predictions.predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE);
+//				} catch (InterruptedException | ExecutionException | IOException e1) {
+//					e1.printStackTrace();
+//				}
+//			else
+//				try {
+////					Scraper.updateInParallel(list, 1, OnlyTodayMatches.TRUE, UpdateType.AUTOMATIC);
+//				} catch (IOException | InterruptedException e1) {
+//					e1.printStackTrace();
+//				}
 
 			// System.exit(0);
 		}

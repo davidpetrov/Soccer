@@ -11,4 +11,7 @@
 *.swp
 
 *.db
+
+*.txt
+
 /target/

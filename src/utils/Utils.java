@@ -10,6 +10,8 @@ import java.text.DateFormat;
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -1218,7 +1220,7 @@ public class Utils {
 
 	}
 
-	private static String format(float d) {
+	public static String format(float d) {
 		return String.format("%.2f", d);
 	}
 
@@ -3241,6 +3243,12 @@ public class Utils {
 		for (FinalEntry i : finals) {
 			i.prediction = i.prediction >= i.threshold ? 0f : 1f;
 		}
+	}
+
+	public static ArrayList<FinalEntry> gamesForDay(ArrayList<FinalEntry> pending, LocalDate date) {
+		return (ArrayList<FinalEntry>) pending.stream()
+				.filter(i -> date.equals(i.fixture.date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()))
+				.collect(Collectors.toList());
 	}
 
 }
