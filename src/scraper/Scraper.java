@@ -14,6 +14,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -62,7 +64,7 @@ import xls.XlSUtils;
 
 public class Scraper {
 	public static final DateFormat OPTAFORMAT = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
-	public static final DateFormat FORMATFULL = new SimpleDateFormat("EEEE, dd MMMM yyyy, HH:mm", Locale.US);
+	public static final DateFormat FORMATFULL = new SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.US);
 	public static final String BASE = "http://int.soccerway.com/";
 	public static final String OUSUFFIX = "#over-under;2;2.50;0";
 	public static final int CURRENT_YEAR = 2017;
@@ -103,7 +105,7 @@ public class Scraper {
 		// ArrayList<ExtendedFixture> list = odds("BEL", 2017, null);
 		// XlSUtils.storeInExcel(list, "BEL", 2017, "odds");
 		// nextMatches("ENG", null, OnlyTodayMatches.TRUE);
-		ArrayList<FullFixture> list = fullOdds("GER", 2017, null);
+		ArrayList<FullFixture> list = fullOdds("ENG", 2017, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
 		// ArrayList<FullFixture> list2 = fullOdds("SPA", 2013,
@@ -1189,7 +1191,6 @@ public class Scraper {
 		String address;
 		if (add == null) {
 			address = EntryPoints.getOddsLink(competition, year);
-			System.out.println(address);
 		} else
 			address = add;
 		System.out.println(address);
@@ -1242,7 +1243,7 @@ public class Scraper {
 						links.add(href);
 				}
 
-				System.out.println(links);
+				// System.out.println(links);
 				for (String i : links) {
 					FullFixture ef = getFullFixtureTest(driver, i, competition);
 					if (ef != null)
@@ -1811,6 +1812,7 @@ public class Scraper {
 		System.out.println(home + " : " + away);
 
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
+		dateString = dateString.split(",")[1] + dateString.split(",")[2];
 		Date date = FORMATFULL.parse(dateString);
 
 		System.out.println(date);
@@ -1848,6 +1850,115 @@ public class Scraper {
 		}
 		// System.out.println(fullResult + " " + htResult);
 
+		// match odds analysis over pinnacle
+		fullMatchOddsOverPinnacle(driver);
+		System.out.println("------------------------------------------------------");
+
+		overUnderOverPinnacle(driver);
+		System.out.println("------------------------------------------------------");
+
+		asianOverPinnacle(driver);
+		System.out.println("========================================================");
+		return null;
+
+	}
+
+	private static void asianOverPinnacle(WebDriver driver) {
+		long start = System.currentTimeMillis();
+		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
+		for (WebElement t : tabs) {
+			if (t.getText().contains("AH")) {
+				t.click();
+				break;
+			}
+		}
+
+		WebElement opt = null;
+		float min = 100f;
+		List<WebElement> divsAsian = driver.findElements(By.xpath("//*[@id='odds-data-table']/div"));
+		for (WebElement div : divsAsian) {
+			String text = div.getText();
+			if (text.split("\n").length > 3) {
+				try {
+					float diff = Math.abs(Float.parseFloat(text.split("\n")[2].trim())
+							- Float.parseFloat(text.split("\n")[3].trim()));
+					if (diff < min) {
+						min = diff;
+						opt = div;
+					}
+				} catch (Exception e) {
+					// System.out.println("asian problem" + home + " " + away);
+				}
+			}
+		}
+
+		int indexOfOptimal = opt == null ? -1 : divsAsian.indexOf(opt);
+
+		if (opt != null)
+
+		{
+			int lower = (indexOfOptimal - 5) < 0 ? 0 : (indexOfOptimal - 5);
+			int higher = (indexOfOptimal + 5) > (divsAsian.size() - 1) ? (divsAsian.size() - 1) : (indexOfOptimal + 5);
+
+			for (int j = lower; j <= higher; j++) {
+				WebElement currentDiv = divsAsian.get(j);
+				if (currentDiv == null || currentDiv.getText().split("\n").length < 3)
+					continue;
+
+				// currentDiv.click();
+				Actions actions = new Actions(driver);
+				actions.moveToElement(currentDiv).click().perform();
+
+				WebElement AHTable = currentDiv.findElement(By.xpath("//table"));
+
+				List<WebElement> rowsGoals = AHTable.findElements(By.xpath("//tbody/tr"));
+				float line = -1f, home = -1f, away = -1f;
+
+				Odds pinnOdds = null;
+
+				ArrayList<Odds> matchOdds = new ArrayList<>();
+				for (WebElement row : rowsGoals) {
+					String rowText = row.getText();
+					if (row.getText().contains("Average"))
+						break;
+					String[] oddsArray = rowText.split("\n");
+					// System.out.println(rowText);
+					if (oddsArray.length != 5)
+						continue;
+					String bookmaker = oddsArray[0].trim();
+
+					if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
+						continue;
+
+					try {
+						line = Float.parseFloat(oddsArray[1].trim());
+						home = Float.parseFloat(oddsArray[2].trim());
+						away = Float.parseFloat(oddsArray[3].trim());
+					} catch (Exception e) {
+						continue;
+					}
+
+					Odds modds = new AsianOdds(bookmaker, new Date(), line, home, away);
+					matchOdds.add(modds);
+
+					if (bookmaker.equals("Pinnacle"))
+						pinnOdds = modds;
+
+				}
+
+				checkValueOverPinnacleOdds(matchOdds, pinnOdds);
+
+				List<WebElement> closeLink = currentDiv.findElements(By.className("odds-co"));
+				if (!closeLink.isEmpty()) {
+					actions.moveToElement(closeLink.get(0)).click().perform();
+				}
+
+			}
+		}
+		System.out.println("asian total time " + (System.currentTimeMillis() - start) / 1000d + "sec");
+	}
+
+	private static void fullMatchOddsOverPinnacle(WebDriver driver) {
 		WebElement table = driver.findElement(By.xpath("//div[@id='odds-data-table']"));
 		List<WebElement> rows = table.findElements(By.xpath("//div[1]/table/tbody/tr"));
 		Odds pinnOdds = null;
@@ -1874,8 +1985,102 @@ public class Scraper {
 		}
 
 		checkValueOverPinnacleOdds(matchOdds, pinnOdds);
-		System.out.println("------------------------------------------------------");
-		return null;
+
+	}
+
+	public static void overUnderOverPinnacle(WebDriver driver) {
+		long start = System.currentTimeMillis();
+		// Over and under odds
+		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
+		for (WebElement t : tabs)
+			if (t.getText().contains("O/U")) {
+				t.click();
+				break;
+			}
+
+		WebElement optGoals = null;
+		float minGoals = 100f;
+		List<WebElement> divsGoals = driver.findElements(By.xpath("//*[@id='odds-data-table']/div"));
+		for (WebElement div : divsGoals) {
+			String text = div.getText();
+			if (text.split("\n").length > 3) {
+				try {
+					float diff = Math.abs(Float.parseFloat(text.split("\n")[2].trim())
+							- Float.parseFloat(text.split("\n")[3].trim()));
+					if (diff < minGoals) {
+						minGoals = diff;
+						optGoals = div;
+					}
+				} catch (Exception e) {
+					// System.out.println("asian problem" + home + " " + away);
+				}
+			}
+		}
+
+		int indexOfOptimalGoals = optGoals == null ? -1 : divsGoals.indexOf(optGoals);
+
+		if (optGoals == null)
+			return;
+		int lower = (indexOfOptimalGoals - 6) < 0 ? 0 : (indexOfOptimalGoals - 6);
+		int higher = (indexOfOptimalGoals + 6) > (divsGoals.size() - 1) ? (divsGoals.size() - 1)
+				: (indexOfOptimalGoals + 6);
+
+		for (int j = lower; j <= higher; j++) {
+			WebElement currentDiv = divsGoals.get(j);
+			if (currentDiv == null || currentDiv.getText().split("\n").length < 3)
+				continue;
+
+			Actions actions = new Actions(driver);
+			actions.moveToElement(currentDiv).click().perform();
+
+			WebElement goalLineTable = currentDiv.findElement(By.xpath("//table"));
+
+			// find the row
+			List<WebElement> rowsGoals = goalLineTable.findElements(By.xpath("//tbody/tr"));
+			float line = -1f, over = -1f, under = -1f;
+
+			Odds pinnOdds = null;
+
+			ArrayList<Odds> matchOdds = new ArrayList<>();
+			for (WebElement row : rowsGoals) {
+				String rowText = row.getText();
+				if (row.getText().contains("Average"))
+					break;
+				String[] oddsArray = rowText.split("\n");
+				// System.out.println(rowText);
+				if (oddsArray.length != 5)
+					continue;
+				String bookmaker = oddsArray[0].trim();
+
+				if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
+					continue;
+
+				try {
+					line = Float.parseFloat(oddsArray[1].trim());
+					over = Float.parseFloat(oddsArray[2].trim());
+					under = Float.parseFloat(oddsArray[3].trim());
+				} catch (Exception e) {
+					continue;
+				}
+
+				Odds modds = new OverUnderOdds(bookmaker, new Date(), line, over, under);
+				matchOdds.add(modds);
+
+				if (bookmaker.equals("Pinnacle"))
+					pinnOdds = modds;
+
+				// System.out.println(modds);
+			}
+
+			checkValueOverPinnacleOdds(matchOdds, pinnOdds);
+
+			List<WebElement> closeLink = currentDiv.findElements(By.className("odds-co"));
+			if (!closeLink.isEmpty()) {
+				actions.moveToElement(closeLink.get(0)).click().perform();
+			}
+		}
+
+		System.out.println("over under total time " + (System.currentTimeMillis() - start) / 1000d + "sec");
 	}
 
 	public static FullFixture getFullFixture(WebDriver driver, String i, String competition)
@@ -2310,32 +2515,37 @@ public class Scraper {
 
 		if (matchOdds.get(0) instanceof MatchOdds) {
 			MatchOdds trueMatchOdds = (MatchOdds) trueOdds;
-			for (Odds i : matchOdds) {
-				MatchOdds m = (MatchOdds) i;
-				if (m.homeOdds > trueMatchOdds.homeOdds)
-					System.out.println(
-							i.bookmaker + " 1 at " + m.homeOdds + " true: " + Utils.format(trueMatchOdds.homeOdds) + " "
-									+ Utils.format(100 * m.homeOdds / trueMatchOdds.homeOdds - 100) + "%");
-				if (m.drawOdds > trueMatchOdds.drawOdds)
-					System.out.println(
-							i.bookmaker + " X at " + m.drawOdds + " true: " + Utils.format(trueMatchOdds.drawOdds) + " "
-									+ Utils.format(100 * m.drawOdds / trueMatchOdds.drawOdds - 100) + "%");
-				if (m.awayOdds > trueMatchOdds.awayOdds)
-					System.out.println(
-							i.bookmaker + " 2 at " + m.awayOdds + " true: " + Utils.format(trueMatchOdds.awayOdds) + " "
-									+ Utils.format(100 * m.awayOdds / trueMatchOdds.awayOdds - 100) + "%");
-			}
+			MatchOdds pinnMatchOdds = (MatchOdds) pinnOdds;
+			List<MatchOdds> casted = matchOdds.stream().map(MatchOdds.class::cast).collect(Collectors.toList());
+
+			casted.sort(Comparator.comparing(MatchOdds::getHomeOdds).reversed());
+			casted.stream().filter(m -> m.homeOdds > pinnMatchOdds.homeOdds)
+					.forEach(i -> System.out.println(
+							i.bookmaker + " 1 at " + i.homeOdds + " true: " + Utils.format(trueMatchOdds.homeOdds) + " "
+									+ Utils.format(100 * i.homeOdds / trueMatchOdds.homeOdds - 100) + "%"));
+			casted.sort(Comparator.comparing(MatchOdds::getDrawOdds).reversed());
+			casted.stream().filter(m -> m.drawOdds > pinnMatchOdds.drawOdds)
+					.forEach(i -> System.out.println(
+							i.bookmaker + " X at " + i.drawOdds + " true: " + Utils.format(trueMatchOdds.drawOdds) + " "
+									+ Utils.format(100 * i.drawOdds / trueMatchOdds.drawOdds - 100) + "%"));
+			casted.sort(Comparator.comparing(MatchOdds::getAwayOdds).reversed());
+			casted.stream().filter(m -> m.awayOdds > pinnMatchOdds.awayOdds)
+					.forEach(i -> System.out.println(
+							i.bookmaker + " 2 at " + i.awayOdds + " true: " + Utils.format(trueMatchOdds.awayOdds) + " "
+									+ Utils.format(100 * i.awayOdds / trueMatchOdds.awayOdds - 100) + "%"));
+
 		}
 
 		if (matchOdds.get(0) instanceof AsianOdds) {
 			AsianOdds trueAsianOdds = (AsianOdds) trueOdds;
+			AsianOdds pinnAsianOdds = (AsianOdds) pinnOdds;
 			for (Odds i : matchOdds) {
 				AsianOdds m = (AsianOdds) i;
-				if (m.homeOdds > trueAsianOdds.homeOdds)
+				if (m.homeOdds > pinnAsianOdds.homeOdds)
 					System.out.println(i.bookmaker + " H " + m.line + " at " + m.homeOdds + " true: "
 							+ Utils.format(trueAsianOdds.homeOdds) + " "
 							+ Utils.format(100 * m.homeOdds / trueAsianOdds.homeOdds - 100) + "%");
-				if (m.awayOdds > trueAsianOdds.awayOdds)
+				if (m.awayOdds > pinnAsianOdds.awayOdds)
 					System.out.println(i.bookmaker + " A " + m.line + " at " + m.awayOdds + " true: "
 							+ Utils.format(trueAsianOdds.awayOdds) + " "
 							+ Utils.format(100 * m.awayOdds / trueAsianOdds.awayOdds - 100) + "%");
@@ -2344,13 +2554,14 @@ public class Scraper {
 
 		if (matchOdds.get(0) instanceof OverUnderOdds) {
 			OverUnderOdds trueOverUnderOdds = (OverUnderOdds) trueOdds;
+			OverUnderOdds pinnOverUnderOdds = (OverUnderOdds) pinnOdds;
 			for (Odds i : matchOdds) {
 				OverUnderOdds m = (OverUnderOdds) i;
-				if (m.overOdds > trueOverUnderOdds.overOdds)
+				if (m.overOdds > pinnOverUnderOdds.overOdds)
 					System.out.println(i.bookmaker + " O " + m.line + " at " + m.overOdds + " true: "
 							+ Utils.format(trueOverUnderOdds.overOdds) + " "
 							+ Utils.format(100 * m.overOdds / trueOverUnderOdds.overOdds - 100) + "%");
-				if (m.underOdds > trueOverUnderOdds.underOdds)
+				if (m.underOdds > pinnOverUnderOdds.underOdds)
 					System.out.println(i.bookmaker + " U " + m.line + " at " + m.underOdds + " true: "
 							+ Utils.format(trueOverUnderOdds.underOdds) + " "
 							+ Utils.format(100 * m.underOdds / trueOverUnderOdds.underOdds - 100) + "%");

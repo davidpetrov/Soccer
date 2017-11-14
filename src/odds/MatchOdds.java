@@ -26,6 +26,30 @@ public class MatchOdds extends Odds {
 		return bookmaker + "  " + homeOdds + "  " + drawOdds + "  " + awayOdds;
 	}
 
+	public float getHomeOdds() {
+		return homeOdds;
+	}
+
+	public float getDrawOdds() {
+		return drawOdds;
+	}
+
+	public void setDrawOdds(float drawOdds) {
+		this.drawOdds = drawOdds;
+	}
+
+	public float getAwayOdds() {
+		return awayOdds;
+	}
+
+	public void setAwayOdds(float awayOdds) {
+		this.awayOdds = awayOdds;
+	}
+
+	public void setHomeOdds(float homeOdds) {
+		this.homeOdds = homeOdds;
+	}
+
 	@Override
 	public Odds getTrueOddsMarginal() {
 		float margin = getMargin() - 1f;

@@ -20,7 +20,9 @@ public class MinMaxOdds {
 			"SPA", "SPA2", "GER", "GER2", "FR", "ENG", "SCO", "ENG2", "ENG3", "ENG4", "ENG5", "BUL", "CRO", "SLO",
 			"SLK" };
 
-	public static final String[] FAKEBOOKS = { "Tempobet", "Interwetten" };
+	public static final String[] FAKEBOOKS = { "Tempobet", "Interwetten", "Vulkanbet", "Scandibet", "Island Casino",
+			"Betser", "Bethard", "Vernons", "18bet", "BetOlimp", "TonyBet", "Betsafe", "Intertops", "Betcruise",
+			"ComeOn", "NordicBet", "RealDealBet", "BetOnline", "ScandiBet", "Asianodds", "Jetbull", "youwin" };
 
 	public static final String[] FULL = { "SWI", "BRA", "ENG", "SPA" };
 
