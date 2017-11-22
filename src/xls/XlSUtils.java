@@ -809,7 +809,8 @@ public class XlSUtils {
 		ArrayList<ExtendedFixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 
-		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
+		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy HH:mm");
+		DateFormat XLSformatOld = new SimpleDateFormat("d.M.yyyy");
 		while (rowIterator.hasNext()) {
 			Row row = rowIterator.next();
 			if (row.getRowNum() == 0)
@@ -818,7 +819,11 @@ public class XlSUtils {
 			String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 			Date fdate;
 			if (row.getCell(getColumnIndex(sheet, "Date")).getCellType() == 1)
-				fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+				try {
+					fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+				} catch (Exception e) {
+					fdate = XLSformatOld.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+				}
 			else
 				fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 
@@ -893,13 +898,18 @@ public class XlSUtils {
 	}
 
 	public static ExtendedFixture getFixture(HSSFSheet sheet, Row row) throws ParseException {
-		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
+		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy HH:mm");
+		DateFormat XLSformatOld = new SimpleDateFormat("d.M.yyyy");
 		ExtendedFixture f = null;
 		String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
 		String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 		Date fdate;
 		if (row.getCell(getColumnIndex(sheet, "Date")).getCellType() == 1)
-			fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+			try {
+				fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+			} catch (Exception e) {
+				fdate = XLSformatOld.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
+			}
 		else
 			fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 		if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && row.getCell(getColumnIndex(sheet, "FTAG")) != null
@@ -4922,7 +4932,7 @@ public class XlSUtils {
 
 	public static synchronized void storeInExcel(ArrayList<ExtendedFixture> all, String competition, int year,
 			String table) throws IOException, InterruptedException {
-		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
+		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy HH:mm");
 		String base = new File("").getAbsolutePath();
 
 		all.sort(new Comparator<ExtendedFixture>() {
@@ -4942,7 +4952,7 @@ public class XlSUtils {
 
 		CreationHelper createHelper = workbook.getCreationHelper();
 		CellStyle cellStyle = workbook.createCellStyle();
-		cellStyle.setDataFormat(createHelper.createDataFormat().getFormat("MMMM dd, yyyy"));
+		cellStyle.setDataFormat(createHelper.createDataFormat().getFormat("d.M.yyyy HH:mm"));
 
 		HSSFRow row0 = sheet.createRow(0);
 		row0.createCell(0).setCellValue("Date");
@@ -5412,8 +5422,8 @@ public class XlSUtils {
 		for (ExtendedFixture i : ways) {
 			if (oddsFixture.homeTeam.equals(reverseDictionary.get(i.homeTeam))
 					&& oddsFixture.awayTeam.equals(reverseDictionary.get(i.awayTeam))
-					&& (oddsFixture.date.equals(i.date) || oddsFixture.date.equals(Utils.getYesterday(i.date))
-							|| oddsFixture.date.equals(Utils.getTommorow(i.date)))) {
+					&& (Math.abs(i.date.getTime() - oddsFixture.date.getTime()) <= 24 * 60 * 60 * 1000)) {
+
 				ExtendedFixture ef = oddsFixture.withShots(i.shotsHome, i.shotsAway);
 				return ef;
 			}

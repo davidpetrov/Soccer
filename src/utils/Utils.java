@@ -2153,14 +2153,13 @@ public class Utils {
 	 */
 	public static boolean matchesFixtureLists(String teamFor, ArrayList<ExtendedFixture> fixtures,
 			ArrayList<ExtendedFixture> fwa) {
-		// System.out.println(fixtures);
+//		System.out.println(fixtures);
 		// System.out.println(fwa);
 		for (ExtendedFixture i : fixtures) {
 			boolean foundMatch = false;
 			boolean isHomeSide = teamFor.equals(i.homeTeam);
 			for (ExtendedFixture j : fwa) {
-				if ((i.date.equals(j.date) || i.date.equals(Utils.getYesterday(j.date))
-						|| i.date.equals(Utils.getTommorow(j.date))) && i.result.equals(j.result)) {
+				if (Math.abs(i.date.getTime() - j.date.getTime()) <= 24 * 60 * 60 * 1000 && i.result.equals(j.result)) {
 					foundMatch = true;
 					break;
 				}

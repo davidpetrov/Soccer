@@ -94,34 +94,41 @@ public class Scraper {
 		// System.out.println(list.size());
 		// ====================================================================
 
-		// ArrayList<ExtendedFixture> shotsList = collect("BEL", 2017, null);
+		// ArrayList<ExtendedFixture> shotsList = collect("FR", 2017, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
-		// XlSUtils.storeInExcel(shotsList, "BEL", 2017, "manual");
+		// shotsList = new ArrayList<>();
+		// shotsList.add(new ExtendedFixture(new Date(), "home", "away", new
+		// Result(2, 2), "BEL1")
+		// .withHTResult(new Result(1, 1)));
+		// XlSUtils.storeInExcel(shotsList, "BRA", 2017, "manual");
 
 		//
 		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
 
-		// ArrayList<ExtendedFixture> list = odds("BEL", 2017, null);
-		// XlSUtils.storeInExcel(list, "BEL", 2017, "odds");
-		// nextMatches("ENG", null, OnlyTodayMatches.TRUE);
-		ArrayList<FullFixture> list = fullOdds("ENG", 2017, null);
+//		ArrayList<ExtendedFixture> list = odds("BRA", 2017, null);
+//		XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
+		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
+		// ArrayList<FullFixture> list = fullOdds("ENG", 2017, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
 		// ArrayList<FullFixture> list2 = fullOdds("SPA", 2013,
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
-		// XlSUtils.combine("BEL", 2017, "manual");
+//		 XlSUtils.combine("BRA", 2017, "manual");
 		// XlSUtils.combineFull("SPA", 2015, "all-data");
 		// ////
-		// XlSUtils.fillMissingShotsData("BEL", 2017, false);
+//		 XlSUtils.fillMissingShotsData("BRA", 2017, false);
 
 		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
 		// nextMatches("BRB", null);
 
-		// checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
-		// checkAndUpdate("GRE", OnlyTodayMatches.FALSE);
+		// collect("FR", 2017, null);
+		// collectUpToDate("GER2", 2017, new Date(), null);
+
+//		checkAndUpdate("FR", OnlyTodayMatches.TRUE);
+		 checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
 		// checkAndUpdate("ENG4", OnlyTodayMatches.FALSE);
 		// checkAndUpdate("ENG", OnlyTodayMatches.FALSE);
 		// checkAndUpdate("SWE", OnlyTodayMatches.FALSE);
@@ -134,6 +141,7 @@ public class Scraper {
 
 		// fastOdds("SPA", 2016, null);
 
+		Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 	}
 
@@ -277,8 +285,7 @@ public class Scraper {
 			boolean continueFlag = false;
 			for (ExtendedFixture comb : combined) {
 				if (i.homeTeam.equals(comb.homeTeam) && i.awayTeam.equals(comb.awayTeam)
-						&& (i.date.equals(comb.date) || i.date.equals(Utils.getYesterday(comb.date))
-								|| i.date.equals(Utils.getTommorow(comb.date)))) {
+						&& (Math.abs(i.date.getTime() - comb.date.getTime()) <= 24 * 60 * 60 * 1000)) {
 					continueFlag = true;
 				}
 			}
@@ -305,8 +312,8 @@ public class Scraper {
 		for (ExtendedFixture i : toAdd) {
 			boolean continueFlag = false;
 			for (ExtendedFixture n : next) {
-				if (i.homeTeam.equals(n.homeTeam) && i.awayTeam.equals(n.awayTeam) && (i.date.equals(n.date)
-						|| i.date.equals(Utils.getYesterday(n.date)) || i.date.equals(Utils.getTommorow(n.date)))) {
+				if (i.homeTeam.equals(n.homeTeam) && i.awayTeam.equals(n.awayTeam)
+						&& (Math.abs(i.date.getTime() - n.date.getTime()) <= 24 * 60 * 60 * 1000)) {
 					continueFlag = true;
 					break;
 				}
@@ -341,6 +348,10 @@ public class Scraper {
 		WebDriver driver = new ChromeDriver();
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
+		driver.navigate().to(address + "/results/");
+
+		login(driver);
+
 		driver.navigate().to(address + "/results/");
 
 		// Get page count
@@ -391,6 +402,10 @@ public class Scraper {
 				driver = new ChromeDriver();
 				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 				driver.manage().window().maximize();
+
+				driver.navigate().to(address + "/results/");
+				login(driver);
+				driver.navigate().to(address + "/results/");
 			}
 
 			if (breakFlag) {
@@ -437,7 +452,8 @@ public class Scraper {
 			Document matches = Jsoup.parse(html);
 
 			boolean breakFlag = false;
-			Elements linksM = matches.select("a[href]");
+			Element list = matches.select("table[class=matches   ]").first();
+			Elements linksM = list.select("a[href]");
 			Elements fixtures = new Elements();
 			for (Element linkM : linksM) {
 				if (isScore(linkM.text())) {
@@ -459,9 +475,8 @@ public class Scraper {
 			if (breakFlag)
 				break;
 
-			// ((JavascriptExecutor)
-			// driver).executeScript("window.scrollBy(0,250)", "");
-			driver.findElement(By.className("previous")).click();
+			Actions actions = new Actions(driver);
+			actions.moveToElement(driver.findElement(By.className("previous"))).click().perform();
 			Thread.sleep(1000);
 			String htmlAfter = driver.getPageSource();
 
@@ -469,8 +484,8 @@ public class Scraper {
 				break;
 
 			// Additional stopping condition - no new entries
-			if (set.size() == setSize)
-				break;
+			// if (set.size() == setSize)
+			// break;
 
 		}
 
@@ -499,10 +514,9 @@ public class Scraper {
 		driver.manage().window().maximize();
 		driver.navigate().to(address);
 
-		driver.findElement(By.partialLinkText("GMT")).click();
+		login(driver);
 
-		// Hardcoded timezone
-		driver.findElement(By.xpath("//*[@id='timezone-content']/a[32]")).click();
+		driver.navigate().to(address);
 
 		String[] splitAddress = address.split("/");
 		String leagueYear = splitAddress[splitAddress.length - 1];
@@ -570,9 +584,10 @@ public class Scraper {
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
 			int setSize = set.size();
-
-			Elements linksM = matches.select("a[href]");
+			Element list = matches.select("table[class=matches   ]").first();
+			Elements linksM = list.select("a[href]");
 			for (Element linkM : linksM) {
+				// System.out.println(linkM.text());
 				if (isScore(linkM.text())) {
 					Document fixture = Jsoup.connect(BASE + linkM.attr("href")).get();
 					ExtendedFixture ef = getFixture(fixture, competition);
@@ -581,7 +596,8 @@ public class Scraper {
 				}
 			}
 
-			driver.findElement(By.className("previous")).click();
+			Actions actions = new Actions(driver);
+			actions.moveToElement(driver.findElement(By.className("previous"))).click().perform();
 			Thread.sleep(1000);
 			String htmlAfter = driver.getPageSource();
 
@@ -589,8 +605,9 @@ public class Scraper {
 				break;
 
 			// Additional stopping condition - no new entries
-			if (set.size() == setSize)
-				break;
+			// if (set.size() == setSize)
+			// break;
+
 		}
 
 		driver.close();
@@ -725,8 +742,19 @@ public class Scraper {
 
 		System.out.println(shotsHome + " s " + shotsAway);
 
-		Date date = OPTAFORMAT.parse(fixture.select("dt:contains(Date) + dd").first().text());
-		// System.out.println(date);
+		String dateString = fixture.select("dt:contains(Date) + dd").first().text();
+		String timeString = "21:00";
+		try {
+			timeString = fixture.select("dt:contains(Kick-off) + dd").first().text();
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println("DA");
+		}
+		// the time is in gmt+1
+		long hour = 3600 * 1000;
+		Date date = new Date(FORMATFULL.parse(dateString + " " + timeString).getTime() + hour);
+		System.out.println(date);
 
 		String teams = fixture.select("h1").first().text();
 		// System.out.println(getHome(teams));
@@ -1115,12 +1143,9 @@ public class Scraper {
 		driver.manage().window().maximize();
 		driver.navigate().to(address + "/results/");
 
-		// driver.findElement(By.partialLinkText("GMT")).click();
+		login(driver);
 
-		// Hardcoded timezone
-		// driver.findElement(By.xpath("//*[@id='timezone-content']/a[32]")).click();
-
-		// *[@id="pagination"]
+		driver.navigate().to(address + "/results/");
 
 		// Get page count
 		int maxPage = 1;
@@ -1162,8 +1187,6 @@ public class Scraper {
 					if (ef != null)
 						result.add(ef);
 
-					// break;
-
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -1174,6 +1197,10 @@ public class Scraper {
 				driver = new ChromeDriver();
 				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 				driver.manage().window().maximize();
+
+				driver.navigate().to(address + "/results/");
+				login(driver);
+				driver.navigate().to(address + "/results/");
 			}
 		}
 
@@ -1543,7 +1570,8 @@ public class Scraper {
 		System.out.println(home + " : " + away);
 
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
-		Date date = OPTAFORMAT.parse(dateString.split(",")[1].trim());
+		dateString = dateString.split(",")[1] + dateString.split(",")[2];
+		Date date = FORMATFULL.parse(dateString);
 		System.out.println(date);
 
 		// skipping to update matches that are played later than today (for
@@ -1769,9 +1797,8 @@ public class Scraper {
 
 		if (opt != null) {
 			try {
-				JavascriptExecutor jse = (JavascriptExecutor) driver;
-				jse.executeScript("window.scrollBy(0,250)", "");
-				opt.click();
+				Actions actions = new Actions(driver);
+				actions.moveToElement(opt).click().perform();
 			} catch (Exception e) {
 				System.out.println("click error ah line ==");
 				e.printStackTrace();

@@ -48,7 +48,7 @@ public class Predictions {
 		// CHECKLIST.add("SPA");
 		// CHECKLIST.add("SPA2");
 		// CHECKLIST.add("GER");
-		// CHECKLIST.add("GER2");
+//		 CHECKLIST.add("GER2");
 		// CHECKLIST.add("SCO");
 		// CHECKLIST.add("NED");
 		// CHECKLIST.add("BEL");
@@ -69,20 +69,23 @@ public class Predictions {
 		// CHECKLIST.add("SWE");
 		// CHECKLIST.add("NOR");
 		// CHECKLIST.add("FIN");
-		// CHECKLIST.add("BRA");
-		CHECKLIST.add("BRB");
+		 CHECKLIST.add("BRA");
+//		CHECKLIST.add("BRB");
 
-//		Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC, 12, 11);
+//		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
+//		 UpdateType.AUTOMATIC, 21, 11);
 
-		predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 13, 11);
+//		predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 22, 11);
 
-		// predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
-		// OnlyTodayMatches.FALSE);
-
+//		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
+//		 OnlyTodayMatches.FALSE, 21, 11);
+		 
+		 Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
 	}
 
 	public static ArrayList<FinalEntry> predictions(int year, DataType type, UpdateType automatic,
-			OnlyTodayMatches onlyToday, int day, int month) throws InterruptedException, ExecutionException, IOException {
+			OnlyTodayMatches onlyToday, int day, int month)
+					throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
 
 		FileInputStream file = null;
@@ -140,8 +143,8 @@ public class Predictions {
 			ArrayList<FinalEntry> dataProper = Utils.noequilibriums(data);
 
 			ArrayList<FinalEntry> pending = Utils.pendingFinals(i.getValue());
-			if (onlyToday.equals(OnlyTodayMatches.TRUE)){
-				pending = Utils.gamesForDay(pending,LocalDate.of(2017, month, day));
+			if (onlyToday.equals(OnlyTodayMatches.TRUE)) {
+				pending = Utils.gamesForDay(pending, LocalDate.of(2017, month, day));
 			}
 
 			if (pending.isEmpty())
