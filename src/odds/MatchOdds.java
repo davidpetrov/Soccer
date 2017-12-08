@@ -22,8 +22,10 @@ public class MatchOdds extends Odds {
 		return 1f / homeOdds + 1f / drawOdds + 1f / awayOdds;
 	}
 
+	@Override
 	public String toString() {
-		return bookmaker + "  " + homeOdds + "  " + drawOdds + "  " + awayOdds;
+		return "MatchOdds [homeOdds=" + homeOdds + ", drawOdds=" + drawOdds + ", awayOdds=" + awayOdds + ", bookmaker="
+				+ bookmaker + ", date=" + date + "]";
 	}
 
 	public float getHomeOdds() {

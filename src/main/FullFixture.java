@@ -9,7 +9,6 @@ public class FullFixture extends ExtendedFixture {
 
 	public FullFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		super(date, homeTeam, awayTeam, result, competition);
-		// TODO Auto-generated constructor stub
 	}
 
 	public FullFixture withLines(AsianLines asianLines, GoalLines goalLines) {

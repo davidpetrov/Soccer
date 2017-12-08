@@ -9,10 +9,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -45,7 +47,7 @@ public class Test {
 
 		// Results.eval("estimateBoth");
 		// Results.eval("smooth");
-		// Results.eval("test");
+//		 Results.eval("test");
 
 		// asianPredictions();
 
@@ -57,19 +59,19 @@ public class Test {
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-		// float total = 0f;
-		// int startY = 2011;
-		// int end = 2016;
-		// for (int year = startY; year <= end; year++)
-		// total += simulationAllLines(year, true /*DataType.ALLEURODATA*/);
-		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
+//		 float total = 0f;
+//		 int startY = 2011;
+//		 int end = 2016;
+//		 for (int year = startY; year <= end; year++)
+//		 total += simulationAllLines(year, true /*DataType.ALLEURODATA*/);
+//		 System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
 
 		// accumulators(2015, 2015);
 
-		// analysis(2005, 2016, DataType.ALLEURODATA);
+		analysis(2013, 2016, DataType.ODDSPORTAL);
 
 		// aggregateInterval();
 
@@ -90,21 +92,18 @@ public class Test {
 		ArrayList<FinalEntry> all = new ArrayList<>();
 		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
 
-		// populateForAnalysis(start, end, all, byLeagueYear, type);
-		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "shots");
+		 populateForAnalysis(start, end, all, byLeagueYear, type);
+//		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "shots");
 
-		// ArrayList<FinalEntry> ita = (ArrayList<FinalEntry>)
-		// byLeagueYear.get("I1").values().stream()
-		// .flatMap(List::stream).collect(Collectors.toList());
+		ArrayList<FinalEntry> eng = (ArrayList<FinalEntry>) byLeagueYear.get("FR2").values().stream()
+				.flatMap(List::stream).collect(Collectors.toList());
 
-		// HashMap<String, ArrayList<FinalEntry>> byLeague =
-		// Utils.byLeague(all);
-		// for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i :
-		// byLeague.entrySet()) {
-		// System.out.println(i.getKey());
-		// System.out.println(i.getValue().size());
-		// Utils.analysys(i.getValue(), 3000, false);
-		// }
+//		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);
+//		for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i : byLeague.entrySet()) {
+//			System.out.println(i.getKey());
+//			System.out.println(i.getValue().size());
+//			Utils.analysys(i.getValue(), i.getKey(), false);
+//		}
 
 		// ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
 		// 1, MaximizingBy.OVERS);
@@ -133,7 +132,7 @@ public class Test {
 		// ArrayList<FinalEntry> withTH12 =
 		// Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.UNDERS);
 
-		Utils.fullAnalysys(all, "all");
+		Utils.fullAnalysys(eng, "all");
 
 		// Utils.fullAnalysys(withTH1, "maxByThOvers(1)");
 
@@ -608,8 +607,8 @@ public class Test {
 			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
 			// continue;
 
-			// if (!sh.getSheetName().equals("I1"))
-			// continue;
+			 if (!sh.getSheetName().equals("FR2"))
+			 continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
 

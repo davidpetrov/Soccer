@@ -22,8 +22,11 @@ public class MinMaxOdds {
 
 	public static final String[] FAKEBOOKS = { "Tempobet", "Interwetten", "Vulkanbet", "Scandibet", "Island Casino",
 			"Betser", "Bethard", "Vernons", "18bet", "BetOlimp", "TonyBet", "Betsafe", "Intertops", "Betcruise",
-			"ComeOn", "NordicBet", "RealDealBet", "BetOnline", "ScandiBet", "Asianodds", "Jetbull", "youwin" };
+			"ComeOn", "NordicBet", "RealDealBet", "BetOnline", "ScandiBet", "Asianodds", "Jetbull", "youwin",
+			"BetCity", "Expekt",/* "Dafabet", "12BET",*/ "Betrally" };
 
+	
+	
 	public static final String[] FULL = { "SWI", "BRA", "ENG", "SPA" };
 
 	public static HashMap<String, String> equivalents = new HashMap<>();

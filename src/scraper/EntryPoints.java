@@ -14,7 +14,7 @@ public class EntryPoints {
 	public static final String[] TRACKING = { "ENG", "ENG2", "ENG3", "ENG4", "ENG5", "IT", "IT2", "FR", "FR2", "SPA",
 			"SPA2", "GER", "GER2", "SCO", "NED", "BEL", "SWI", "POR", "GRE", "TUR", "BUL",
 			"RUS", /* "AUS", "DEN", "CZE", "ARG", "POL", "CRO", */
-			/* "SLO", */ "SWE", "USA", "FIN" /* "ICE" */, "BRA", "BRB", /* "NOR" */ };
+			/* "SLO", */ "SWE", /*"USA",*/ "FIN" /* "ICE" */, "BRA", "BRB", /* "NOR" */ };
 
 	public static final String[] SUMMER = { "SWE", "USA", "FIN", "ICE", "BRA", "BRB", "NOR" };
 
@@ -120,6 +120,8 @@ public class EntryPoints {
 		odds.put("CRO", "croatia/1-hnl");
 		odds.put("SLO", "slovenia/prva-liga");
 		odds.put("SLK", "slovakia/fortuna-liga");
+		odds.put("EL", "europe/europa-league/");
+		
 	}
 
 	public static String getLink(String competition, int year) {

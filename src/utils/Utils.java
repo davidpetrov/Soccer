@@ -53,6 +53,8 @@ import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
 import main.Test.DataType;
+import odds.Odds;
+import odds.OverUnderOdds;
 import results.Results;
 import scraper.Names;
 import scraper.Scraper;
@@ -865,10 +867,10 @@ public class Utils {
 		Stats equilibriumsAsOvers = new Stats(allOvers(onlyFixtures(equilibriums)), "Equilibriums as overs");
 		stats.add(equilibriumsAsOvers);
 		stats.add(equilibriumsAsUnders);
-		if (verbose) {
-			System.out.println(equilibriumsAsUnders);
-			System.out.println(equilibriumsAsOvers);
-		}
+		// if (verbose) {
+		System.out.println(equilibriumsAsUnders);
+		System.out.println(equilibriumsAsOvers);
+		// }
 
 		if (verbose)
 			System.out.println("Avg return: " + avgReturn(onlyFixtures(noEquilibriums)));
@@ -2153,7 +2155,7 @@ public class Utils {
 	 */
 	public static boolean matchesFixtureLists(String teamFor, ArrayList<ExtendedFixture> fixtures,
 			ArrayList<ExtendedFixture> fwa) {
-//		System.out.println(fixtures);
+		// System.out.println(fixtures);
 		// System.out.println(fwa);
 		for (ExtendedFixture i : fixtures) {
 			boolean foundMatch = false;
@@ -3248,6 +3250,21 @@ public class Utils {
 		return (ArrayList<FinalEntry>) pending.stream()
 				.filter(i -> date.equals(i.fixture.date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()))
 				.collect(Collectors.toList());
+	}
+
+	public static ArrayList<FinalEntry> setTrueOddsProportional(ArrayList<FinalEntry> finals) {
+		ArrayList<FinalEntry> result = new ArrayList<>();
+		for (FinalEntry i : finals) {
+			FullEntry full = (FullEntry) i;
+			Odds odds = new OverUnderOdds(full.line.bookmaker, full.fixture.date, full.line.line, full.line.home,
+					full.line.away);
+			OverUnderOdds trueOdds = (OverUnderOdds) odds.getTrueOddsMarginal();
+			full.line.home = trueOdds.overOdds;
+			full.line.away = trueOdds.underOdds;
+			result.add(full);
+		}
+
+		return result;
 	}
 
 }

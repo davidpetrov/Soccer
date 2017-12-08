@@ -2469,11 +2469,12 @@ public class XlSUtils {
 
 			// finals = Utils.certaintyRestrict(finals, 0.70f);
 			// finals = Utils.estimateOposite(current, map, sheet);
-			// finals = Utils.mainGoalLine(finals, map);
+//			 finals = Utils.mainGoalLine(finals, map);
 			// Utils.theOposite(finals);
-			// finals = Utils.customGoalLine(finals, map, 0.5f);
+			 finals = Utils.customGoalLine(finals, map, -0.5f);
+//			 finals = Utils.specificLine(finals, map, 2.5f);
+//			 finals = Utils.setTrueOddsProportional(finals);
 			// finals = Utils.bestValueByDistibution(finals, map, all, sheet);
-			// finals = Utils.specificLine(finals, map, 2f);
 
 			played += finals.size();
 
@@ -5516,7 +5517,7 @@ public class XlSUtils {
 		ArrayList<FinalEntry> pending = new ArrayList<>();
 
 		int maxMatchDay = FixtureUtils.addMatchDay(all);
-		for (int i = maxMatchDay >= 14 ? 14 : 5; i <= maxMatchDay; i++) {
+		for (int i = maxMatchDay >= 12 ? 12 : 5; i <= maxMatchDay; i++) {
 			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
 			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
 			// i);
