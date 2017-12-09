@@ -1953,10 +1953,11 @@ public class Scraper {
 		// System.out.println(fullResult + " " + htResult);
 
 		// match odds analysis over pinnacle
-		ArrayList<MatchOdds> matchOdds = fullMatchOddsOverPinnacle(driver, date);
+		// ArrayList<MatchOdds> matchOdds = fullMatchOddsOverPinnacle(driver,
+		// date);
 		System.out.println("------------------------------------------------------");
 
-		// overUnderOverPinnacle(driver, null);
+		ArrayList<OverUnderOdds> overUnderOdds = overUnderOverPinnacle(driver, date);
 		// System.out.println("------------------------------------------------------");
 		//
 		// asianOverPinnacle(driver);
@@ -1993,7 +1994,7 @@ public class Scraper {
 		System.out.println(home + " : " + away);
 		System.out.println(date);
 
-		overUnderOverPinnacle(driver, prediction);
+		// overUnderOverPinnacle(driver, prediction);
 		System.out.println("------------------------------------------------------");
 
 		// asianOverPinnacle(driver);
@@ -2240,6 +2241,8 @@ public class Scraper {
 		if (!awayHistory.isEmpty())
 			set.add(awayHistory.get(awayHistory.size() - 1).getDate());
 
+		if (set.isEmpty())
+			System.out.println("last prob");
 		return set.last();
 	}
 
@@ -2293,17 +2296,12 @@ public class Scraper {
 		return new MatchOdds("", openingDate, openingOdds, -1f, -1f);
 	}
 
-	public static void overUnderOverPinnacle(WebDriver driver, FinalEntry prediction) {
+	public static ArrayList<OverUnderOdds> overUnderOverPinnacle(WebDriver driver, Date date)
+			throws InterruptedException, ParseException {
 		long start = System.currentTimeMillis();
 
-		System.out.println(prediction);
-		// Over and under odds
-		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
-		for (WebElement t : tabs)
-			if (t.getText().contains("O/U")) {
-				t.click();
-				break;
-			}
+		HashMap<Float, ArrayList<OverUnderOdds>> result = new HashMap<>();
+		navigateToTab(driver, "O/U");
 
 		WebElement optGoals = null;
 		float minGoals = 100f;
@@ -2327,43 +2325,65 @@ public class Scraper {
 		int indexOfOptimalGoals = optGoals == null ? -1 : divsGoals.indexOf(optGoals);
 
 		if (optGoals == null)
-			return;
+			return null;
 		int lower = (indexOfOptimalGoals - 6) < 0 ? 0 : (indexOfOptimalGoals - 6);
 		int higher = (indexOfOptimalGoals + 6) > (divsGoals.size() - 1) ? (divsGoals.size() - 1)
 				: (indexOfOptimalGoals + 6);
 
 		for (int j = lower; j <= higher; j++) {
 			WebElement currentDiv = divsGoals.get(j);
-			if (currentDiv == null || currentDiv.getText().split("\n").length < 3)
+			if (currentDiv == null || currentDiv.getText().split("\n").length < 3
+					|| currentDiv.getText().contains("EXCHANGES"))
 				continue;
+
+			float line = Float.parseFloat(currentDiv.getText().split("\n")[0].split(" ")[1]);
+			System.out.println(line);
 
 			Actions actions = new Actions(driver);
 			actions.moveToElement(currentDiv).click().perform();
 
-			WebElement goalLineTable = currentDiv.findElement(By.xpath("//table"));
+			WebElement goalLineTable = currentDiv.findElement(By.cssSelector("table.table-main.detail-odds"));
 
 			// find the row
-			List<WebElement> rowsGoals = goalLineTable.findElements(By.xpath("//tbody/tr"));
-			float line = -1f, over = -1f, under = -1f;
+			List<WebElement> rowsGoals = goalLineTable.findElements(By.tagName("tr"));
+			System.out.println("size  " +rowsGoals.size());
+			float over = -1f, under = -1f;
 
 			Odds pinnOdds = null;
 
 			ArrayList<Odds> matchOdds = new ArrayList<>();
 			for (WebElement row : rowsGoals) {
 				String rowText = row.getText();
+				// System.out.println(rowText);
 				if (row.getText().contains("Average"))
 					break;
 				String[] oddsArray = rowText.split("\n");
-				// System.out.println(rowText);
-				// if
-				// (!row.findElements(By.className("deactivateOdd")).isEmpty())
-				// continue;
 				if (oddsArray.length != 5)
 					continue;
 				String bookmaker = oddsArray[0].trim();
 
 				if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
 					continue;
+
+				List<WebElement> columns = row.findElements(By.tagName("td"));
+				// hover for odds history
+				Actions ToolTip1 = new Actions(driver);
+				WebElement overElement = columns.get(2);
+				WebElement underElement = columns.get(3);
+
+				ToolTip1.moveToElement(overElement).clickAndHold(overElement).perform();
+				WebElement hover = overElement.findElement(By.xpath("//*[@id='tooltiptext']"));
+				String drawText = hover.getText();
+
+				Thread.sleep(200);
+				ToolTip1.moveToElement(underElement).clickAndHold(underElement).perform();
+				hover = underElement.findElement(By.xpath("//*[@id='tooltiptext']"));
+				String awayText = hover.getText();
+
+				Thread.sleep(200);
+				TreeSet<OverUnderOdds> oddsHistory = getOUOddsHistory(line, drawText, awayText, date, bookmaker);
+
+				System.out.println(bookmaker + " O/U " + line + " " + oddsHistory.size());
 
 				try {
 					line = Float.parseFloat(oddsArray[1].trim());
@@ -2384,7 +2404,8 @@ public class Scraper {
 
 			// checkValueOverPinnacleOdds(matchOdds, pinnOdds);
 
-			checkValueOverPinnacleOddsWithPrediction(matchOdds, pinnOdds, prediction);
+			// checkValueOverPinnacleOddsWithPrediction(matchOdds, pinnOdds,
+			// date);
 
 			List<WebElement> closeLink = currentDiv.findElements(By.className("odds-co"));
 			if (!closeLink.isEmpty()) {
@@ -2392,8 +2413,89 @@ public class Scraper {
 			}
 		}
 
-		// System.out.println("over under total time " +
-		// (System.currentTimeMillis() - start) / 1000d + "sec");
+		System.out.println("over under total time " + (System.currentTimeMillis() - start) / 1000d + "sec");
+		return null;
+
+	}
+
+	/**
+	 * Returns sorted set of the history of the O/U odds for the given line and
+	 * bookmaker
+	 * 
+	 * @param line
+	 * @param drawText
+	 * @param awayText
+	 * @param date
+	 * @param bookmaker
+	 * @return
+	 * @throws ParseException
+	 */
+	private static TreeSet<OverUnderOdds> getOUOddsHistory(float line, String overText, String underText, Date date,
+			String bookmaker) throws ParseException {
+		TreeSet<OverUnderOdds> result = new TreeSet<>(Comparator.comparing(OverUnderOdds::getDate));
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		int year = cal.get(Calendar.YEAR);
+
+		MatchOdds openingOver = getOpeningOdds(overText, date, year);
+		MatchOdds openingUnder = getOpeningOdds(underText, date, year);
+
+		if (!openingOver.date.equals(openingOver.date))
+			System.out.println("possible odds history time mismatch for o/u" + line + " " + bookmaker);
+
+		OverUnderOdds opening = new OverUnderOdds(bookmaker, openingOver.date, line, openingOver.homeOdds,
+				openingUnder.homeOdds);
+
+		ArrayList<MatchOdds> overHistory = getOddsHistory(overText, date, year);
+		ArrayList<MatchOdds> underHistory = getOddsHistory(underText, date, year);
+
+		TreeSet<Date> changeTimes = new TreeSet<>();
+		changeTimes.addAll(overHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
+		changeTimes.addAll(underHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
+
+		Map<Date, MatchOdds> drawMap = overHistory.stream()
+				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+		Map<Date, MatchOdds> awayMap = underHistory.stream()
+				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+
+		Date last = getLastDateFromOddsHistories(new ArrayList<>(), overHistory, underHistory);
+
+		result.add(opening);
+		drawMap.put(opening.getDate(), openingOver);
+		awayMap.put(opening.getDate(), openingUnder);
+
+		for (Date t : changeTimes.tailSet(last)) {
+			boolean drawIsNull = drawMap.get(t) != null;
+			boolean awayIsNull = awayMap.get(t) != null;
+
+			Float overOdds = drawIsNull ? drawMap.get(t).homeOdds
+					: drawMap.get(new TreeMap<Date, MatchOdds>(drawMap).headMap(t).lastKey()).homeOdds;
+			Float underOdds = awayIsNull ? awayMap.get(t).homeOdds
+					: awayMap.get(new TreeMap<Date, MatchOdds>(awayMap).headMap(t).lastKey()).homeOdds;
+
+			OverUnderOdds newm = new OverUnderOdds(bookmaker, t, line, overOdds, underOdds);
+			// System.out.println(newm);
+			result.add(newm);
+		}
+		// System.out.println(result.size());
+		// result.forEach(System.out::println);
+		return result;
+
+	}
+
+	/**
+	 * Helper method for navigating to tab in oddsportal
+	 * 
+	 * @param driver
+	 * @param tabName
+	 */
+	private static void navigateToTab(WebDriver driver, String tabName) {
+		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
+		for (WebElement t : tabs)
+			if (t.getText().contains(tabName)) {
+				t.click();
+				break;
+			}
 	}
 
 	private static void checkValueOverPinnacleOddsWithPrediction(ArrayList<Odds> matchOdds, Odds pinnOdds,

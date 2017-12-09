@@ -74,14 +74,14 @@ public class Predictions {
 		// CHECKLIST.add("BRA");
 		// CHECKLIST.add("BRB");
 
-//		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-//		 UpdateType.AUTOMATIC, 8, 12);
+		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
+		 UpdateType.AUTOMATIC, 9, 12);
 
-		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-		 OnlyTodayMatches.TRUE, 8, 12);
+//		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
+//		 OnlyTodayMatches.TRUE, 8, 12);
 
-		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
-		 OnlyTodayMatches.FALSE, 8, 12);
+//		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
+//		 OnlyTodayMatches.FALSE, 8, 12);
 		
 //		Scraper.checkAndUpdate("BUL", OnlyTodayMatches.FALSE);
 

@@ -23,7 +23,7 @@ public class OverUnderOdds extends Odds {
 	}
 
 	public String toString() {
-		return bookmaker + "  " + line + "  " + overOdds + "  " + underOdds;
+		return bookmaker + " " + date + "  " + line + "  " + overOdds + "  " + underOdds;
 	}
 
 	@Override
