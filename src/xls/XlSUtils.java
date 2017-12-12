@@ -4675,7 +4675,7 @@ public class XlSUtils {
 
 		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
 
-		Settings temp = Settings.shots(sheet.getSheetName());
+		Settings temp = Settings.weightedPoisson(sheet.getSheetName());
 		// Settings shotSets = Settings.shots(sheet.getSheetName());
 		// Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
 

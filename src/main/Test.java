@@ -71,7 +71,7 @@ public class Test {
 
 		// accumulators(2015, 2015);
 
-		analysis(2013, 2016, DataType.ODDSPORTAL);
+		analysis(2005, 2016, DataType.ALLEURODATA);
 
 		// aggregateInterval();
 
@@ -95,8 +95,8 @@ public class Test {
 		 populateForAnalysis(start, end, all, byLeagueYear, type);
 //		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "shots");
 
-		ArrayList<FinalEntry> eng = (ArrayList<FinalEntry>) byLeagueYear.get("FR2").values().stream()
-				.flatMap(List::stream).collect(Collectors.toList());
+//		ArrayList<FinalEntry> eng = (ArrayList<FinalEntry>) byLeagueYear.get("FR2").values().stream()
+//				.flatMap(List::stream).collect(Collectors.toList());
 
 //		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);
 //		for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i : byLeague.entrySet()) {
@@ -132,7 +132,7 @@ public class Test {
 		// ArrayList<FinalEntry> withTH12 =
 		// Utils.withBestThreshold(byLeagueYear, 4, MaximizingBy.UNDERS);
 
-		Utils.fullAnalysys(eng, "all");
+		Utils.fullAnalysys(all, "all");
 
 		// Utils.fullAnalysys(withTH1, "maxByThOvers(1)");
 
@@ -607,8 +607,8 @@ public class Test {
 			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
 			// continue;
 
-			 if (!sh.getSheetName().equals("FR2"))
-			 continue;
+//			 if (!sh.getSheetName().equals("FR2"))
+//			 continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
 

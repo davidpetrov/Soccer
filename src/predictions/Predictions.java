@@ -74,16 +74,23 @@ public class Predictions {
 		// CHECKLIST.add("BRA");
 		// CHECKLIST.add("BRB");
 
-		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-		 UpdateType.AUTOMATIC, 9, 12);
+//		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
+//		 UpdateType.AUTOMATIC, 10, 12);
 
-//		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-//		 OnlyTodayMatches.TRUE, 8, 12);
+		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
+		 OnlyTodayMatches.TRUE, 11, 12);
 
 //		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
 //		 OnlyTodayMatches.FALSE, 8, 12);
 		
-//		Scraper.checkAndUpdate("BUL", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("RUS", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("IT", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("BEL", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("SWI", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("NED", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("FR", OnlyTodayMatches.FALSE);
+
+
 
 		// Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
 

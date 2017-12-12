@@ -1,6 +1,8 @@
 package scraper;
 
 import java.io.File;
+
+import org.json.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -24,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -35,6 +38,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Maps.EntryTransformer;
+import com.google.gson.JsonObject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -50,6 +57,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.json.Json;
 
 import constants.MinMaxOdds;
 import entries.FinalEntry;
@@ -118,6 +126,7 @@ public class Scraper {
 		// ArrayList<ExtendedFixture> list = odds("BRA", 2017, null);
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
 		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
+		// fastOdds("ENG", 2017, null);
 		ArrayList<Fixture> list = fullOdds("ENG", 2017, null);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
@@ -1332,9 +1341,11 @@ public class Scraper {
 
 				ArrayList<String> links = new ArrayList<>();
 				WebElement table = driver.findElement(By.id("tournamentTable"));
-				List<WebElement> rows = table.findElements(By.xpath("//tbody/tr"));
+				// List<WebElement> rows =
+				// table.findElements(By.xpath("//tbody/tr"));
+				List<WebElement> tagrows = table.findElements(By.tagName("tr"));
 
-				for (WebElement i : rows) {
+				for (WebElement i : tagrows) {
 					if (i.getText().contains("-")) {
 
 						WebElement aElem = i.findElement(By.cssSelector("a"));
@@ -1906,7 +1917,7 @@ public class Scraper {
 
 	public static Fixture getFullFixtureTest(WebDriver driver, String i, String competition)
 			throws ParseException, InterruptedException {
-		driver.navigate().to(i);
+		driver.navigate().to("http://www.oddsportal.com/soccer/england/premier-league/burnley-watford-j95WUhWk/");
 
 		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
 		String home = title.split(" - ")[0].trim();
@@ -1951,18 +1962,288 @@ public class Scraper {
 			System.out.println("next match");
 		}
 		// System.out.println(fullResult + " " + htResult);
+		navigateToTab(driver, "O/U");
+
+		Thread.sleep(3000);
+		JavascriptExecutor jse = (JavascriptExecutor) driver;
+		jse.executeScript(
+				"document.body.innerHTML += '<div style=\"display:none;\" id=\"hackerman\">' + JSON.stringify(page.getTableSet(page.bettingType, page.scopeId).data) + '</div>'");
+		String data = (String) jse.executeScript("return document.getElementById('hackerman').innerHTML");
+
+		// for bookmaker name hash --
+		jse.executeScript(
+				"document.body.innerHTML += '<div style=\"display:none;\" id=\"hackerman2\">' + JSON.stringify(globals.bookmakerData) + '</div>'");
+		String bookmakerHash = (String) jse.executeScript("return document.getElementById('hackerman2').innerHTML");
+
+		HashMap<Integer, String> booksMap = getBookmakersMap(bookmakerHash);
+
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overUnderOdds = getFullOddsHistoryOverUnder(data,
+				booksMap);
+				// String data = jse.executeScript("return
+				// page.getTableSet(page.bettingType,
+				// page.scopeId).data").getClass();
+
+		// System.out.println(data);
 
 		// match odds analysis over pinnacle
 		// ArrayList<MatchOdds> matchOdds = fullMatchOddsOverPinnacle(driver,
 		// date);
-		System.out.println("------------------------------------------------------");
+		System.out.println("-----------------------------------------------------");
 
-		ArrayList<OverUnderOdds> overUnderOdds = overUnderOverPinnacle(driver, date);
+		// ArrayList<OverUnderOdds> overUnderOdds =
+		// overUnderOverPinnacle(driver, date);
 		// System.out.println("------------------------------------------------------");
 		//
 		// asianOverPinnacle(driver);
 		// System.out.println("========================================================");
 		return null;
+
+	}
+
+	private static HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> getFullOddsHistoryOverUnder(String data,
+			HashMap<Integer, String> booksMap) {
+		JSONObject json = new JSONObject(data);
+
+		HashMap<String, Float> underOutcomesID = new HashMap<>();
+		HashMap<String, Float> overOutcomesID = new HashMap<>();
+
+		ArrayList<OverUnderOdds> closingOdds = new ArrayList<>();
+
+		// from odds data get outcomeid hash
+		getOutcomesIDandClosingOdds(json, underOutcomesID, overOutcomesID, closingOdds, booksMap);
+
+		// map key is the line value -list of odds history (for over and under
+		// outcomes)
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overHistoriesMap = new HashMap<>();
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> underHistoriesMap = new HashMap<>();
+
+		JSONObject hist = json.getJSONObject("history");
+		JSONObject lay = hist.getJSONObject("lay");
+		JSONObject back = hist.getJSONObject("back");
+
+		Set<String> keys = back.keySet();
+		for (String i : keys) {
+			boolean isOver = true;
+			Float line = -1f;
+//			System.out.println(i);
+			if (overOutcomesID.containsKey(i)) {
+				line = overOutcomesID.get(i);
+				isOver = true;
+			} else if (underOutcomesID.containsKey(i)) {
+				line = underOutcomesID.get(i);
+				isOver = false;
+			} else
+				System.out.println("outcomeid not found!");
+
+//			System.out.println(isOver ? "OVER " : "UNDER " + line);
+
+			JSONObject outcome1 = back.getJSONObject(i);
+			Set<String> bookies = outcome1.keySet();
+			for (String b : bookies) {
+				String bookmaker = booksMap.get(Integer.parseInt(b));
+//				System.out.println(bookmaker);
+				JSONArray history = outcome1.getJSONArray(b);
+				ArrayList<OverUnderOdds> oddsHistory = new ArrayList<>();
+				for (int j = 0; j < history.length(); j++) {
+					JSONArray hentry = history.getJSONArray(j);
+					float odds = (float) hentry.getDouble(0);
+					//sometimes null sometimes integer unknown meaning
+					Object unknown = hentry.get(1);
+					Calendar cal = Calendar.getInstance();
+					cal.setTimeInMillis(hentry.getLong(2) * 1000);
+					Date date = cal.getTime();
+					// System.out.println(odds + " " + date);
+					OverUnderOdds ouodds = new OverUnderOdds(bookmaker, date, line, isOver ? odds : -1f,
+							isOver ? -1f : odds);
+					// System.out.println(ouodds);
+					oddsHistory.add(ouodds);
+
+				}
+//				oddsHistory.stream().forEach(System.out::println);
+
+				if (isOver) {
+					HashMap<String, ArrayList<OverUnderOdds>> booksSoFar = overHistoriesMap.get(line);
+					if (booksSoFar == null) {
+						HashMap<String, ArrayList<OverUnderOdds>> newBooksHash = new HashMap<>();
+						newBooksHash.put(bookmaker, oddsHistory);
+						overHistoriesMap.put(line, newBooksHash);
+					} else {
+						HashMap<String, ArrayList<OverUnderOdds>> newBooksHash = overHistoriesMap.get(line);
+						newBooksHash.put(bookmaker, oddsHistory);
+						overHistoriesMap.put(line, newBooksHash);
+					}
+				} else {
+					HashMap<String, ArrayList<OverUnderOdds>> booksSoFar = underHistoriesMap.get(line);
+					if (booksSoFar == null) {
+						HashMap<String, ArrayList<OverUnderOdds>> newBooksHash = new HashMap<>();
+						newBooksHash.put(bookmaker, oddsHistory);
+						underHistoriesMap.put(line, newBooksHash);
+					} else {
+						HashMap<String, ArrayList<OverUnderOdds>> newBooksHash = underHistoriesMap.get(line);
+						newBooksHash.put(bookmaker, oddsHistory);
+						underHistoriesMap.put(line, newBooksHash);
+					}
+				}
+
+			}
+
+			// break;
+		}
+
+		// add the closing odds before combining
+		for (OverUnderOdds i : closingOdds) 
+			if (i.underOdds == -1f) 
+				overHistoriesMap.get(i.line).get(i.bookmaker).add(i);
+			 else 
+				underHistoriesMap.get(i.line).get(i.bookmaker).add(i);
+
+		
+
+		// CLOSING odds are missing
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> historyDataOU = combineOddsHistories(overHistoriesMap,
+				underHistoriesMap);
+
+		return historyDataOU;
+	}
+
+	private static void getOutcomesIDandClosingOdds(JSONObject json, HashMap<String, Float> underOutcomesID,
+			HashMap<String, Float> overOutcomesID, ArrayList<OverUnderOdds> closingOdds,
+			HashMap<Integer, String> booksMap) {
+		JSONObject oddsdata = json.getJSONObject("oddsdata");
+		JSONObject backOdds = oddsdata.getJSONObject("back");
+		Set<String> keysOdds = backOdds.keySet();
+		for (String i : keysOdds) {
+			JSONObject entry = backOdds.getJSONObject(i);
+			float handicapValue = (float) entry.getDouble("handicapValue");
+			Object outcomedID = entry.get("OutcomeID");
+			if (outcomedID instanceof JSONArray) {
+				JSONArray arr = (JSONArray) outcomedID;
+				overOutcomesID.put(arr.getString(0), handicapValue);
+				underOutcomesID.put(arr.getString(1), handicapValue);
+			} else {
+				JSONObject obj = (JSONObject) outcomedID;
+				overOutcomesID.put(obj.getString("0"), handicapValue);
+				underOutcomesID.put(obj.getString("1"), handicapValue);
+			}
+
+			JSONObject closingOddsObject = entry.getJSONObject("odds");
+			JSONObject changeTime = entry.getJSONObject("change_time");
+			Set<String> bookies = closingOddsObject.keySet();
+			Calendar cal = Calendar.getInstance();
+
+			for (String b : bookies) {
+				String bookmaker = booksMap.get(Integer.parseInt(b));
+				Object closingObjectJSON = closingOddsObject.get(b);
+				float overOdds = -1f, underOdds = -1f;
+
+				if (closingObjectJSON instanceof JSONArray) {
+					overOdds = (float) closingOddsObject.getJSONArray(b).getDouble(0);
+					underOdds = (float) closingOddsObject.getJSONArray(b).getDouble(1);
+				} else {
+					overOdds = (float) closingOddsObject.getJSONObject(b).getDouble("0");
+					underOdds = (float) closingOddsObject.getJSONObject(b).getDouble("1");
+				}
+
+				Date timeOver = null, timeUnder = null;
+
+				Object changeTimeJSON = changeTime.get(b);
+
+				if (changeTimeJSON instanceof JSONArray) {
+					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(0) * 1000);
+					timeOver = cal.getTime();
+					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(1) * 1000);
+					timeUnder = cal.getTime();
+				} else {
+					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("0") * 1000);
+					timeOver = cal.getTime();
+					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("1") * 1000);
+					timeUnder = cal.getTime();
+				}
+
+				OverUnderOdds closingOver = new OverUnderOdds(bookmaker, timeOver, handicapValue, overOdds, -1f);
+				OverUnderOdds closingUnder = new OverUnderOdds(bookmaker, timeUnder, handicapValue, -1f, underOdds);
+				closingOdds.add(closingOver);
+				closingOdds.add(closingUnder);
+			}
+
+		}
+
+	}
+
+	private static HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> combineOddsHistories(
+			HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overHistoriesMap,
+			HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> underHistoriesMap) {
+
+		if (overHistoriesMap.size() != underHistoriesMap.size())
+			System.out.println("Histories map size differ");
+
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> result = new HashMap<>();
+
+		for (Entry<Float, HashMap<String, ArrayList<OverUnderOdds>>> i : overHistoriesMap.entrySet()) {
+			float line = i.getKey();
+			HashMap<String, ArrayList<OverUnderOdds>> overBookMap = i.getValue();
+			HashMap<String, ArrayList<OverUnderOdds>> underBookMap = underHistoriesMap.get(line);
+
+			HashMap<String, ArrayList<OverUnderOdds>> resultBookMap = new HashMap<>();
+			for (Entry<String, ArrayList<OverUnderOdds>> b : overBookMap.entrySet()) {
+				String bookie = b.getKey();
+				ArrayList<OverUnderOdds> overOdds = b.getValue();
+				ArrayList<OverUnderOdds> underOdds = underBookMap.get(bookie);
+
+//				overOdds.stream().forEach(System.out::println);
+//				underOdds.stream().forEach(System.out::println);
+
+				TreeSet<Date> changeTimes = new TreeSet<>();
+				changeTimes.addAll(overOdds.stream().map(v -> v.date).collect(Collectors.toSet()));
+				changeTimes.addAll(underOdds.stream().map(v -> v.date).collect(Collectors.toSet()));
+
+				Map<Date, OverUnderOdds> drawMap = overOdds.stream()
+						.collect(Collectors.toMap(OverUnderOdds::getDate, Function.identity(), (p1, p2) -> p1));
+				Map<Date, OverUnderOdds> awayMap = underOdds.stream()
+						.collect(Collectors.toMap(OverUnderOdds::getDate, Function.identity(), (p1, p2) -> p1));
+
+				// if (changeTimes.isEmpty())
+
+				overOdds.sort(Comparator.comparing(OverUnderOdds::getDate));
+				underOdds.sort(Comparator.comparing(OverUnderOdds::getDate));
+				TreeSet<Date> set = new TreeSet<>();
+				if (!overOdds.isEmpty())
+					set.add(overOdds.get(0).getDate());
+				if (!underOdds.isEmpty())
+					set.add(underOdds.get(0).getDate());
+
+				Date last = set.last();
+
+				ArrayList<OverUnderOdds> oulist = new ArrayList<>();
+				for (Date t : changeTimes.tailSet(last)) {
+					boolean drawIsNull = drawMap.get(t) != null;
+					boolean awayIsNull = awayMap.get(t) != null;
+
+					Float over = drawIsNull ? drawMap.get(t).overOdds
+							: drawMap.get(new TreeMap<Date, OverUnderOdds>(drawMap).headMap(t).lastKey()).overOdds;
+					Float under = awayIsNull ? awayMap.get(t).underOdds
+							: awayMap.get(new TreeMap<Date, OverUnderOdds>(awayMap).headMap(t).lastKey()).underOdds;
+
+					OverUnderOdds newm = new OverUnderOdds(bookie, t, line, over, under);
+					oulist.add(newm);
+				}
+				resultBookMap.put(bookie, oulist);
+			}
+			result.put(line, resultBookMap);
+		}
+		return result;
+	}
+
+	private static HashMap<Integer, String> getBookmakersMap(String bookmakerHash) {
+		HashMap<Integer, String> result = new HashMap<>();
+		JSONObject json = new JSONObject(bookmakerHash);
+		Set<String> keys = json.keySet();
+		for (String i : keys) {
+			String name = json.getJSONObject(i).getString("WebName");
+			result.put(Integer.parseInt(i), name);
+		}
+		System.out.println(result);
+		return result;
 
 	}
 
@@ -2103,13 +2384,15 @@ public class Scraper {
 		long start = System.currentTimeMillis();
 		ArrayList<MatchOdds> result = new ArrayList<>();
 		WebElement table = driver.findElement(By.xpath("//div[@id='odds-data-table']"));
-		List<WebElement> rows = table.findElements(By.xpath("//div[1]/table/tbody/tr"));
+		List<WebElement> rows = table.findElements(By.tagName("tr"));
 		Odds pinnOdds = null;
 
 		ArrayList<Odds> matchOdds = new ArrayList<>();
 		for (WebElement row : rows) {
+			if (row.getText().contains("Average"))
+				break;
 			// System.out.println(row.getText());
-			List<WebElement> columns = row.findElements(By.xpath("td"));
+			List<WebElement> columns = row.findElements(By.tagName("td"));
 			if (columns.size() < 4)
 				continue;
 
@@ -2241,8 +2524,6 @@ public class Scraper {
 		if (!awayHistory.isEmpty())
 			set.add(awayHistory.get(awayHistory.size() - 1).getDate());
 
-		if (set.isEmpty())
-			System.out.println("last prob");
 		return set.last();
 	}
 
@@ -2281,6 +2562,10 @@ public class Scraper {
 	private static MatchOdds getOpeningOdds(String text, Date date, int year) throws ParseException {
 		Calendar cal = Calendar.getInstance();
 		String[] homeText = text.split("Opening odds:");
+		if (homeText.length < 2) {
+			System.out.println("lengs");
+			return null;
+		}
 		String openingOddsText = homeText[1].trim();
 		String[] splitted = openingOddsText.split(" ");
 		Float openingOdds = Float.parseFloat(splitted[splitted.length - 1].trim());
@@ -2346,7 +2631,7 @@ public class Scraper {
 
 			// find the row
 			List<WebElement> rowsGoals = goalLineTable.findElements(By.tagName("tr"));
-			System.out.println("size  " +rowsGoals.size());
+			System.out.println("size  " + rowsGoals.size());
 			float over = -1f, under = -1f;
 
 			Odds pinnOdds = null;
@@ -2458,11 +2743,14 @@ public class Scraper {
 		Map<Date, MatchOdds> awayMap = underHistory.stream()
 				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
 
-		Date last = getLastDateFromOddsHistories(new ArrayList<>(), overHistory, underHistory);
-
 		result.add(opening);
 		drawMap.put(opening.getDate(), openingOver);
 		awayMap.put(opening.getDate(), openingUnder);
+
+		if (changeTimes.isEmpty())
+			return result;
+
+		Date last = getLastDateFromOddsHistories(new ArrayList<>(), overHistory, underHistory);
 
 		for (Date t : changeTimes.tailSet(last)) {
 			boolean drawIsNull = drawMap.get(t) != null;
