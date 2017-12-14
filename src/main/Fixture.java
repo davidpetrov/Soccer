@@ -1,7 +1,9 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 
 import odds.AsianOdds;
 import odds.MatchOdds;
@@ -39,7 +41,7 @@ public class Fixture {
 	ArrayList<MatchOdds> matchOdds;
 	ArrayList<AsianOdds> asianOdds;
 	ArrayList<OverUnderOdds> overUnderOdds;
-	
+
 	public Fixture(Date date, int year, String competition, String homeTeam, String awayTeam, Result result) {
 		super();
 		this.date = date;
@@ -86,6 +88,33 @@ public class Fixture {
 			return false;
 		return true;
 	}
-	
-	
+
+	public Fixture withHTResult(Result htResult) {
+		this.HTresult = htResult;
+		return this;
+	}
+
+	public Fixture withOUodds(HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overUnderOdds) {
+		this.overUnderOdds = new ArrayList<>();
+		for (HashMap<String, ArrayList<OverUnderOdds>> i : overUnderOdds.values())
+			for (ArrayList<OverUnderOdds> j : i.values())
+				this.overUnderOdds.addAll(j);
+		return this;
+	}
+
+	public Fixture withAsianOdds(HashMap<Float, HashMap<String, ArrayList<AsianOdds>>> asianOdds) {
+		this.asianOdds = new ArrayList<>();
+		for (HashMap<String, ArrayList<AsianOdds>> i : asianOdds.values())
+			for (Collection<AsianOdds> j : i.values())
+				this.asianOdds.addAll(j);
+		return this;
+	}
+
+	public Fixture withMatchOdds(HashMap<String, ArrayList<MatchOdds>> matchOdds) {
+		this.matchOdds =  new ArrayList<>();
+		for (ArrayList<MatchOdds> i : matchOdds.values())
+			this.matchOdds.addAll(i);
+		return this;
+	}
+
 }

@@ -16,6 +16,9 @@ import org.json.JSONObject;
 import entries.AllEntry;
 import entries.FinalEntry;
 import entries.HTEntry;
+import odds.AsianOdds;
+import odds.MatchOdds;
+import odds.OverUnderOdds;
 import settings.Settings;
 import utils.Lines;
 import utils.Utils;
@@ -1095,13 +1098,104 @@ public class SQLiteJDBC {
 						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.maxOver + "," + f.fe.fixture.maxUnder
 						+ "," + (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
 						+ f.fe.lower + "," + f.fe.upper + "," + f.fe.value + "," + f.zero + "," + f.one + "," + f.two
-						+ "," + f.more + ","+ f.basic + "," + f.poisson + "," + f.weighted + "," + f.shots + " );";
+						+ "," + f.more + "," + f.basic + "," + f.poisson + "," + f.weighted + "," + f.shots + " );";
 				try {
 					if (!Float.isNaN(f.fe.prediction))
 						stmt.executeUpdate(sql);
 				} catch (SQLException e) {
 					e.printStackTrace();
 					System.out.println("tuka");
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+	}
+
+	public static void storePlayerFixtures(ArrayList<Fixture> list) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			for (Fixture f : list) {
+
+				String sql = "INSERT OR IGNORE INTO Fixtures "
+						+ "(Date,Competition,StartYear,EndYear,Matchday,HomeTeamName,AwayTeamName,HomeGoals,AwayGoals,HTHome,HTAway)"
+						+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.competition) + "," + f.year
+						+ "," + f.year + "," + +f.matchday + "," + addQuotes(f.homeTeam) + "," + addQuotes(f.awayTeam)
+						+ "," + f.result.goalsHomeTeam + "," + f.result.goalsAwayTeam + "," + f.HTresult.goalsHomeTeam
+						+ "," + f.HTresult.goalsAwayTeam + " );";
+				try {
+					stmt.executeUpdate(sql);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					System.out.println("Store Fixture in db problem");
+					System.out.println(f);
+				}
+
+				// store all 1x2 odds for the fixture
+				for (MatchOdds i : f.matchOdds) {
+					String sqlOU = "INSERT OR IGNORE INTO MatchOdds "
+							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,HomeOdds,DrawOdds,AwayOdds,isOpening,isClosing)"
+							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
+							+ addQuotes(format.format(i.date)) + "," + i.homeOdds + "," + i.drawOdds + "," + i.awayOdds
+							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
+					try {
+						stmt.executeUpdate(sqlOU);
+					} catch (SQLException e) {
+						e.printStackTrace();
+						System.out.println("Store 1x2 in db problem ");
+						System.out.println(i);
+					}
+				}
+
+				// store all O/U odds for the fixture
+				for (OverUnderOdds i : f.overUnderOdds) {
+					String sqlOU = "INSERT OR IGNORE INTO OverUnderOdds "
+							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing)"
+							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
+							+ addQuotes(format.format(i.date)) + "," + i.line + "," + i.overOdds + "," + i.underOdds
+							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
+					try {
+						stmt.executeUpdate(sqlOU);
+					} catch (SQLException e) {
+						e.printStackTrace();
+						System.out.println("Store OU in db problem ");
+						System.out.println(i);
+					}
+				}
+
+				// store all Asian odds for the fixture
+				for (AsianOdds i : f.asianOdds) {
+					String sqlOU = "INSERT OR IGNORE INTO AsianOdds "
+							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,HomeOdds,AwayOdds,isOpening,isClosing)"
+							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
+							+ addQuotes(format.format(i.date)) + "," + i.line + "," + i.homeOdds + "," + i.awayOdds
+							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
+					try {
+						stmt.executeUpdate(sqlOU);
+					} catch (SQLException e) {
+						e.printStackTrace();
+						System.out.println("Store asian in db problem ");
+						System.out.println(i);
+					}
 				}
 			}
 

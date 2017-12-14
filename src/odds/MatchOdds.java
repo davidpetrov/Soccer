@@ -61,4 +61,42 @@ public class MatchOdds extends Odds {
 		return new MatchOdds(bookmaker, date, truehomeOdds, truedrawOdds, trueawayOdds);
 	}
 
+	public MatchOdds withIsClosing() {
+		this.isClosing = true;
+		return this;
+	}
+
+	public MatchOdds withIsOpening() {
+		this.isOpening = true;
+		return this;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Float.floatToIntBits(awayOdds);
+		result = prime * result + Float.floatToIntBits(drawOdds);
+		result = prime * result + Float.floatToIntBits(homeOdds);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof MatchOdds))
+			return false;
+		MatchOdds other = (MatchOdds) obj;
+		if (Float.floatToIntBits(awayOdds) != Float.floatToIntBits(other.awayOdds))
+			return false;
+		if (Float.floatToIntBits(drawOdds) != Float.floatToIntBits(other.drawOdds))
+			return false;
+		if (Float.floatToIntBits(homeOdds) != Float.floatToIntBits(other.homeOdds))
+			return false;
+		return true;
+	}
+
 }

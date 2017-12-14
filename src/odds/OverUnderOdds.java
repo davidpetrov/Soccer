@@ -33,4 +33,43 @@ public class OverUnderOdds extends Odds {
 		float trueUnderOdds = 2 * underOdds / (2f - margin * underOdds);
 		return new OverUnderOdds(bookmaker, date, line, trueOverOdds, trueUnderOdds);
 	}
+
+	public OverUnderOdds withIsClosing() {
+		this.isClosing = true;
+		return this;
+	}
+
+	public OverUnderOdds withIsOpening() {
+		this.isOpening = true;
+		return this;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Float.floatToIntBits(line);
+		result = prime * result + Float.floatToIntBits(overOdds);
+		result = prime * result + Float.floatToIntBits(underOdds);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof OverUnderOdds))
+			return false;
+		OverUnderOdds other = (OverUnderOdds) obj;
+		if (Float.floatToIntBits(line) != Float.floatToIntBits(other.line))
+			return false;
+		if (Float.floatToIntBits(overOdds) != Float.floatToIntBits(other.overOdds))
+			return false;
+		if (Float.floatToIntBits(underOdds) != Float.floatToIntBits(other.underOdds))
+			return false;
+		return true;
+	}
+
 }

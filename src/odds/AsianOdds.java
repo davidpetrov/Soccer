@@ -17,6 +17,22 @@ public class AsianOdds extends Odds {
 		this.awayOdds = awayOdds;
 	}
 
+	/**
+	 * Constructor for converting OverUnderOdds into AsianOdds overOdds has the
+	 * meaning of homeOdds and underOdds has the meaning of awayOdds
+	 * 
+	 * @param ou
+	 */
+	public AsianOdds(OverUnderOdds ou) {
+		this.date = ou.date;
+		this.bookmaker = ou.bookmaker;
+		this.line = ou.line;
+		this.homeOdds = ou.overOdds;
+		this.awayOdds = ou.underOdds;
+		this.isClosing = ou.isClosing;
+		this.isOpening = ou.isOpening;
+	}
+
 	@Override
 	public float getMargin() {
 		return 1f / homeOdds + 1f / awayOdds;
@@ -32,6 +48,44 @@ public class AsianOdds extends Odds {
 		float truehomeOdds = 2 * homeOdds / (2f - margin * homeOdds);
 		float trueawayOdds = 2 * awayOdds / (2f - margin * awayOdds);
 		return new AsianOdds(bookmaker, date, line, truehomeOdds, trueawayOdds);
+	}
+
+	public AsianOdds withIsClosing() {
+		this.isClosing = true;
+		return this;
+	}
+
+	public AsianOdds withIsOpening() {
+		this.isOpening = true;
+		return this;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Float.floatToIntBits(awayOdds);
+		result = prime * result + Float.floatToIntBits(homeOdds);
+		result = prime * result + Float.floatToIntBits(line);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (!(obj instanceof AsianOdds))
+			return false;
+		AsianOdds other = (AsianOdds) obj;
+		if (Float.floatToIntBits(awayOdds) != Float.floatToIntBits(other.awayOdds))
+			return false;
+		if (Float.floatToIntBits(homeOdds) != Float.floatToIntBits(other.homeOdds))
+			return false;
+		if (Float.floatToIntBits(line) != Float.floatToIntBits(other.line))
+			return false;
+		return true;
 	}
 
 }
