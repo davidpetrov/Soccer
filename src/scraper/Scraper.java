@@ -127,8 +127,12 @@ public class Scraper {
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
 		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
 		// fastOdds("ENG", 2017, null);
-		ArrayList<Fixture> list = fullOdds("SPA", 2017, null);
-		SQLiteJDBC.storePlayerFixtures(list);
+//		ArrayList<Fixture> list = fullOdds("ENG", 2010, null);
+//		SQLiteJDBC.storePlayerFixtures(list);
+		ArrayList<Fixture> list2 = fullOdds("ENG", 2009, null);
+		SQLiteJDBC.storePlayerFixtures(list2);
+		// ArrayList<Fixture> list3 = fullOdds("ENG", 2010, null);
+		// SQLiteJDBC.storePlayerFixtures(list3);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
 		// ArrayList<FullFixture> list2 = fullOdds("SPA", 2013,
@@ -1311,7 +1315,7 @@ public class Scraper {
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
-		// options.addArguments("headless");
+		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -2013,13 +2017,13 @@ public class Scraper {
 	 */
 	private static JSONObject getJsonDataFromJS(WebDriver driver, String type) throws Exception {
 		JSONObject json = new JSONObject();
-		navigateToTab(driver, type);
-		navigateToTab(driver, type);
 		JavascriptExecutor jse = (JavascriptExecutor) driver;
 		int count = 0;
 		int maxTries = 7;
 		while (true) {
 			try {
+				navigateToTab(driver, type);
+				navigateToTab(driver, type);
 				Thread.sleep(2000);
 				jse.executeScript(
 						"document.body.innerHTML += '<div style=\"display:none;\" id=\"hackerman\">' + JSON.stringify(page.getTableSet(page.bettingType, page.scopeId).data) + '</div>'");
@@ -2028,8 +2032,9 @@ public class Scraper {
 				json = new JSONObject(data);
 				break;
 			} catch (Exception e) {
+				System.out.println(type + " retry " + count);
 				if (++count == maxTries) {
-					System.out.println("Json parsing timeout for:" + type + " try " +count);
+					System.out.println("Json parsing timeout for:" + type + " try " + count);
 					throw e;
 				}
 			}
@@ -2111,17 +2116,29 @@ public class Scraper {
 
 		// add the closing odds before combining
 		for (MatchOdds i : closingOdds) {
-			if (i.homeOdds != -1f)
+			if (i.homeOdds != -1f) {
+				if (homeHistoriesMap.get(i.bookmaker) == null)
+					homeHistoriesMap.put(i.bookmaker, new ArrayList<>());
+
 				if (!homeHistoriesMap.get(i.bookmaker).contains(i))
 					homeHistoriesMap.get(i.bookmaker).add(i);
+			}
 
-			if (i.drawOdds != -1f)
+			if (i.drawOdds != -1f) {
+				if (drawHistoriesMap.get(i.bookmaker) == null)
+					drawHistoriesMap.put(i.bookmaker, new ArrayList<>());
+
 				if (!drawHistoriesMap.get(i.bookmaker).contains(i))
 					drawHistoriesMap.get(i.bookmaker).add(i);
+			}
 
-			if (i.awayOdds != -1f)
+			if (i.awayOdds != -1f) {
+				if (awayHistoriesMap.get(i.bookmaker) == null)
+					awayHistoriesMap.put(i.bookmaker, new ArrayList<>());
+
 				if (!awayHistoriesMap.get(i.bookmaker).contains(i))
 					awayHistoriesMap.get(i.bookmaker).add(i);
+			}
 		}
 
 		HashMap<String, ArrayList<MatchOdds>> combined = combineMatchOddsHistories(homeHistoriesMap, drawHistoriesMap,
@@ -2413,11 +2430,25 @@ public class Scraper {
 		// add the closing odds before combining
 		for (OverUnderOdds i : closingOdds)
 			if (i.underOdds == -1f) {
+				if (overHistoriesMap.get(i.line) == null)
+					overHistoriesMap.put(i.line, new HashMap<>());
+
+				if (overHistoriesMap.get(i.line).get(i.bookmaker) == null)
+					overHistoriesMap.get(i.line).put(i.bookmaker, new ArrayList<>());
+
 				if (!overHistoriesMap.get(i.line).get(i.bookmaker).contains(i))
 					overHistoriesMap.get(i.line).get(i.bookmaker).add(i);
-			} else if (i.overOdds == -1f)
+			} else if (i.overOdds == -1f) {
+
+				if (underHistoriesMap.get(i.line) == null)
+					underHistoriesMap.put(i.line, new HashMap<>());
+
+				if (underHistoriesMap.get(i.line).get(i.bookmaker) == null)
+					underHistoriesMap.get(i.line).put(i.bookmaker, new ArrayList<>());
+
 				if (!underHistoriesMap.get(i.line).get(i.bookmaker).contains(i))
 					underHistoriesMap.get(i.line).get(i.bookmaker).add(i);
+			}
 
 		// CLOSING odds are missing
 		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> historyDataOU = combineOddsHistories(overHistoriesMap,
@@ -2443,8 +2474,12 @@ public class Scraper {
 				underOutcomesID.put(arr.getString(1), handicapValue);
 			} else {
 				JSONObject obj = (JSONObject) outcomedID;
-				overOutcomesID.put(obj.getString("0"), handicapValue);
-				underOutcomesID.put(obj.getString("1"), handicapValue);
+				try {
+					overOutcomesID.put(obj.getString("0"), handicapValue);
+					underOutcomesID.put(obj.getString("1"), handicapValue);
+				} catch (Exception e) {
+					System.out.println("daad");
+				}
 			}
 
 			JSONObject closingOddsObject = entry.getJSONObject("odds");
