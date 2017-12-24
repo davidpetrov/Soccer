@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.json.JSONArray;
@@ -1153,7 +1154,7 @@ public class SQLiteJDBC {
 							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,HomeOdds,DrawOdds,AwayOdds,isOpening,isClosing)"
 							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
 							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
-							+ addQuotes(format.format(i.date)) + "," + i.homeOdds + "," + i.drawOdds + "," + i.awayOdds
+							+ addQuotes(format.format(i.time)) + "," + i.homeOdds + "," + i.drawOdds + "," + i.awayOdds
 							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
 					try {
 						stmt.executeUpdate(sqlOU);
@@ -1170,7 +1171,7 @@ public class SQLiteJDBC {
 							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing)"
 							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
 							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
-							+ addQuotes(format.format(i.date)) + "," + i.line + "," + i.overOdds + "," + i.underOdds
+							+ addQuotes(format.format(i.time)) + "," + i.line + "," + i.overOdds + "," + i.underOdds
 							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
 					try {
 						stmt.executeUpdate(sqlOU);
@@ -1187,7 +1188,7 @@ public class SQLiteJDBC {
 							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,HomeOdds,AwayOdds,isOpening,isClosing)"
 							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
 							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
-							+ addQuotes(format.format(i.date)) + "," + i.line + "," + i.homeOdds + "," + i.awayOdds
+							+ addQuotes(format.format(i.time)) + "," + i.line + "," + i.homeOdds + "," + i.awayOdds
 							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
 					try {
 						stmt.executeUpdate(sqlOU);
@@ -1212,7 +1213,226 @@ public class SQLiteJDBC {
 			System.exit(0);
 		}
 	}
-	
-	
+
+	/**
+	 * Selects full data fixtures from db
+	 * 
+	 * @param competition
+	 * @param year
+	 * @return
+	 */
+	public static ArrayList<Fixture> selectFixtures(String competition, int year) {
+		ArrayList<Fixture> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from Fixtures" + " where StartYear=" + year + " AND competition="
+					+ addQuotes(competition) + ";");
+			while (rs.next()) {
+				String date = rs.getString("date");
+				// int matchday = rs.getInt("matchday");
+				String homeTeamName = rs.getString("hometeamname");
+				String awayTeamName = rs.getString("awayteamname");
+				int homeGoals = rs.getInt("homeGoals");
+				int awayGoals = rs.getInt("awayGoals");
+				int htHome = rs.getInt("HTHome");
+				int htAway = rs.getInt("HTAway");
+
+				// long start = System.currentTimeMillis();
+				// ArrayList<MatchOdds> matchOdds = selectMatchOdds(date,
+				// homeTeamName, awayTeamName);
+				// ArrayList<AsianOdds> asianOdds = selectAsianOdds(date,
+				// homeTeamName, awayTeamName);
+				// ArrayList<OverUnderOdds> overUnderOdds =
+				// selectOverUnderOdds(date, homeTeamName, awayTeamName);
+
+				Fixture f = new Fixture(format.parse(date), year, competition, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withHTResult(new Result(htHome, htAway));
+						// .withMatchOddsList(matchOdds).withAsianOddsList(asianOdds)
+						// .withOverUnderOddsList(overUnderOdds);
+
+				// System.out.println("odds loading " +
+				// (System.currentTimeMillis() - start) / 1000d + "sec");
+				result.add(f);
+			}
+			rs.close();
+
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		addOddsData(result, competition, year);
+
+		return result;
+	}
+
+	private static void addOddsData(ArrayList<Fixture> result, String competition, int year) {
+		ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
+		ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
+		ArrayList<OverUnderOdds> overUnderOdds = selectOverUnderOdds(competition, year);
+
+		for (Fixture i : result) {
+			try {
+				i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+						.collect(Collectors.toCollection(ArrayList::new));
+				i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+						.collect(Collectors.toCollection(ArrayList::new));
+				i.overUnderOdds = overUnderOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+						.collect(Collectors.toCollection(ArrayList::new));
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	private static ArrayList<OverUnderOdds> selectOverUnderOdds(String competition, int year) {
+		ArrayList<OverUnderOdds> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet matchRs = stmt.executeQuery("select * from fixtures " + "join overunderodds on"
+					+ " (fixtures.date = overunderodds.date and fixtures.hometeamname=overunderodds.hometeamname  and fixtures.awayteamname=overunderodds.awayteamname )"
+					+ " where competition=" + addQuotes(competition) + " and startyear =" + year);
+			while (matchRs.next()) {
+				String fixtureDate = matchRs.getString("date");
+				String homeTeam = matchRs.getString("hometeamname");
+				String awayTeam = matchRs.getString("awayteamname");
+				String bookmaker = matchRs.getString("Bookmaker");
+				String time = matchRs.getString("date");
+				// int matchday = matchRs.getInt("matchday");
+				float line = matchRs.getFloat("line");
+				float overOdds = matchRs.getFloat("overOdds");
+				float underOdds = matchRs.getFloat("underOdds");
+				int isOpening = matchRs.getInt("isOpening");
+				int isClosing = matchRs.getInt("isClosing");
+
+				OverUnderOdds mo = new OverUnderOdds(bookmaker, format.parse(time), line, overOdds, underOdds)
+						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
+				mo.isOpening = isOpening == 1;
+				mo.isClosing = isClosing == 1;
+				result.add(mo);
+			}
+
+			matchRs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
+	}
+
+	private static ArrayList<AsianOdds> selectAsianOdds(String competition, int year) {
+		ArrayList<AsianOdds> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			ResultSet matchRs = stmt.executeQuery("select * from fixtures " + "join AsianOdds on"
+					+ " (fixtures.date = AsianOdds.date and fixtures.hometeamname=AsianOdds.hometeamname  and fixtures.awayteamname=AsianOdds.awayteamname )"
+					+ " where competition=" + addQuotes(competition) + " and startyear =" + year);
+			while (matchRs.next()) {
+				String fixtureDate = matchRs.getString("date");
+				String homeTeam = matchRs.getString("hometeamname");
+				String awayTeam = matchRs.getString("awayteamname");
+				String bookmaker = matchRs.getString("Bookmaker");
+				String time = matchRs.getString("date");
+				// int matchday = matchRs.getInt("matchday");
+				float line = matchRs.getFloat("line");
+				float homeOdds = matchRs.getFloat("homeOdds");
+				float awayOdds = matchRs.getFloat("awayOdds");
+				int isOpening = matchRs.getInt("isOpening");
+				int isClosing = matchRs.getInt("isClosing");
+
+				AsianOdds mo = new AsianOdds(bookmaker, format.parse(time), line, homeOdds, awayOdds)
+						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
+				mo.isOpening = isOpening == 1;
+				mo.isClosing = isClosing == 1;
+				result.add(mo);
+			}
+
+			matchRs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
+	}
+
+	private static ArrayList<MatchOdds> selectMatchOdds(String competition, int year) {
+		ArrayList<MatchOdds> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+
+			ResultSet matchRs = stmt.executeQuery("select * from fixtures " + "join matchodds on"
+					+ " (fixtures.date = matchodds.date and fixtures.hometeamname=matchodds.hometeamname  and fixtures.awayteamname=matchodds.awayteamname )"
+					+ " where competition=" + addQuotes(competition) + " and startyear =" + year);
+			while (matchRs.next()) {
+				String fixtureDate = matchRs.getString("date");
+				String homeTeam = matchRs.getString("hometeamname");
+				String awayTeam = matchRs.getString("awayteamname");
+				String bookmaker = matchRs.getString("Bookmaker");
+				String time = matchRs.getString("time");
+				// int matchday = matchRs.getInt("matchday");
+				float homeOdds = matchRs.getFloat("homeOdds");
+				float drawOdds = matchRs.getFloat("drawOdds");
+				float awayOdds = matchRs.getFloat("awayOdds");
+				int isOpening = matchRs.getInt("isOpening");
+				int isClosing = matchRs.getInt("isClosing");
+
+				MatchOdds mo = new MatchOdds(bookmaker, format.parse(time), homeOdds, drawOdds, awayOdds)
+						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
+				mo.isOpening = isOpening == 1;
+				mo.isClosing = isClosing == 1;
+				result.add(mo);
+			}
+
+			matchRs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		return result;
+	}
 
 }

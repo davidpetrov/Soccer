@@ -10,7 +10,7 @@ public class AsianOdds extends Odds {
 
 	public AsianOdds(String bookmaker, Date date, float line, float homeOdds, float awayOdds) {
 		super();
-		this.date = date;
+		this.time = time;
 		this.bookmaker = bookmaker;
 		this.line = line;
 		this.homeOdds = homeOdds;
@@ -24,7 +24,7 @@ public class AsianOdds extends Odds {
 	 * @param ou
 	 */
 	public AsianOdds(OverUnderOdds ou) {
-		this.date = ou.date;
+		this.time = ou.time;
 		this.bookmaker = ou.bookmaker;
 		this.line = ou.line;
 		this.homeOdds = ou.overOdds;
@@ -47,7 +47,7 @@ public class AsianOdds extends Odds {
 		float margin = 1f / homeOdds + 1f / awayOdds - 1f;
 		float truehomeOdds = 2 * homeOdds / (2f - margin * homeOdds);
 		float trueawayOdds = 2 * awayOdds / (2f - margin * awayOdds);
-		return new AsianOdds(bookmaker, date, line, truehomeOdds, trueawayOdds);
+		return new AsianOdds(bookmaker, time, line, truehomeOdds, trueawayOdds);
 	}
 
 	public AsianOdds withIsClosing() {
@@ -86,6 +86,13 @@ public class AsianOdds extends Odds {
 		if (Float.floatToIntBits(line) != Float.floatToIntBits(other.line))
 			return false;
 		return true;
+	}
+	
+	public AsianOdds withFixtureFields(Date date, String homeTeam, String awayTeam) {
+		this.fixtureDate = date;
+		this.homeTeamName = homeTeam;
+		this.awayTeamName = awayTeam;
+		return this;
 	}
 
 }

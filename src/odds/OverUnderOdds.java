@@ -10,7 +10,7 @@ public class OverUnderOdds extends Odds {
 
 	public OverUnderOdds(String bookmaker, Date date, float line, float overOdds, float underOdds) {
 		super();
-		this.date = date;
+		this.time = time;
 		this.bookmaker = bookmaker;
 		this.line = line;
 		this.overOdds = overOdds;
@@ -23,7 +23,7 @@ public class OverUnderOdds extends Odds {
 	}
 
 	public String toString() {
-		return bookmaker + " " + date + "  " + line + "  " + overOdds + "  " + underOdds;
+		return bookmaker + " " + time + "  " + line + "  " + overOdds + "  " + underOdds;
 	}
 
 	@Override
@@ -31,7 +31,7 @@ public class OverUnderOdds extends Odds {
 		float margin = 1f / overOdds + 1f / underOdds - 1f;
 		float trueOverOdds = 2 * overOdds / (2f - margin * overOdds);
 		float trueUnderOdds = 2 * underOdds / (2f - margin * underOdds);
-		return new OverUnderOdds(bookmaker, date, line, trueOverOdds, trueUnderOdds);
+		return new OverUnderOdds(bookmaker, time, line, trueOverOdds, trueUnderOdds);
 	}
 
 	public OverUnderOdds withIsClosing() {
@@ -70,6 +70,13 @@ public class OverUnderOdds extends Odds {
 		if (Float.floatToIntBits(underOdds) != Float.floatToIntBits(other.underOdds))
 			return false;
 		return true;
+	}
+
+	public OverUnderOdds withFixtureFields(Date date, String homeTeam, String awayTeam) {
+		this.fixtureDate = date;
+		this.homeTeamName = homeTeam;
+		this.awayTeamName = awayTeam;
+		return this;
 	}
 
 }

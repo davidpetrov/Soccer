@@ -8,9 +8,9 @@ public class MatchOdds extends Odds {
 	public float drawOdds;
 	public float awayOdds;
 
-	public MatchOdds(String bookmaker, Date date, float homeOdds, float drawOdds, float awayOdds) {
+	public MatchOdds(String bookmaker, Date time, float homeOdds, float drawOdds, float awayOdds) {
 		super();
-		this.date = date;
+		this.time = time;
 		this.bookmaker = bookmaker;
 		this.homeOdds = homeOdds;
 		this.drawOdds = drawOdds;
@@ -25,7 +25,7 @@ public class MatchOdds extends Odds {
 	@Override
 	public String toString() {
 		return "MatchOdds [homeOdds=" + homeOdds + ", drawOdds=" + drawOdds + ", awayOdds=" + awayOdds + ", bookmaker="
-				+ bookmaker + ", date=" + date + "]";
+				+ bookmaker + ", time=" + time + "]";
 	}
 
 	public float getHomeOdds() {
@@ -58,7 +58,7 @@ public class MatchOdds extends Odds {
 		float truehomeOdds = 3 * homeOdds / (3f - margin * homeOdds);
 		float truedrawOdds = 3 * drawOdds / (3f - margin * drawOdds);
 		float trueawayOdds = 3 * awayOdds / (3f - margin * awayOdds);
-		return new MatchOdds(bookmaker, date, truehomeOdds, truedrawOdds, trueawayOdds);
+		return new MatchOdds(bookmaker, time, truehomeOdds, truedrawOdds, trueawayOdds);
 	}
 
 	public MatchOdds withIsClosing() {
@@ -97,6 +97,13 @@ public class MatchOdds extends Odds {
 		if (Float.floatToIntBits(homeOdds) != Float.floatToIntBits(other.homeOdds))
 			return false;
 		return true;
+	}
+
+	public MatchOdds withFixtureFields(Date date, String homeTeam, String awayTeam) {
+		this.fixtureDate = date;
+		this.homeTeamName = homeTeam;
+		this.awayTeamName = awayTeam;
+		return this;
 	}
 
 }

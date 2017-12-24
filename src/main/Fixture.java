@@ -89,6 +89,11 @@ public class Fixture {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return date + " " + homeTeam + " " + result.goalsHomeTeam + " : " + result.goalsAwayTeam + " " + awayTeam;
+	}
+
 	public Fixture withHTResult(Result htResult) {
 		this.HTresult = htResult;
 		return this;
@@ -111,9 +116,25 @@ public class Fixture {
 	}
 
 	public Fixture withMatchOdds(HashMap<String, ArrayList<MatchOdds>> matchOdds) {
-		this.matchOdds =  new ArrayList<>();
+		this.matchOdds = new ArrayList<>();
 		for (ArrayList<MatchOdds> i : matchOdds.values())
 			this.matchOdds.addAll(i);
+		return this;
+	}
+
+	// For loading from db
+	public Fixture withMatchOddsList(ArrayList<MatchOdds> matchOdds) {
+		this.matchOdds = matchOdds;
+		return this;
+	}
+
+	public Fixture withAsianOddsList(ArrayList<AsianOdds> asianOdds) {
+		this.asianOdds = asianOdds;
+		return this;
+	}
+
+	public Fixture withOverUnderOddsList(ArrayList<OverUnderOdds> overUnderOdds) {
+		this.overUnderOdds = overUnderOdds;
 		return this;
 	}
 

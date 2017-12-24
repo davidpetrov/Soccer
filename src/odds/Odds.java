@@ -3,8 +3,14 @@ package odds;
 import java.util.Date;
 
 public abstract class Odds {
+
+	// for identification
+	public Date fixtureDate;
+	public String homeTeamName;
+	public String awayTeamName;
+
 	public String bookmaker;
-	public Date date;
+	public Date time;
 	public boolean isOpening;
 	public boolean isClosing;
 
@@ -20,12 +26,12 @@ public abstract class Odds {
 		this.bookmaker = bookmaker;
 	}
 
-	public Date getDate() {
-		return date;
+	public Date getTime() {
+		return time;
 	}
 
-	public void setDate(Date date) {
-		this.date = date;
+	public void setTime(Date time) {
+		this.time = time;
 	}
 
 	@Override
@@ -33,7 +39,7 @@ public abstract class Odds {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((bookmaker == null) ? 0 : bookmaker.hashCode());
-		result = prime * result + ((date == null) ? 0 : date.hashCode());
+		result = prime * result + ((time == null) ? 0 : time.hashCode());
 		return result;
 	}
 
@@ -51,10 +57,10 @@ public abstract class Odds {
 				return false;
 		} else if (!bookmaker.equals(other.bookmaker))
 			return false;
-		if (date == null) {
-			if (other.date != null)
+		if (time == null) {
+			if (other.time != null)
 				return false;
-		} else if (!date.equals(other.date))
+		} else if (!time.equals(other.time))
 			return false;
 		return true;
 	}

@@ -95,6 +95,10 @@ public class Scraper {
 
 		// =================================================================
 
+		ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
+		System.out.println(eng.size());
+		eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
+
 		// for (int i = 2012; i <= 2012; i++) {
 		// ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
 		// // //
@@ -127,10 +131,10 @@ public class Scraper {
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
 		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
 		// fastOdds("ENG", 2017, null);
-//		ArrayList<Fixture> list = fullOdds("ENG", 2010, null);
-//		SQLiteJDBC.storePlayerFixtures(list);
-		ArrayList<Fixture> list2 = fullOdds("ENG", 2009, null);
-		SQLiteJDBC.storePlayerFixtures(list2);
+		// ArrayList<Fixture> list = fullOdds("ENG", 2010, null);
+		// SQLiteJDBC.storePlayerFixtures(list);
+		// ArrayList<Fixture> list2 = fullOdds("ENG", 2009, null);
+		// SQLiteJDBC.storePlayerFixtures(list2);
 		// ArrayList<Fixture> list3 = fullOdds("ENG", 2010, null);
 		// SQLiteJDBC.storePlayerFixtures(list3);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
@@ -2160,19 +2164,19 @@ public class Scraper {
 			ArrayList<MatchOdds> drawHistory = drawHistoriesMap.get(bookmaker);
 			ArrayList<MatchOdds> awayHistory = awayHistoriesMap.get(bookmaker);
 
-			homeHistory.sort(Comparator.comparing(MatchOdds::getDate).reversed());
-			drawHistory.sort(Comparator.comparing(MatchOdds::getDate).reversed());
-			awayHistory.sort(Comparator.comparing(MatchOdds::getDate).reversed());
+			homeHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
+			drawHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
+			awayHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
 
-			if (!(homeHistory.get(homeHistory.size() - 1).date.equals(drawHistory.get(drawHistory.size() - 1).date)
-					&& drawHistory.get(drawHistory.size() - 1).date
-							.equals(awayHistory.get(awayHistory.size() - 1).date)))
+			if (!(homeHistory.get(homeHistory.size() - 1).time.equals(drawHistory.get(drawHistory.size() - 1).time)
+					&& drawHistory.get(drawHistory.size() - 1).time
+							.equals(awayHistory.get(awayHistory.size() - 1).time)))
 				System.out.println("Opening 1x2 odds dates differ:" + bookmaker);
 
 			MatchOdds openingHome = homeHistory.remove(homeHistory.size() - 1);
 			MatchOdds openingDraw = drawHistory.remove(drawHistory.size() - 1);
 			MatchOdds openingAway = awayHistory.remove(awayHistory.size() - 1);
-			MatchOdds opening = new MatchOdds(bookmaker, openingHome.date, openingHome.homeOdds, openingDraw.drawOdds,
+			MatchOdds opening = new MatchOdds(bookmaker, openingHome.time, openingHome.homeOdds, openingDraw.drawOdds,
 					openingAway.awayOdds).withIsOpening();
 
 			// in the corner case where there is no change in odds, i.e. opening
@@ -2191,16 +2195,16 @@ public class Scraper {
 				awayHistory.add(openingAway.withIsClosing());
 
 			TreeSet<Date> changeTimes = new TreeSet<>();
-			changeTimes.addAll(homeHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
-			changeTimes.addAll(drawHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
-			changeTimes.addAll(awayHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
+			changeTimes.addAll(homeHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
+			changeTimes.addAll(drawHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
+			changeTimes.addAll(awayHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
 
 			Map<Date, MatchOdds> homeMap = homeHistory.stream()
-					.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+					.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 			Map<Date, MatchOdds> drawMap = drawHistory.stream()
-					.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+					.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 			Map<Date, MatchOdds> awayMap = awayHistory.stream()
-					.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+					.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 
 			Date last = getLastDateFromOddsHistories(homeHistory, drawHistory, awayHistory);
 
@@ -2551,16 +2555,16 @@ public class Scraper {
 				ArrayList<OverUnderOdds> overOdds = b.getValue();
 				ArrayList<OverUnderOdds> underOdds = underBookMap.get(bookie);
 
-				overOdds.sort(Comparator.comparing(OverUnderOdds::getDate).reversed());
-				underOdds.sort(Comparator.comparing(OverUnderOdds::getDate).reversed());
+				overOdds.sort(Comparator.comparing(OverUnderOdds::getTime).reversed());
+				underOdds.sort(Comparator.comparing(OverUnderOdds::getTime).reversed());
 
-				if (!overOdds.get(overOdds.size() - 1).date.equals(overOdds.get(overOdds.size() - 1).date))
+				if (!overOdds.get(overOdds.size() - 1).time.equals(overOdds.get(overOdds.size() - 1).time))
 					System.out.println("Opening  odds dates differ: " + line + " at " + bookie);
 
 				ArrayList<OverUnderOdds> oulist = new ArrayList<>();
 				OverUnderOdds openingOver = overOdds.remove(overOdds.size() - 1);
 				OverUnderOdds openingUnder = underOdds.remove(underOdds.size() - 1);
-				OverUnderOdds opening = new OverUnderOdds(bookie, openingOver.date, line, openingOver.overOdds,
+				OverUnderOdds opening = new OverUnderOdds(bookie, openingOver.time, line, openingOver.overOdds,
 						openingUnder.underOdds).withIsOpening();
 
 				// in the corner case where there is no change in odds, i.e.
@@ -2578,19 +2582,19 @@ public class Scraper {
 				oulist.add(opening);
 
 				TreeSet<Date> changeTimes = new TreeSet<>();
-				changeTimes.addAll(overOdds.stream().map(v -> v.date).collect(Collectors.toSet()));
-				changeTimes.addAll(underOdds.stream().map(v -> v.date).collect(Collectors.toSet()));
+				changeTimes.addAll(overOdds.stream().map(v -> v.time).collect(Collectors.toSet()));
+				changeTimes.addAll(underOdds.stream().map(v -> v.time).collect(Collectors.toSet()));
 
 				Map<Date, OverUnderOdds> overMap = overOdds.stream()
-						.collect(Collectors.toMap(OverUnderOdds::getDate, Function.identity(), (p1, p2) -> p1));
+						.collect(Collectors.toMap(OverUnderOdds::getTime, Function.identity(), (p1, p2) -> p1));
 				Map<Date, OverUnderOdds> underMap = underOdds.stream()
-						.collect(Collectors.toMap(OverUnderOdds::getDate, Function.identity(), (p1, p2) -> p1));
+						.collect(Collectors.toMap(OverUnderOdds::getTime, Function.identity(), (p1, p2) -> p1));
 
 				TreeSet<Date> set = new TreeSet<>();
 				if (!overOdds.isEmpty())
-					set.add(overOdds.get(overOdds.size() - 1).getDate());
+					set.add(overOdds.get(overOdds.size() - 1).getTime());
 				if (!underOdds.isEmpty())
-					set.add(underOdds.get(underOdds.size() - 1).getDate());
+					set.add(underOdds.get(underOdds.size() - 1).getTime());
 
 				Date last = set.last();
 
@@ -2828,7 +2832,7 @@ public class Scraper {
 
 	private static TreeSet<MatchOdds> getMatchOddsHistory(String text, String drawText, String awayText, Date date,
 			String bookmaker) throws ParseException {
-		TreeSet<MatchOdds> result = new TreeSet<>(Comparator.comparing(MatchOdds::getDate));
+		TreeSet<MatchOdds> result = new TreeSet<>(Comparator.comparing(MatchOdds::getTime));
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
 		int year = cal.get(Calendar.YEAR);
@@ -2837,10 +2841,10 @@ public class Scraper {
 		MatchOdds openingDraw = getOpeningOdds(drawText, date, year);
 		MatchOdds openingAway = getOpeningOdds(awayText, date, year);
 
-		if (!((openingHome.date.equals(openingDraw.date) && openingDraw.date.equals(openingAway.date))))
+		if (!((openingHome.time.equals(openingDraw.time) && openingDraw.time.equals(openingAway.time))))
 			System.out.println("possible odds history time mismatch");
 
-		MatchOdds opening = new MatchOdds(bookmaker, openingHome.date, openingHome.homeOdds, openingDraw.homeOdds,
+		MatchOdds opening = new MatchOdds(bookmaker, openingHome.time, openingHome.homeOdds, openingDraw.homeOdds,
 				openingAway.homeOdds);
 
 		ArrayList<MatchOdds> homeHistory = getOddsHistory(text, date, year);
@@ -2848,23 +2852,23 @@ public class Scraper {
 		ArrayList<MatchOdds> awayHistory = getOddsHistory(awayText, date, year);
 
 		TreeSet<Date> changeTimes = new TreeSet<>();
-		changeTimes.addAll(homeHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
-		changeTimes.addAll(drawHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
-		changeTimes.addAll(awayHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
+		changeTimes.addAll(homeHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
+		changeTimes.addAll(drawHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
+		changeTimes.addAll(awayHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
 
 		Map<Date, MatchOdds> homeMap = homeHistory.stream()
-				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+				.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 		Map<Date, MatchOdds> drawMap = drawHistory.stream()
-				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+				.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 		Map<Date, MatchOdds> awayMap = awayHistory.stream()
-				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+				.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 
 		Date last = getLastDateFromOddsHistories(homeHistory, drawHistory, awayHistory);
 
 		result.add(opening);
-		homeMap.put(opening.getDate(), openingHome);
-		drawMap.put(opening.getDate(), openingDraw);
-		awayMap.put(opening.getDate(), openingAway);
+		homeMap.put(opening.getTime(), openingHome);
+		drawMap.put(opening.getTime(), openingDraw);
+		awayMap.put(opening.getTime(), openingAway);
 
 		for (Date t : changeTimes.tailSet(last)) {
 			boolean homeIsNull = homeMap.get(t) != null;
@@ -2898,11 +2902,11 @@ public class Scraper {
 			ArrayList<MatchOdds> awayHistory) {
 		TreeSet<Date> set = new TreeSet<>();
 		if (!homeHistory.isEmpty())
-			set.add(homeHistory.get(homeHistory.size() - 1).getDate());
+			set.add(homeHistory.get(homeHistory.size() - 1).getTime());
 		if (!drawHistory.isEmpty())
-			set.add(drawHistory.get(drawHistory.size() - 1).getDate());
+			set.add(drawHistory.get(drawHistory.size() - 1).getTime());
 		if (!awayHistory.isEmpty())
-			set.add(awayHistory.get(awayHistory.size() - 1).getDate());
+			set.add(awayHistory.get(awayHistory.size() - 1).getTime());
 
 		return set.last();
 	}
@@ -3097,7 +3101,7 @@ public class Scraper {
 	 */
 	private static TreeSet<OverUnderOdds> getOUOddsHistory(float line, String overText, String underText, Date date,
 			String bookmaker) throws ParseException {
-		TreeSet<OverUnderOdds> result = new TreeSet<>(Comparator.comparing(OverUnderOdds::getDate));
+		TreeSet<OverUnderOdds> result = new TreeSet<>(Comparator.comparing(OverUnderOdds::getTime));
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
 		int year = cal.get(Calendar.YEAR);
@@ -3105,27 +3109,27 @@ public class Scraper {
 		MatchOdds openingOver = getOpeningOdds(overText, date, year);
 		MatchOdds openingUnder = getOpeningOdds(underText, date, year);
 
-		if (!openingOver.date.equals(openingOver.date))
+		if (!openingOver.time.equals(openingOver.time))
 			System.out.println("possible odds history time mismatch for o/u" + line + " " + bookmaker);
 
-		OverUnderOdds opening = new OverUnderOdds(bookmaker, openingOver.date, line, openingOver.homeOdds,
+		OverUnderOdds opening = new OverUnderOdds(bookmaker, openingOver.time, line, openingOver.homeOdds,
 				openingUnder.homeOdds);
 
 		ArrayList<MatchOdds> overHistory = getOddsHistory(overText, date, year);
 		ArrayList<MatchOdds> underHistory = getOddsHistory(underText, date, year);
 
 		TreeSet<Date> changeTimes = new TreeSet<>();
-		changeTimes.addAll(overHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
-		changeTimes.addAll(underHistory.stream().map(v -> v.date).collect(Collectors.toSet()));
+		changeTimes.addAll(overHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
+		changeTimes.addAll(underHistory.stream().map(v -> v.time).collect(Collectors.toSet()));
 
 		Map<Date, MatchOdds> drawMap = overHistory.stream()
-				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+				.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 		Map<Date, MatchOdds> awayMap = underHistory.stream()
-				.collect(Collectors.toMap(MatchOdds::getDate, Function.identity(), (p1, p2) -> p1));
+				.collect(Collectors.toMap(MatchOdds::getTime, Function.identity(), (p1, p2) -> p1));
 
 		result.add(opening);
-		drawMap.put(opening.getDate(), openingOver);
-		awayMap.put(opening.getDate(), openingUnder);
+		drawMap.put(opening.getTime(), openingOver);
+		awayMap.put(opening.getTime(), openingUnder);
 
 		if (changeTimes.isEmpty())
 			return result;
