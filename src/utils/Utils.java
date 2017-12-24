@@ -39,7 +39,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import charts.LineChart;
-import constants.MinMaxOdds;
+import constants.Constants;
 import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.FullEntry;
@@ -67,97 +67,7 @@ import xls.XlSUtils.MaximizingBy;
 
 public class Utils {
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-	public static final String TOKEN = "19f6c3cd0bd54c4286322c08734b53bd";
-	static int count = 50;
 	static long start = System.currentTimeMillis();
-
-	public static String query(String address) throws IOException {
-		if (--count == 0)
-			try {
-				long now = System.currentTimeMillis();
-				System.out.println("Sleeping for " + (61 * 1000 - (now - start)) / 1000);
-				long time = 61 * 1000 - (now - start);
-				Thread.sleep(time < 0 ? 61 : time);
-				count = 50;
-				start = System.currentTimeMillis();
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
-		URL url = new URL(address);
-		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		conn.setRequestMethod("GET");
-		conn.addRequestProperty("X-Auth-Token", TOKEN);
-		InputStreamReader isr = null;
-		isr = new InputStreamReader(conn.getInputStream());
-		BufferedReader bfr = new BufferedReader(isr);
-		String output;
-		StringBuffer sb = new StringBuffer();
-		while ((output = bfr.readLine()) != null) {
-			sb.append(output);
-		}
-		return sb.toString();
-	}
-
-	@SuppressWarnings("unused")
-	public static ArrayList<ExtendedFixture> createFixtureList(JSONArray arr) throws JSONException, ParseException {
-		ArrayList<ExtendedFixture> fixtures = new ArrayList<>();
-		for (int i = 0; i < arr.length(); i++) {
-			JSONObject f = arr.getJSONObject(i);
-			String date = f.getString("date");
-			String status;
-			try {
-				status = f.getString("status");
-			} catch (Exception e) {
-				status = "FINISHED";
-			}
-			int matchday = f.getInt("matchday");
-			String homeTeamName = f.getString("homeTeamName");
-			String awayTeamName = f.getString("awayTeamName");
-			int goalsHomeTeam = f.getJSONObject("result").getInt("goalsHomeTeam");
-			int goalsAwayTeam = f.getJSONObject("result").getInt("goalsAwayTeam");
-			String links_homeTeam = f.getJSONObject("_links").getJSONObject("homeTeam").getString("href");
-			String links_awayTeam = f.getJSONObject("_links").getJSONObject("awayTeam").getString("href");
-			String competition = f.getJSONObject("_links").getJSONObject("soccerseason").getString("href");
-
-			ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-					new Result(goalsHomeTeam, goalsAwayTeam), competition).withMatchday(matchday);
-			fixtures.add(ef);
-		}
-		return fixtures;
-	}
-
-	@SuppressWarnings("unused")
-	public static ArrayList<ExtendedFixture> createFixtureList(JSONObject obj) throws JSONException, ParseException {
-		ArrayList<ExtendedFixture> fixtures = new ArrayList<>();
-		String date = obj.getString("date");
-		String status = obj.getString("status");
-		int matchday = obj.getInt("matchday");
-		String homeTeamName = obj.getString("homeTeamName");
-		String awayTeamName = obj.getString("awayTeamName");
-		int goalsHomeTeam = obj.getJSONObject("result").getInt("goalsHomeTeam");
-		int goalsAwayTeam = obj.getJSONObject("result").getInt("goalsAwayTeam");
-		String links_homeTeam = obj.getJSONObject("_links").getJSONObject("homeTeam").getString("href");
-		String links_awayTeam = obj.getJSONObject("_links").getJSONObject("homeTeam").getString("href");
-		String competition = obj.getJSONObject("_links").getJSONObject("soccerseason").getString("href");
-
-		ExtendedFixture f = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-				new Result(goalsHomeTeam, goalsAwayTeam), competition).withMatchday(matchday);
-		fixtures.add(f);
-		return fixtures;
-	}
-
-	// get last n fixtures from a list
-	// assumes the ordering is the from older to newer
-	// public static ArrayList<Fixture> getLastFixtures(ArrayList<Fixture>
-	// fixtures, int n) {
-	// ArrayList<Fixture> last = new ArrayList<>();
-	// int returnedSize = fixtures.size() >= n ? n : fixtures.size();
-	// Collections.sort(fixtures, Collections.reverseOrder());
-	// for (int i = 0; i < returnedSize; i++) {
-	// last.add(fixtures.get(i));
-	// }
-	// return last;
-	// }
 
 	public static ArrayList<ExtendedFixture> getLastFixtures(ArrayList<ExtendedFixture> fixtures, int n) {
 		ArrayList<ExtendedFixture> last = new ArrayList<>();
@@ -187,21 +97,6 @@ public class Utils {
 		return away;
 	}
 
-	// public static ArrayList<Fixture> getForDate(ArrayList<Fixture> fixtures,
-	// int day) {
-	// ArrayList<Fixture> result = new ArrayList<>();
-	// DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-	// for (Fixture i : fixtures) {
-	// try {
-	// if (format.parse(i.date).getDay() == day)
-	// result.add(i);
-	// } catch (ParseException e) {
-	// e.printStackTrace();
-	// }
-	// }
-	// return result;
-	// }
-
 	public static float countOverGamesPercent(ArrayList<ExtendedFixture> fixtures) {
 		int count = 0;
 		for (ExtendedFixture f : fixtures) {
@@ -222,12 +117,12 @@ public class Utils {
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
 	}
 
-	public static float findAvg(ArrayList<ExtendedFixture> lastHomeTeam) {
+	public static float findAvg(ArrayList<ExtendedFixture> all) {
 		float total = 0;
-		for (ExtendedFixture f : lastHomeTeam) {
+		for (ExtendedFixture f : all) {
 			total += f.getTotalGoals();
 		}
-		return total / lastHomeTeam.size();
+		return total / all.size();
 	}
 
 	public static float poisson(float lambda, int goal) {
@@ -448,16 +343,6 @@ public class Utils {
 		return (float) success / list.size();
 	}
 
-	public static float getSuccessRate(ArrayList<FinalEntry> list, float threshold) {
-		int success = 0;
-		for (FinalEntry fe : list) {
-			fe.threshold = threshold;
-			if (fe.success())
-				success++;
-		}
-		return (float) success / list.size();
-	}
-
 	/**
 	 * Filter by min and max odds
 	 * 
@@ -475,30 +360,6 @@ public class Utils {
 				filtered.add(fe);
 		}
 		return filtered;
-	}
-
-	public static float[] getScaledProfit(ArrayList<FinalEntry> finals, float f) {
-		float profit = 0.0f;
-		float staked = 0f;
-		for (FinalEntry fe : finals) {
-			float gain = fe.prediction > fe.upper ? fe.fixture.maxOver : fe.fixture.maxUnder;
-			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
-			float cot = fe.prediction > fe.threshold ? (fe.prediction - fe.threshold) : (fe.threshold - fe.prediction);
-			float betsize = 1;
-			float value = certainty * gain;
-			if (value > fe.value) {
-				staked += betsize;
-				if (fe.success()) {
-					if (gain != -1.0d) {
-						profit += gain * betsize;
-					}
-				}
-			}
-		}
-		float[] result = new float[2];
-		result[0] = profit - staked;
-		result[1] = staked;
-		return result;
 	}
 
 	public static ArrayList<ExtendedFixture> onlyFixtures(ArrayList<FinalEntry> finals) {
@@ -1879,7 +1740,6 @@ public class Utils {
 	}
 
 	public static float getNormalizedYield(ArrayList<FinalEntry> all) {
-
 		return getNormalizedProfit(all) / all.size();
 	}
 
@@ -2436,7 +2296,7 @@ public class Utils {
 		// The shots data from soccerway(opta) does not add the goals as shots,
 		// must be added for more accurate predictions and equivalancy with
 		// alleurodata
-		boolean manual = Arrays.asList(MinMaxOdds.MANUAL).contains(ef.competition);
+		boolean manual = Arrays.asList(Constants.MANUAL).contains(ef.competition);
 		float goalsWeight = 1f;
 
 		float homeEstimate = estimateGoalFromPlayerStats(ef, pfs, dictionary, true, all);
@@ -2967,7 +2827,7 @@ public class Utils {
 
 		for (int i = start; i <= end; i++) {
 			ArrayList<HTEntry> finals = new ArrayList<>();
-			for (String comp : Arrays.asList(MinMaxOdds.SHOTS)) {
+			for (String comp : Arrays.asList(Constants.SHOTS)) {
 				finals.addAll(SQLiteJDBC.selectHTData(comp, i, "ht"));
 			}
 
@@ -3144,7 +3004,7 @@ public class Utils {
 
 		for (int i = start; i <= end; i++) {
 			ArrayList<HTEntry> finals = new ArrayList<>();
-			for (String comp : Arrays.asList(MinMaxOdds.SHOTS)) {
+			for (String comp : Arrays.asList(Constants.SHOTS)) {
 				finals.addAll(SQLiteJDBC.selectHTData(comp, i, "ht"));
 			}
 			all.addAll(finals);

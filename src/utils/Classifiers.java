@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 
-import constants.MinMaxOdds;
+import constants.Constants;
 import main.ExtendedFixture;
 import xls.XlSUtils;
 
@@ -17,7 +17,7 @@ public class Classifiers {
 		// The shots data from soccerway(opta) does not add the goals as shots,
 		// must be added for more accurate predictions and equivalancy with
 		// alleurodata
-		boolean manual = Arrays.asList(MinMaxOdds.MANUAL).contains(f.competition);
+		boolean manual = Arrays.asList(Constants.MANUAL).contains(f.competition);
 
 		float goalsWeight = 1f;
 

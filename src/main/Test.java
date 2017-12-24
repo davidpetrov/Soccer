@@ -21,7 +21,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.json.JSONException;
 
-import constants.MinMaxOdds;
+import constants.Constants;
 import entries.AsianEntry;
 import entries.FinalEntry;
 import results.Results;
@@ -47,7 +47,7 @@ public class Test {
 
 		// Results.eval("estimateBoth");
 		// Results.eval("smooth");
-//		 Results.eval("test");
+		// Results.eval("test");
 
 		// asianPredictions();
 
@@ -59,12 +59,12 @@ public class Test {
 		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
 		// makePredictions();
 
-//		 float total = 0f;
-//		 int startY = 2011;
-//		 int end = 2016;
-//		 for (int year = startY; year <= end; year++)
-//		 total += simulationAllLines(year, true /*DataType.ALLEURODATA*/);
-//		 System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		// float total = 0f;
+		// int startY = 2011;
+		// int end = 2016;
+		// for (int year = startY; year <= end; year++)
+		// total += simulationAllLines(year, true /*DataType.ALLEURODATA*/);
+		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
 		// for (int i = 2005; i <= 2015; i++)
 		// XlSUtils.populateScores(i);
@@ -92,18 +92,22 @@ public class Test {
 		ArrayList<FinalEntry> all = new ArrayList<>();
 		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
 
-		 populateForAnalysis(start, end, all, byLeagueYear, type);
-//		populateForAnalysisFromDB(start, end, all, byLeagueYear, type, "shots");
+		populateForAnalysis(start, end, all, byLeagueYear, type);
+		// populateForAnalysisFromDB(start, end, all, byLeagueYear, type,
+		// "shots");
 
-//		ArrayList<FinalEntry> eng = (ArrayList<FinalEntry>) byLeagueYear.get("FR2").values().stream()
-//				.flatMap(List::stream).collect(Collectors.toList());
+		// ArrayList<FinalEntry> eng = (ArrayList<FinalEntry>)
+		// byLeagueYear.get("FR2").values().stream()
+		// .flatMap(List::stream).collect(Collectors.toList());
 
-//		HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(all);
-//		for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i : byLeague.entrySet()) {
-//			System.out.println(i.getKey());
-//			System.out.println(i.getValue().size());
-//			Utils.analysys(i.getValue(), i.getKey(), false);
-//		}
+		// HashMap<String, ArrayList<FinalEntry>> byLeague =
+		// Utils.byLeague(all);
+		// for (java.util.Map.Entry<String, ArrayList<FinalEntry>> i :
+		// byLeague.entrySet()) {
+		// System.out.println(i.getKey());
+		// System.out.println(i.getValue().size());
+		// Utils.analysys(i.getValue(), i.getKey(), false);
+		// }
 
 		// ArrayList<FinalEntry> withTH1 = Utils.withBestThreshold(byLeagueYear,
 		// 1, MaximizingBy.OVERS);
@@ -159,7 +163,7 @@ public class Test {
 					throws InterruptedException {
 		for (int i = start; i <= end; i++) {
 			ArrayList<FinalEntry> finals = new ArrayList<>();
-			for (String comp : Arrays.asList(MinMaxOdds.SHOTS)) {
+			for (String comp : Arrays.asList(Constants.SHOTS)) {
 				finals.addAll(SQLiteJDBC.selectFinals(comp, i, description));
 			}
 
@@ -366,85 +370,8 @@ public class Test {
 		return totalProfit;
 	}
 
-	public static final void singleMethod() throws IOException, ParseException {
-
-		float totalTotal = 0f;
-		for (int year = 2005; year <= 2015; year++) {
-			float total = 0f;
-			String base = new File("").getAbsolutePath();
-			FileInputStream file = new FileInputStream(
-					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
-			HSSFWorkbook workbook = new HSSFWorkbook(file);
-			Iterator<Sheet> sheet = workbook.sheetIterator();
-			while (sheet.hasNext()) {
-				HSSFSheet sh = (HSSFSheet) sheet.next();
-				if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-					continue;
-				float profit = XlSUtils.singleMethod(sh, XlSUtils.selectAll(sh, 10), year);
-				// System.out.println(sh.getSheetName() + " " + year + " " +
-				// profit);
-				total += profit;
-			}
-			System.out.println("Total for " + year + ": " + total);
-			workbook.close();
-			file.close();
-			totalTotal += total;
-		}
-		System.out.println("Avg is: " + totalTotal / 11);
-	}
-
-	public static void stored24() throws InterruptedException {
-		int bestPeriod = 0;
-		float bestProfit = Float.NEGATIVE_INFINITY;
-
-		int period = 3;
-
-		float total = 0f;
-		int sizeTotal = 0;
-		float totalStake = 0f;
-
-		ArrayList<FinalEntry> all = new ArrayList<>();
-
-		for (int i = 2005 + period; i <= 2014; i++) {
-			float curr = 0f;
-			int size = 0;
-			float staked = 0f;
-			for (String league : Results.LEAGUES) {
-				if (!Arrays.asList(MinMaxOdds.DONT).contains(league)) {
-					ArrayList<FinalEntry> list = XlSUtils.bestCot(league, i, period, "realdouble15");
-					// System.out.println("Profit for: " + league + " last: " +
-					// i + " is: " + Results.format(pr));
-
-					curr += Utils.getScaledProfit(list, 0f)[0];
-					size += list.size();
-					staked += Utils.getScaledProfit(list, 0f)[1];
-					all.addAll(list);
-				}
-			}
-
-			System.out.println(
-					"For " + i + ": " + curr + "  yield: " + Results.format((curr / staked) * 100) + " from: " + size);
-			total += curr;
-			sizeTotal += size;
-			totalStake += staked;
-
-			if (curr > bestProfit) {
-				bestProfit = curr;
-				bestPeriod = i;
-			}
-
-		}
-
-		System.out.println(
-				"Total avg: " + total / (10 - period) + " avg yield: " + Results.format(100 * (total / totalStake)));
-				// Utils.drawAnalysis(all);
-
-		// System.out.println("Best period: " + bestPeriod + " with profit: " +
-		// bestProfit);
-	}
-
 	public static final void aggregateInterval() throws IOException, InterruptedException, ExecutionException {
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + 2014 + "-" + 2015 + ".xls"));
@@ -469,7 +396,7 @@ public class Test {
 	}
 
 	public static final void aggregate(int year, int n) throws IOException, InterruptedException, ExecutionException {
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
 				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
@@ -493,24 +420,6 @@ public class Test {
 			optimals.put(result.league, result);
 			SQLiteJDBC.storeSettings(result, year, n);
 		}
-
-		// // TESTING
-		// float totalProfit = 0f;
-		// Iterator<Sheet> sheets = workbook.sheetIterator();
-		// while (sheets.hasNext()) {
-		// HSSFSheet sh = (HSSFSheet) sheets.next();
-		// // if (sh.getSheetName().equals("D1")) {
-		// ArrayList<FinalEntry> list = XlSUtils.runWithSettingsList(sh,
-		// XlSUtils.selectAll(sh),
-		// optimals.get(sh.getSheetName()));
-		// float profit = Utils.getProfit(list,
-		// optimals.get(sh.getSheetName()));
-		// totalProfit += profit;
-		// System.out.println(sh.getSheetName() + ": " + profit);
-		// // }
-		// }
-
-		// System.out.println("Total for " + year + " : " + totalProfit);
 
 		workbook.close();
 		file.close();
@@ -558,7 +467,7 @@ public class Test {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			// if (!sh.getSheetName().equals("E0"))
 			// continue;
-			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
 				continue;
 
 			// if (!Arrays.asList(MinMaxOdds.PFS).contains(sh.getSheetName()))
@@ -585,8 +494,8 @@ public class Test {
 	public static ArrayList<FinalEntry> finals(int year, DataType type)
 			throws InterruptedException, ExecutionException, IOException {
 		String base = new File("").getAbsolutePath();
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
-		ArrayList<String> draw = new ArrayList<String>(Arrays.asList(MinMaxOdds.DRAW));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
+		ArrayList<String> draw = new ArrayList<String>(Arrays.asList(Constants.DRAW));
 
 		FileInputStream file;
 		if (type.equals(DataType.ALLEURODATA))
@@ -607,8 +516,8 @@ public class Test {
 			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
 			// continue;
 
-//			 if (!sh.getSheetName().equals("FR2"))
-//			 continue;
+			// if (!sh.getSheetName().equals("FR2"))
+			// continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
 
@@ -704,6 +613,7 @@ public class Test {
 		System.out.println("Average is:" + totalTotal / 11);
 	}
 
+	@Deprecated
 	public static void optimalsbyCompetition() throws IOException, ParseException {
 
 		HashMap<String, ArrayList<Settings>> optimals = new HashMap<>();
@@ -742,7 +652,7 @@ public class Test {
 		// }
 		float totalPeriod = 0f;
 
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
 
 		for (int year = 2006; year <= 2015; year++) {
 			float total = 0f;
@@ -773,43 +683,8 @@ public class Test {
 
 	}
 
-	// public static void findSettings(int year) throws IOException,
-	// ParseException {
-	// FileInputStream file = new FileInputStream(new File(
-	// "C:\\Users\\Admin\\workspace\\Soccer\\data\\all-euro-data-" + year + "-"
-	// + (year + 1) + ".xls"));
-	// HSSFWorkbook workbook = new HSSFWorkbook(file);
-	// Iterator<Sheet> sheet = workbook.sheetIterator();
-	// float totalProfit = 0.0f;
-	// while (sheet.hasNext()) {
-	// HSSFSheet sh = (HSSFSheet) sheet.next();
-	// Settings sett = /*
-	// * XlSUtils.runForLeagueWithOdds(sh,
-	// * xls.XlSUtils.selectAll(sh), 1.0d);
-	// */
-	//
-	// XlSUtils.findInterval(XlSUtils.selectAll(sh), sh, year);
-	// Settings stored = SQLiteJDBC.getSettings(sett.league, year);
-	//
-	// if (stored == null) {
-	// SQLiteJDBC.storeSettings(sett, year);
-	// System.out.println(sett);
-	// totalProfit += sett.profit;
-	// } else if (stored.profit >= sett.profit) {
-	// System.out.println(stored);
-	// totalProfit += stored.profit;
-	// } else {
-	// System.out.println(sett);
-	// SQLiteJDBC.deleteSettings(sett.league, year);
-	// SQLiteJDBC.storeSettings(sett, year);
-	// System.out.println(sett);
-	// totalProfit += sett.profit;
-	// }
-	// }
-	// System.out.println("TotalProfit: " + totalProfit);
-	// workbook.close();
-	// }
-
+	// for making predictions from footballdata excel files
+	@Deprecated
 	public static void makePredictions() throws IOException, InterruptedException, ParseException {
 		String basePath = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(new File("C:\\Users\\Tereza\\Desktop\\fixtures.xls"));
@@ -886,94 +761,6 @@ public class Test {
 		System.out
 				.println("Rate" + listName + ": " + String.format("%.2f", ((float) successOver50 / list.size()) * 100));
 		System.out.println("Profit" + listName + ": " + String.format("%.2f", successOver50 * 0.9 - failureOver50));
-	}
-
-	public static float basic1(ExtendedFixture f) {
-		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 5, 2014, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 5, 2014, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeam, 5, 2014, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeam, 5, 2014, f.matchday,
-				f.competition);
-		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
-		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
-				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
-		float BTSAVG = (Utils.countBTSPercent(lastHomeTeam) + Utils.countBTSPercent(lastAwayTeam)) / 2;
-
-		return 0.4f * allGamesAVG + 0.4f * homeAwayAVG + 0.2f * BTSAVG;
-	}
-
-	public static float last10only(ExtendedFixture f, int n) {
-		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, n, 2014, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, n, 2014, f.matchday,
-				f.competition);
-
-		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
-		return allGamesAVG;
-	}
-
-	public static float last5HAonly(ExtendedFixture f) {
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeam, 5, 2014, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeam, 5, 2014, f.matchday,
-				f.competition);
-
-		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
-				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
-		return homeAwayAVG;
-	}
-
-	public static float last10BTSonly(ExtendedFixture f) {
-		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 10, 2014, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 10, 2014, f.matchday,
-				f.competition);
-
-		float BTSAVG = (Utils.countBTSPercent(lastHomeTeam) + Utils.countBTSPercent(lastAwayTeam)) / 2;
-		return BTSAVG;
-	}
-
-	public static float basic2(ExtendedFixture f, int year, float d, float e, float z) {
-		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 10, year, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 10, year, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = SQLiteJDBC.selectLastHome(f.homeTeam, 5, year, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = SQLiteJDBC.selectLastAway(f.awayTeam, 5, year, f.matchday,
-				f.competition);
-		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
-		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
-				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
-		float BTSAVG = (Utils.countBTSPercent(lastHomeTeam) + Utils.countBTSPercent(lastAwayTeam)) / 2;
-
-		return d * allGamesAVG + e * homeAwayAVG + z * BTSAVG;
-	}
-
-	public static float poisson(ExtendedFixture f, int year) {
-		ArrayList<ExtendedFixture> lastHomeTeam = SQLiteJDBC.selectLastAll(f.homeTeam, 10, year, f.matchday,
-				f.competition);
-		ArrayList<ExtendedFixture> lastAwayTeam = SQLiteJDBC.selectLastAll(f.awayTeam, 10, year, f.matchday,
-				f.competition);
-		float lambda = Utils.avgFor(f.homeTeam, lastHomeTeam);
-		float mu = Utils.avgFor(f.awayTeam, lastAwayTeam);
-		return Utils.poissonOver(lambda, mu);
-	}
-
-	public static float poissonWeighted(ExtendedFixture f, int year) {
-		float leagueAvgHome = SQLiteJDBC.selectAvgLeagueHome(f.competition, year, f.matchday);
-		float leagueAvgAway = SQLiteJDBC.selectAvgLeagueAway(f.competition, year, f.matchday);
-		float homeAvgFor = SQLiteJDBC.selectAvgHomeTeamFor(f.competition, f.homeTeam, year, f.matchday);
-		float homeAvgAgainst = SQLiteJDBC.selectAvgHomeTeamAgainst(f.competition, f.homeTeam, year, f.matchday);
-		float awayAvgFor = SQLiteJDBC.selectAvgAwayTeamFor(f.competition, f.awayTeam, year, f.matchday);
-		float awayAvgAgainst = SQLiteJDBC.selectAvgAwayTeamAgainst(f.competition, f.awayTeam, year, f.matchday);
-
-		float lambda = homeAvgFor * awayAvgAgainst / leagueAvgAway;
-		float mu = awayAvgFor * homeAvgAgainst / leagueAvgHome;
-		return Utils.poissonOver(lambda, mu);
 	}
 
 	public enum DataType {

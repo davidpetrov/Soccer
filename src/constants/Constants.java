@@ -2,7 +2,7 @@ package constants;
 
 import java.util.HashMap;
 
-public class MinMaxOdds {
+public class Constants {
 
 	public static final String[] DONT = { "E0", "EC", "E1", "E2", "SC0", "I1", "I2", "F1", "T1", "B1" };
 	public static final String[] DRAW = { "I1", "I2", "F2", "P1", "D1", "D2", "SP2" };

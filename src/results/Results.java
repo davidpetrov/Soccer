@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import constants.MinMaxOdds;
+import constants.Constants;
 import utils.Utils;
 
 public class Results {
@@ -142,7 +142,7 @@ public class Results {
 	}
 
 	public static void dontRestric(HashMap<Integer, Map<String, Float>> results) {
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.SHOTSDONT));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.SHOTSDONT));
 		HashMap<Integer, Float> byYear = new HashMap<>();
 		for (Entry<Integer, Map<String, Float>> entry : results.entrySet()) {
 			int year = entry.getKey();

@@ -59,7 +59,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.json.Json;
 
-import constants.MinMaxOdds;
+import constants.Constants;
 import entries.FinalEntry;
 import main.AsianLines;
 import main.ExtendedFixture;
@@ -2732,7 +2732,7 @@ public class Scraper {
 						continue;
 					String bookmaker = oddsArray[0].trim();
 
-					if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
+					if (Arrays.asList(Constants.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
 						continue;
 
 					try {
@@ -2781,7 +2781,7 @@ public class Scraper {
 				continue;
 
 			String bookmaker = columns.get(0).getText().trim();
-			if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker))
+			if (Arrays.asList(Constants.FAKEBOOKS).contains(bookmaker))
 				continue;
 
 			// hover for odds history
@@ -3031,7 +3031,7 @@ public class Scraper {
 					continue;
 				String bookmaker = oddsArray[0].trim();
 
-				if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
+				if (Arrays.asList(Constants.FAKEBOOKS).contains(bookmaker) || bookmaker.isEmpty())
 					continue;
 
 				List<WebElement> columns = row.findElements(By.tagName("td"));
@@ -3267,7 +3267,7 @@ public class Scraper {
 			if (columns.size() < 4)
 				continue;
 			String bookmaker = columns.get(0).getText().trim();
-			if (Arrays.asList(MinMaxOdds.FAKEBOOKS).contains(bookmaker))
+			if (Arrays.asList(Constants.FAKEBOOKS).contains(bookmaker))
 				continue;
 			float homeOdds = Float.parseFloat(columns.get(1).getText().trim());
 			float drawOdds = Float.parseFloat(columns.get(2).getText().trim());

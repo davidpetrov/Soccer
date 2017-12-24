@@ -29,121 +29,6 @@ public class SQLiteJDBC {
 
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-	public static void createDB() {
-		Connection c = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			System.exit(0);
-		}
-		// System.out.println("Opened database successfully");
-
-	}
-
-	public static void createTable(int year) {
-		Connection c = null;
-		Statement stmt = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-			// System.out.println("Opened database successfully");
-
-			stmt = c.createStatement();
-			String sql = "CREATE TABLE RESULTS" + year + " (DATE TEXT      NOT NULL,"
-					+ " HOMETEAMNAME  TEXT     NOT NULL, " + " AWAYTEAMNAME  TEXT     NOT NULL, "
-					+ " HOMEGOALS  INT   NOT NULL, " + " AWAYGOALS  INT   NOT NULL, " + " COMPETITION TEXT  NOT NULL, "
-					+ " MATCHDAY INT       NOT NULL, " + " PRIMARY KEY (DATE, HOMETEAMNAME, AWAYTEAMNAME)) ";
-			stmt.executeUpdate(sql);
-			stmt.close();
-			c.close();
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			System.exit(0);
-		}
-		// System.out.println("Table created successfully");
-	}
-
-	// insert Fixture entry into DB
-	public static void insert(ExtendedFixture f, String competition, String tableName) {
-		Connection c = null;
-		Statement stmt = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-			c.setAutoCommit(false);
-			// System.out.println("Opened database successfully");
-
-			stmt = c.createStatement();
-			String sql = "INSERT INTO " + tableName
-					+ " (DATE,HOMETEAMNAME,AWAYTEAMNAME,HOMEGOALS,AWAYGOALS,COMPETITION,MATCHDAY)" + "VALUES ("
-					+ addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + "," + addQuotes(f.awayTeam) + ","
-					+ f.result.goalsHomeTeam + "," + f.result.goalsAwayTeam + "," + addQuotes(competition) + ", "
-					+ f.matchday + " );";
-			try {
-				stmt.executeUpdate(sql);
-			} catch (SQLException e) {
-				System.out.println("tuka");
-
-			}
-
-			stmt.close();
-			c.commit();
-			c.close();
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			try {
-				c.close();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-			System.exit(0);
-		}
-		// System.out.println("Records created successfully");
-
-	}
-
-	// selects all fixtures for a given season from the database
-	// without cl and wc and from 11 matchday up
-	public static ArrayList<ExtendedFixture> select(int season) {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
-
-		Connection c = null;
-		Statement stmt = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-			c.setAutoCommit(false);
-			// System.out.println("Opened database successfully");
-
-			stmt = c.createStatement();
-			ResultSet rs = stmt.executeQuery(
-					"select * from results" + season + " where matchday > 10 and competition not in ('CL' ,'WC');");
-			while (rs.next()) {
-				String date = rs.getString("date");
-				String homeTeamName = rs.getString("hometeamname");
-				String awayTeamName = rs.getString("awayteamname");
-				int homeGoals = rs.getInt("homegoals");
-				int awayGoals = rs.getInt("awaygoals");
-				String competition = rs.getString("competition");
-				int matchday = rs.getInt("matchday");
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competition).withMatchday(matchday);
-				results.add(ef);
-			}
-			rs.close();
-			stmt.close();
-			c.close();
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			System.exit(0);
-		}
-		// System.out.println("Operation done successfully");
-
-		return results;
-	}
-
 	public static ArrayList<ExtendedFixture> selectLastAll(String team, int count, int season, int matchday,
 			String competition) {
 		ArrayList<ExtendedFixture> results = new ArrayList<>();
@@ -461,57 +346,6 @@ public class SQLiteJDBC {
 		return average;
 	}
 
-	// update database with all results up to date for a season 30 days back
-	public static void update(int season) throws ParseException {
-		try {
-			JSONArray arr = new JSONArray(
-					Utils.query("http://api.football-data.org/alpha/soccerseasons/?season=" + season));
-			for (int i = 0; i < arr.length(); i++) {
-				String address = arr.getJSONObject(i).getJSONObject("_links").getJSONObject("fixtures")
-						.getString("href") + "/?timeFrame=p30";
-				String league = arr.getJSONObject(i).getString("league");
-				JSONObject obj = new JSONObject(Utils.query(address));
-				obj.getJSONArray("fixtures");
-				JSONArray jsonFixtures = obj.getJSONArray("fixtures");
-
-				ArrayList<ExtendedFixture> fixtures = Utils.createFixtureList(jsonFixtures);
-				for (ExtendedFixture f : fixtures) {
-					if (f.status.equals("FINISHED")
-							&& !SQLiteJDBC.checkExistense(f.homeTeam, f.awayTeam, format.format(f.date), season)) {
-						SQLiteJDBC.insert(f, league, "RESULTS" + season);
-					}
-				}
-			}
-		} catch (IOException | JSONException e) {
-			e.printStackTrace();
-		}
-	}
-
-	// populate database with all results up to date for a season
-	public static void populateInitial(int season) throws ParseException {
-		try {
-			JSONArray arr = new JSONArray(
-					Utils.query("http://api.football-data.org/alpha/soccerseasons/?season=" + season));
-			for (int i = 0; i < arr.length(); i++) {
-				String address = arr.getJSONObject(i).getJSONObject("_links").getJSONObject("fixtures")
-						.getString("href");
-				String league = arr.getJSONObject(i).getString("league");
-				JSONObject obj = new JSONObject(Utils.query(address));
-				obj.getJSONArray("fixtures");
-				JSONArray jsonFixtures = obj.getJSONArray("fixtures");
-
-				ArrayList<ExtendedFixture> fixtures = Utils.createFixtureList(jsonFixtures);
-				for (ExtendedFixture f : fixtures) {
-					if (f.status.equals("FINISHED")) {
-						SQLiteJDBC.insert(f, league, "RESULTS" + season);
-					}
-				}
-			}
-		} catch (IOException | JSONException e) {
-			e.printStackTrace();
-		}
-	}
-
 	// insert Fixture entry into DB
 	public static void storeSettings(Settings s, int year, int period) {
 		Connection c = null;
@@ -639,27 +473,6 @@ public class SQLiteJDBC {
 		}
 		String escaped = sb.toString();
 		return "'" + escaped + "'";
-	}
-
-	public static void deleteSettings(String league, int year) {
-		Connection c = null;
-		Statement stmt = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-			c.setAutoCommit(false);
-
-			stmt = c.createStatement();
-			stmt.executeUpdate("delete  from settings where league=" + addQuotes(league) + " and SEASON=" + year + ";");
-
-			stmt.close();
-			c.commit();
-			c.close();
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			System.exit(0);
-		}
-
 	}
 
 	public static synchronized HashMap<ExtendedFixture, Float> selectScores(ArrayList<ExtendedFixture> all,

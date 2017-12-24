@@ -29,7 +29,7 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
-import constants.MinMaxOdds;
+import constants.Constants;
 import entries.AllEntry;
 import entries.AsianEntry;
 import entries.FinalEntry;
@@ -357,7 +357,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && fdate.before(date)) {
 				int homeShots = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += homeShots;
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 				}
 				count++;
@@ -388,7 +388,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && fdate.before(date)) {
 				int homeShots = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 				total += homeShots;
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 				}
 				count++;
@@ -418,7 +418,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && fdate.before(date)) {
 				int homeShots = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 				total += homeShots;
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 				}
 				count++;
@@ -448,7 +448,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && fdate.before(date)) {
 				int homeShots = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += homeShots;
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 				}
 				count++;
@@ -477,7 +477,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && fdate.before(date)) {
 				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 					total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 				}
@@ -511,7 +511,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && homegoal + awaygoal < 2.5f) {
 				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 					total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 				}
@@ -545,7 +545,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && homegoal + awaygoal > 2.5f) {
 				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 					total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 				}
@@ -575,7 +575,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "HST")).getCellType() == 0 && dateCell != null
 					&& fdate.before(date)) {
 				total += (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					total += (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
 				}
 				count++;
@@ -603,7 +603,7 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "AST")).getCellType() == 0 && dateCell != null
 					&& fdate.before(date)) {
 				total += (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					try {
 						total += (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
 					} catch (Exception e) {
@@ -951,7 +951,7 @@ public class XlSUtils {
 				f = f.withShots((int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue(),
 						(int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue());
 				// opta/soccerway source
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet)) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet)) {
 					f.shotsHome = f.result.goalsHomeTeam + f.shotsHome;
 					f.shotsAway = f.result.goalsAwayTeam + f.shotsAway;
 				}
@@ -1033,7 +1033,7 @@ public class XlSUtils {
 				f.shotsHome = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
 				f.shotsAway = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 
-				if (Arrays.asList(MinMaxOdds.MANUAL).contains(sheet.getSheetName())) {
+				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
 					f.shotsHome = f.result.goalsHomeTeam + f.shotsHome;
 					f.shotsAway = f.result.goalsAwayTeam + f.shotsAway;
 				}
@@ -1539,34 +1539,6 @@ public class XlSUtils {
 		return best;
 	}
 
-	public static float singleMethod(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year) throws ParseException {
-		ArrayList<FinalEntry> finals = new ArrayList<>();
-		ArrayList<FinalEntry> basics = new ArrayList<>();
-		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
-			float finalScore = shots(f, sheet);
-			float basicScore = 0f;
-			// System.out.println(Results.format(finalScore));
-			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
-					0.51f, 0.51f, 0.51f);
-			if (!fe.prediction.equals(Float.NaN) && finalScore != 0.5f)
-				finals.add(fe);
-
-			FinalEntry fbasic = new FinalEntry(f, basicScore,
-					new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.51f, 0.51f, 0.51f);
-			if (!fbasic.prediction.equals(Float.NaN))
-				basics.add(fe);
-		}
-
-		// finals = utils.Utils.intersect(finals, basics);
-
-		float currentProfit = Utils.getProfit(finals);
-		float yield = (currentProfit / finals.size()) * 100f;
-		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: "
-				+ String.format("%.2f", currentProfit) + " yield is: " + String.format("%.2f%%", yield));
-		return currentProfit;
-	}
-
 	public static ArrayList<FinalEntry> intersectAllClassifier(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
 			int year, float basicThreshold, float poissonThreshold, float weightedThreshold, float htThreshold,
 			float drawThreshold) throws ParseException {
@@ -1920,7 +1892,7 @@ public class XlSUtils {
 
 		ArrayList<ExtendedFixture> one = new ArrayList<>();
 
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(MinMaxOdds.DONT));
+		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
 		if (sett == null)
 			return;
 		float score = sett.basic * basic2(f, league, 0.6f, 0.3f, 0.1f) + sett.poisson * poisson(f, league)
@@ -2469,11 +2441,11 @@ public class XlSUtils {
 
 			// finals = Utils.certaintyRestrict(finals, 0.70f);
 			// finals = Utils.estimateOposite(current, map, sheet);
-//			 finals = Utils.mainGoalLine(finals, map);
+			// finals = Utils.mainGoalLine(finals, map);
 			// Utils.theOposite(finals);
-			 finals = Utils.customGoalLine(finals, map, -0.5f);
-//			 finals = Utils.specificLine(finals, map, 2.5f);
-//			 finals = Utils.setTrueOddsProportional(finals);
+			finals = Utils.customGoalLine(finals, map, -0.5f);
+			// finals = Utils.specificLine(finals, map, 2.5f);
+			// finals = Utils.setTrueOddsProportional(finals);
 			// finals = Utils.bestValueByDistibution(finals, map, all, sheet);
 
 			played += finals.size();
@@ -2921,206 +2893,6 @@ public class XlSUtils {
 		return result;
 	}
 
-	public static float realisticUnderOver(HSSFSheet sheet, int year) throws IOException, InterruptedException {
-		float profit = 0.0f;
-		// int played = 0;
-		// ArrayList<ExtendedFixture> all = selectAllAll(sheet);
-		//
-		// HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all,
-		// "BASICS", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> poissons =
-		// SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> weighted =
-		// SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all,
-		// "HALFTIME1", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all,
-		// "HALFTIME2", year, sheet.getSheetName());
-		//
-		// int maxMatchDay = addMatchDay(sheet, all);
-		// for (int i = 15; i < maxMatchDay; i++) {
-		// ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all,
-		// i);
-		//
-		// ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all,
-		// i);
-		//
-		// Settings temp = runForLeagueWithOdds(sheet, data, year, null, basics,
-		// poissons, weighted, ht1, ht2, 0.55f,
-		// "unders").withValue(0.9f);
-		//
-		// ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data,
-		// temp);
-		// temp = findThreshold(sheet, finals, temp, "unders");
-		// finals = restrict(finals, temp);
-		//
-		// temp = findIntervalReal(finals, year, temp, "unders");
-		// finals = restrict(finals, temp);
-		//
-		// temp = runForLeagueWithOdds(sheet, Utils.onlyFixtures(finals), year,
-		// null, basics, poissons, weighted, ht1,
-		// ht2, temp.threshold, "unders");
-		// finals = runWithSettingsList(sheet, Utils.onlyFixtures(finals),
-		// temp);
-		//
-		// temp = findThreshold(sheet, finals, temp, "unders");
-		// finals = restrict(finals, temp);
-		//
-		// temp = findIntervalReal(finals, year, temp, "unders");
-		// finals = restrict(finals, temp);
-		//
-		// temp = findValue(finals, sheet, temp, "unders");
-		//
-		// finals = runWithSettingsList(sheet, current, temp);
-		//
-		// finals = Utils.certaintyRestrict(finals, 0.5f);
-		//
-		// Settings tempOvers = runForLeagueWithOdds(sheet, data, year, null,
-		// basics, poissons, weighted, ht1, ht2,
-		// 0.55f, "overs").withValue(0.9f);
-		//
-		// ArrayList<FinalEntry> finalsOvers = runWithSettingsList(sheet, data,
-		// tempOvers);
-		// tempOvers = findThreshold(sheet, finalsOvers, tempOvers, "overs");
-		// finalsOvers = restrict(finalsOvers, tempOvers);
-		//
-		// tempOvers = findIntervalReal(finalsOvers, year, tempOvers, "overs");
-		// finalsOvers = restrict(finalsOvers, tempOvers);
-		//
-		// tempOvers = runForLeagueWithOdds(sheet,
-		// Utils.onlyFixtures(finalsOvers), year, null, basics, poissons,
-		// weighted, ht1, ht2, tempOvers.threshold, "overs");
-		// finalsOvers = runWithSettingsList(sheet,
-		// Utils.onlyFixtures(finalsOvers), tempOvers);
-		//
-		// tempOvers = findThreshold(sheet, finalsOvers, tempOvers, "overs");
-		// finalsOvers = restrict(finalsOvers, tempOvers);
-		//
-		// tempOvers = findIntervalReal(finalsOvers, year, tempOvers, "overs");
-		// finalsOvers = restrict(finalsOvers, tempOvers);
-		//
-		// tempOvers = findValue(finalsOvers, sheet, tempOvers, "overs");
-		//
-		// finalsOvers = runWithSettingsList(sheet, current, tempOvers);
-		//
-		// finalsOvers = Utils.certaintyRestrict(finalsOvers, 0.5f);
-		//
-		// finals = utils.Utils.onlyUnders(finals);
-		//
-		// finalsOvers = Utils.onlyOvers(finalsOvers);
-		//
-		// // System.out.println(finals);
-		// // System.out.println(finalsOvers);
-		//
-		// ArrayList<FinalEntry> duplicates = new ArrayList<>();
-		//
-		// for (FinalEntry u : finals) {
-		// for (FinalEntry o : finalsOvers) {
-		// if (u.fixture.equals(o.fixture)) {
-		// duplicates.add(o);
-		// duplicates.add(u);
-		// }
-		// }
-		// }
-		// for (FinalEntry d : duplicates) {
-		// finals.remove(d);
-		// finalsOvers.remove(d);
-		// }
-		//
-		// finals = Utils.cotRestrict(finals, findCot(sheet.getSheetName(),
-		// year, 3, "realdouble15"));
-		//
-		// finalsOvers = Utils.cotRestrict(finalsOvers,
-		// findCot(sheet.getSheetName(), year, 3, "realdouble15"));
-		//
-		// if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
-		// ArrayList<FinalEntry> shotBased = new ArrayList<>();
-		// for (FinalEntry fe : finals) {
-		// float shotsScore = shots(fe.fixture, sheet);
-		// if (fe.prediction >= fe.upper && shotsScore == 1f) {
-		// shotBased.add(fe);
-		// } else if (fe.prediction <= fe.lower && shotsScore == 0f) {
-		// shotBased.add(fe);
-		// }
-		// }
-		// finals = shotBased;
-		// }
-		//
-		// if (Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())) {
-		// ArrayList<FinalEntry> shotBased = new ArrayList<>();
-		// for (FinalEntry fe : finalsOvers) {
-		// float shotsScore = shots(fe.fixture, sheet);
-		// if (fe.prediction >= fe.upper && shotsScore == 1f) {
-		// shotBased.add(fe);
-		// } else if (fe.prediction <= fe.lower && shotsScore == 0f) {
-		// shotBased.add(fe);
-		// }
-		// }
-		// finalsOvers = shotBased;
-		// }
-
-		// played += finals.size();
-		// played += finalsOvers.size();
-
-		// float trprofit = Utils.getProfit(finals, temp, "unders") +
-		// Utils.getProfit(finalsOvers, tempOvers, "overs");
-
-		// profit += trprofit;
-		//
-		// }
-		// float yield = (profit / played) * 100f;
-		// System.out.println("Profit for " + sheet.getSheetName() + " " + year
-		// + " is: " + String.format("%.2f", profit)
-		// + " yield is: " + String.format("%.2f%%", yield));
-		return profit;
-	}
-
-	public static float realisticAggregate(HSSFSheet sheet, int year, int period) throws IOException, ParseException {
-		float profit = 0.0f;
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
-
-		int maxMatchDay = addMatchDay(sheet, all);
-		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
-			// Calendar cal = Calendar.getInstance();
-			// cal.set(year + 1, 1, 1);
-			// if (!current.isEmpty() &&
-			// current.get(0).date.after(cal.getTime())) {
-			// return profit;
-			// }
-
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
-			// data = Utils.filterByOdds(data, minOdds, maxOdds);
-			Settings temp = SQLiteJDBC.getSettings(sheet.getSheetName(), year, period);
-			// System.out.println("match " + i + temp);
-			// temp.maxOdds = maxOdds;
-			// temp.minOdds = minOdds;
-
-			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
-			temp = findIntervalReal(finals, year, temp);
-			finals = runWithSettingsList(sheet, data, temp);
-			temp = findThreshold(finals, temp, MaximizingBy.BOTH);
-			temp = findIntervalReal(finals, year, temp);
-			finals = runWithSettingsList(sheet, data, temp);
-			temp = findValue(finals, sheet, temp);
-			// System.out.println(temp);
-
-			// temp = findIntervalReal(finals, sheet, year, temp);
-			// current = Utils.filterByOdds(current, minOdds, maxOdds);
-			finals = runWithSettingsList(sheet, current, temp);
-
-			// finals = Utils.intersectDiff(finals,
-			// intersectAllClassifier(sheet, current, year));
-
-			// System.out.println(finals);
-			float trprofit = Utils.getProfit(finals);
-			// System.out.println(i + " " + trprofit);
-			// System.out.println("--------------------------");
-			profit += trprofit;
-		}
-		return profit;
-	}
-
 	private static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, Table table,
 			HashMap<ExtendedFixture, Float> basicMap, HashMap<ExtendedFixture, Float> poissonsMap,
 			HashMap<ExtendedFixture, Float> weightedMap, HashMap<ExtendedFixture, Float> ht1Map,
@@ -3128,7 +2900,7 @@ public class XlSUtils {
 			String type) {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
-		boolean flagShots = Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName());
+		boolean flagShots = Arrays.asList(Constants.SHOTS).contains(sheet.getSheetName());
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
 
@@ -3890,9 +3662,6 @@ public class XlSUtils {
 		trset.upperBound = bestThreshold;
 
 		finals = restrict(finals, initial);
-		// System.out.println("thold: " + trset.threshold + " profit: " +
-		// trset.profit + " lower: " + trset.lowerBound
-		// + " upper: " + trset.upperBound);]
 		return trset;
 
 	}
@@ -4096,94 +3865,6 @@ public class XlSUtils {
 		return best.withYear(initial.year).withHT(initial.halfTimeOverOne, initial.htCombo).withValue(bestValue);
 	}
 
-	// public static Settings aggregateInterval(int start, int end, String
-	// league) throws IOException {
-	// float bestProfit = Float.NEGATIVE_INFINITY;
-	// float bestMinOdds = 1.0f;
-	// int bestminx = 0;
-	// float bestMaxOdds = 10f;
-	// Settings set = new Settings(league, 0.6f, 0.2f, 0.2f, 0.55f, 0.55f,
-	// 0.55f, 1, 10, 0.5f, bestProfit);
-	//
-	// ArrayList<ArrayList<ExtendedFixture>> byYear = new ArrayList<>();
-	// ArrayList<HSSFSheet> sheets = new ArrayList<>();
-	// for (int year = start; year <= end; year++) {
-	// String base = new File("").getAbsolutePath();
-	// FileInputStream file = new FileInputStream(
-	// new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) +
-	// ".xls"));
-	// HSSFWorkbook workbook = new HSSFWorkbook(file);
-	// HSSFSheet sheet = workbook.getSheet(league);
-	//
-	// byYear.add(selectAllAll(sheet));
-	// sheets.add(sheet);
-	//
-	// workbook.close();
-	// file.close();
-	// }
-	//
-	// for (int x = 0; x < 40; x++) {
-	// float currentMin = 1.3f + x * 0.025f;
-	// float currentProfit = 0f;
-	// for (int i = 0; i < sheets.size(); i++) {
-	// HSSFSheet sheet = sheets.get(i);
-	// ArrayList<ExtendedFixture> filtered = Utils.filterByOdds(byYear.get(i),
-	// currentMin, 10f);
-	//
-	// Settings temp = runForLeagueWithOdds(sheets.get(i), filtered, start + i);
-	//
-	// temp.minOdds = currentMin;
-	// temp.maxOdds = 10f;
-	//
-	// ArrayList<FinalEntry> finals = runWithSettingsList(sheet, filtered,
-	// temp);
-	//
-	// temp = findThreshold(sheet, finals, temp);
-	// temp = trustInterval(sheet, finals, temp);
-	// currentProfit += Utils.getProfit(finals, temp);
-	// }
-	//
-	// if (currentProfit > bestProfit) {
-	// bestProfit = currentProfit;
-	// bestMinOdds = currentMin;
-	// }
-	//
-	// }
-	//
-	// for (int x = bestminx; 1.3f + x * 0.025f < 2.5f; x++) {
-	// float currentMax = 1.3f + x * 0.025f;
-	// float currentProfit = 0f;
-	// for (int i = 0; i < sheets.size(); i++) {
-	// HSSFSheet sheet = sheets.get(i);
-	// ArrayList<ExtendedFixture> filtered = Utils.filterByOdds(byYear.get(i),
-	// bestMinOdds, currentMax);
-	//
-	// Settings temp = runForLeagueWithOdds(sheets.get(i), filtered, start + i);
-	//
-	// temp.minOdds = bestMinOdds;
-	// temp.maxOdds = currentMax;
-	//
-	// ArrayList<FinalEntry> finals = runWithSettingsList(sheet, filtered,
-	// temp);
-	//
-	// temp = findThreshold(sheet, finals, temp);
-	// temp = trustInterval(sheet, finals, temp);
-	// currentProfit += Utils.getProfit(finals, temp);
-	// }
-	//
-	// if (currentProfit > bestProfit) {
-	// bestProfit = currentProfit;
-	// bestMaxOdds = currentMax;
-	// }
-	//
-	// }
-	// set.minOdds = bestMinOdds;
-	// set.maxOdds = bestMaxOdds;
-	// set.profit = bestProfit;
-	//
-	// return set;
-	// }
-
 	public static void populateScores(int year) throws IOException, ParseException {
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
@@ -4193,7 +3874,7 @@ public class XlSUtils {
 
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
+			if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
 				continue;
 			ArrayList<ExtendedFixture> all = selectAllAll(sh);
 
@@ -4639,36 +4320,6 @@ public class XlSUtils {
 
 	}
 
-	public static float selectAvgLeagueHome(HSSFSheet sheet, Date date, ArrayList<String> filterHome)
-			throws ParseException {
-		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
-		float total = 0f;
-		int count = 0;
-		Iterator<Row> rowIterator = sheet.iterator();
-		while (rowIterator.hasNext()) {
-			Row row = rowIterator.next();
-			if (row.getRowNum() == 0)
-				continue;
-			Date fdate;
-			Cell dateCell = row.getCell(getColumnIndex(sheet, "Date"));
-			if (row.getCell(getColumnIndex(sheet, "Date")).getCellType() == 1)
-				fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
-			else
-				fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
-
-			if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && dateCell != null
-					&& dateCell.getDateCellValue() != null && fdate.before(date)) {
-				String homeTeam = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
-				if (filterHome.contains(homeTeam)) {
-					int homegoal = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-					total += homegoal;
-					count++;
-				}
-			}
-		}
-		return count == 0 ? 0 : total / count;
-	}
-
 	public static ArrayList<FinalEntry> finalsShots(HSSFSheet sheet, int year)
 			throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
@@ -5055,7 +4706,7 @@ public class XlSUtils {
 		}
 		HSSFWorkbook workbookWay = new HSSFWorkbook(fileWay);
 		if (table.equals("all-data")) {
-			sheet = workbookWay.getSheet(MinMaxOdds.equivalents.get(competition));
+			sheet = workbookWay.getSheet(Constants.equivalents.get(competition));
 		} else {
 			sheet = workbookWay.getSheet(competition);
 		}
@@ -5374,7 +5025,7 @@ public class XlSUtils {
 		HSSFWorkbook workbookWay = new HSSFWorkbook(fileWay);
 
 		ArrayList<ExtendedFixture> ways = selectAll(
-				workbookWay.getSheet(table.equals("all-data") ? competition : MinMaxOdds.equivalents.get(competition)),
+				workbookWay.getSheet(table.equals("all-data") ? competition : Constants.equivalents.get(competition)),
 				0);
 		System.out.println("ways size " + ways.size());
 
@@ -5528,27 +5179,6 @@ public class XlSUtils {
 			pending.addAll(finals);
 
 		}
-
-		// pending.sort(new Comparator<FinalEntry>() {
-		//
-		// @Override
-		// public int compare(FinalEntry o1, FinalEntry o2) {
-		// return ((Float) o1.prediction).compareTo((Float) o2.prediction);
-		// }
-		// });
-
-		// float yield = (profit / played) * 100f;
-		// System.out.println("Profit for " + sheet.getSheetName() + " " + year
-		// + " is: " + String.format("%.2f", profit)
-		// + " yield is: " + String.format("%.2f%%", yield));
-		//
-		// ArrayList<FinalEntry> todayGames = new ArrayList<>();
-		// for (FinalEntry p : pending) {
-		// if (Utils.isToday(p.fixture.date))
-		// todayGames.add(p);
-		// }
-		//
-		// System.out.println(todayGames);
 
 		return pending;
 	}
