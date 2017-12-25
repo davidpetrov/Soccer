@@ -77,7 +77,7 @@ public class Predictions {
 //		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
 //		 UpdateType.AUTOMATIC, 23, 12);
 		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-		 OnlyTodayMatches.TRUE, 24, 12);
+		 OnlyTodayMatches.TRUE, 25, 12);
 
 //		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
 //		 OnlyTodayMatches.FALSE, 8, 12);

@@ -46,7 +46,7 @@ public class GameStatsCollector {
 		return new GameStatsCollector(competition, year, null);
 	}
 
-	//TODO possible smarter impl with js calls
+	// TODO possible smarter impl with js calls
 	public ArrayList<Fixture> collect() throws InterruptedException, IOException, ParseException {
 		ArrayList<Fixture> result = new ArrayList<>();
 		Set<Fixture> set = new HashSet<>();
@@ -101,8 +101,8 @@ public class GameStatsCollector {
 		Date date = getDate(fixture);
 
 		String teams = fixture.select("h1").first().text();
-		String homeTeam = Utils.replaceNonAsciiWhitespace(teams.split(" vs. ")[0]);
-		String awayTeam = Utils.replaceNonAsciiWhitespace(teams.split(" vs. ")[1]);
+		String homeTeam = Utils.replaceNonAsciiWhitespace(getHome(teams));
+		String awayTeam = Utils.replaceNonAsciiWhitespace(getAway(teams));
 
 		GameStats gameStats = getGameStats(fixture);
 
@@ -209,6 +209,27 @@ public class GameStatsCollector {
 			return false;
 		}
 		return true;
+	}
+
+	private static String getHome(String teams) {
+		String[] split = teams.split(" vs. ");
+		return split[0].trim();
+	}
+
+	private static String getAway(String teams) {
+		String[] split = teams.split(" vs. ");
+
+		if (!split[1].contains("-"))
+			return split[1];
+		else {
+			String[] splitAway = split[1].split(" ");
+			String awayTeam = "";
+			for (int j = 0; j < splitAway.length - 3; j++)
+				awayTeam += splitAway[j] + " ";
+
+			return awayTeam.trim();
+		}
+
 	}
 
 }

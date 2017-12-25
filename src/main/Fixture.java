@@ -21,7 +21,7 @@ public class Fixture {
 	public Result HTresult;
 	public String status;
 
-	private GameStats withGameStats;
+	public GameStats gameStats;
 	
 	ArrayList<MatchOdds> matchOdds;
 	ArrayList<AsianOdds> asianOdds;
@@ -125,7 +125,7 @@ public class Fixture {
 	}
 
 	public Fixture withGameStats(GameStats gameStats) {
-		this.withGameStats = gameStats;
+		this.gameStats = gameStats;
 		return this;
 	}
 

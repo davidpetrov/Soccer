@@ -1248,4 +1248,50 @@ public class SQLiteJDBC {
 		return result;
 	}
 
+	public static void storeGameStats(ArrayList<Fixture> stats, String competition, int year) {
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+			for (Fixture f : stats) {
+
+				String sql = "INSERT OR IGNORE INTO GameStats "
+						+ "(Competition,Year,Date,HomeTeamName,AwayTeamName,HomeGoals,AwayGoals,HTHome,HTAway,AlllEuroShotsHome ,AllEuroShotsAway ,"
+						+ "ShotsHome ,ShotsAway ,ShotsWideHome ,ShotsWideAway ,CornersHome ,CornersAway ,FoulsHome ,FoulsAway ,OffsidesHome ,OffsidesAway ,PossessionHome)"
+						+ "VALUES (" + addQuotes(competition) + "," + year + "," + addQuotes(format.format(f.date))
+						+ "," + addQuotes(f.homeTeam) + "," + addQuotes(f.awayTeam) + "," + f.result.goalsHomeTeam + ","
+						+ f.result.goalsAwayTeam + "," + f.HTresult.goalsHomeTeam + "," + f.HTresult.goalsAwayTeam + ","
+						+ f.gameStats.AllEuroShots.home + "," + f.gameStats.AllEuroShots.away + ","
+						+ f.gameStats.shots.home + "," + f.gameStats.shots.away + "," + f.gameStats.shotsWide.home + ","
+						+ f.gameStats.shotsWide.away + "," + f.gameStats.corners.home + "," + f.gameStats.corners.away
+						+ "," + f.gameStats.fouls.home + "," + f.gameStats.fouls.away + "," + f.gameStats.offsides.home
+						+ "," + f.gameStats.offsides.away + "," + f.gameStats.posssessionHome + " );";
+				try {
+					stmt.executeUpdate(sql);
+				} catch (SQLException e) {
+					e.printStackTrace();
+					System.out.println("Error storing game stats for");
+					System.out.println(f);
+				}
+			}
+
+			stmt.close();
+			c.commit();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			try {
+				c.close();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			System.exit(0);
+		}
+
+	}
+
 }

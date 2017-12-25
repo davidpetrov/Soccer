@@ -120,6 +120,7 @@ public class Scraper {
 		// ====================================================================
 
 		ArrayList<Fixture> stats = GameStatsCollector.of("ENG", 2016).collect();
+		SQLiteJDBC.storeGameStats(stats,"ENG",2016);
 
 		// ArrayList<ExtendedFixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
