@@ -78,6 +78,7 @@ import predictions.Predictions.OnlyTodayMatches;
 import predictions.UpdateType;
 import runner.RunnerOdds;
 import runner.UpdateRunner;
+import utils.Pair;
 import utils.Utils;
 import xls.XlSUtils;
 
@@ -95,9 +96,9 @@ public class Scraper {
 
 		// =================================================================
 
-		ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
-		System.out.println(eng.size());
-		eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
+		// ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
+		// System.out.println(eng.size());
+		// eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
 
 		// for (int i = 2012; i <= 2012; i++) {
 		// ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
@@ -118,7 +119,9 @@ public class Scraper {
 		// System.out.println(list.size());
 		// ====================================================================
 
-		// ArrayList<ExtendedFixture> shotsList = collect("FR", 2017, null);
+		ArrayList<Fixture> stats = GameStatsCollector.of("ENG", 2016).collect();
+
+		// ArrayList<ExtendedFixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
 		// shotsList = new ArrayList<>();
@@ -665,14 +668,6 @@ public class Scraper {
 		driver.manage().window().maximize();
 		driver.navigate().to(address);
 
-		// try {
-		// WebDriverWait wait = new WebDriverWait(driver, 10);
-		// wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("hstp_14536_interstitial_pub"))).click();
-		// System.out.println("Successfully closed efbet add");
-		// } catch (Exception e) {
-		// System.out.println("Problem closing efbet add");
-		// }
-
 		while (true) {
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
@@ -810,30 +805,25 @@ public class Scraper {
 		try {
 			matchday = Integer.parseInt(fixture.select("dt:contains(Game week) + dd").first().text());
 		} catch (Exception e) {
-
 		}
 
 		String iframe;
-
-		int shotsHome = -1, shotsAway = -1;
+		Pair shots = null;
+		// Possession can't be parsed using jsoup only
+		// possible if using selenium but performance would be worse
 
 		Elements frames = fixture.select("iframe");
 		for (Element i : frames) {
 			if (i.attr("src").contains("/charts/statsplus")) {
 				Document stats = Jsoup.connect(BASE + i.attr("src")).timeout(0).get();
 				try {
-					shotsHome = Integer.parseInt(
-							stats.select("tr:contains(Shots on target)").get(1).select("td.legend.left.value").text());
-
-					shotsAway = Integer.parseInt(
-							stats.select("tr:contains(Shots on target)").get(1).select("td.legend.right.value").text());
+					shots = selectStatsWithTextDescription(stats, "Shots on target");
 				} catch (Exception exp) {
+					System.out.println("Exception when parsing stats");
 				}
 				break;
 			}
 		}
-
-		System.out.println(shotsHome + " s " + shotsAway);
 
 		String dateString = fixture.select("dt:contains(Date) + dd").first().text();
 		String timeString = "21:00";
@@ -856,12 +846,19 @@ public class Scraper {
 		String awayTeam = Utils.replaceNonAsciiWhitespace(getAway(teams));
 
 		ExtendedFixture ef = new ExtendedFixture(date, homeTeam, awayTeam, result, "BRA").withHTResult(ht)
-				.withShots(shotsHome, shotsAway);
+				.withShots((int) shots.home, (int) shots.away);
 		if (matchday != -1)
 			ef = ef.withMatchday(matchday);
 		System.out.println(ef);
 
 		return ef;
+	}
+
+	private static Pair selectStatsWithTextDescription(Document stats, String text) {
+		Element element = stats.select("tr:contains(" + text + ")").get(1);
+		int homeStats = Integer.parseInt(element.select("td.legend.left.value").text());
+		int awayStats = Integer.parseInt(element.select("td.legend.right.value").text());
+		return Pair.of(homeStats, awayStats);
 	}
 
 	public static ArrayList<PlayerFixture> getFixtureFull(Document fixture, String competition)

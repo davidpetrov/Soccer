@@ -21,26 +21,12 @@ public class Fixture {
 	public Result HTresult;
 	public String status;
 
-	// stats data
-	public int shotsHome;
-	public int shotsAway;
-	// public int shotsWideHome;
-	// public int shotsWideAway;
-	// public int cornersHome;
-	// public int cornersAway;
-	// public int foulsHome;
-	// public int foulsAway;
-	// public int offsidesHome;
-	// public int offsidesAway;
-	// public int possessionHome;
-	// public int redCardsHome;
-	// public int redCardsAway;
-	// public int yellowCardsHome;
-	// public int yellowCardsAway;
-
+	private GameStats withGameStats;
+	
 	ArrayList<MatchOdds> matchOdds;
 	ArrayList<AsianOdds> asianOdds;
 	ArrayList<OverUnderOdds> overUnderOdds;
+
 
 	public Fixture(Date date, int year, String competition, String homeTeam, String awayTeam, Result result) {
 		super();
@@ -135,6 +121,11 @@ public class Fixture {
 
 	public Fixture withOverUnderOddsList(ArrayList<OverUnderOdds> overUnderOdds) {
 		this.overUnderOdds = overUnderOdds;
+		return this;
+	}
+
+	public Fixture withGameStats(GameStats gameStats) {
+		this.withGameStats = gameStats;
 		return this;
 	}
 
