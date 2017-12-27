@@ -2,7 +2,9 @@ package main;
 
 import java.util.Date;
 
-public class ExtendedFixture implements Comparable<ExtendedFixture> {
+import utils.Pair;
+
+public class ExtendedFixture implements Comparable<ExtendedFixture>, Combinable {
 	public Date date;
 	public int year;
 	public String homeTeam;
@@ -26,7 +28,8 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 	public float asianAway;
 	public int redHome;
 	public int redAway;
-	
+
+	public GameStats gameStats;
 
 	public ExtendedFixture(Date date, String homeTeam, String awayTeam, Result result, String competition) {
 		this.date = date;
@@ -36,14 +39,14 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		this.competition = competition;
 	}
 
-//	/**
-//	 * Copy constructor
-//	 * 
-//	 * @param fixture
-//	 */
-//	public ExtendedFixture(ExtendedFixture fixture) {
-//		// TODO Auto-generated constructor stub
-//	}
+	// /**
+	// * Copy constructor
+	// *
+	// * @param fixture
+	// */
+	// public ExtendedFixture(ExtendedFixture fixture) {
+	// // TODO Auto-generated constructor stub
+	// }
 
 	public ExtendedFixture withOdds(float overOdds, float underOdds, float maxOver, float maxUnder) {
 		this.overOdds = overOdds;
@@ -64,7 +67,7 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 		this.status = status;
 		return this;
 	}
-	
+
 	public ExtendedFixture withYear(int year) {
 		this.year = year;
 		return this;
@@ -174,6 +177,46 @@ public class ExtendedFixture implements Comparable<ExtendedFixture> {
 
 	public boolean isDraw() {
 		return result.goalsHomeTeam == result.goalsAwayTeam;
+	}
+
+	@Override
+	public String getHomeTeam() {
+		return homeTeam;
+	}
+
+	@Override
+	public String getAwayTeam() {
+		return awayTeam; 
+	}
+
+	@Override
+	public Date getDate() {
+		return date;
+	}
+
+	@Override
+	public Result getResult() {
+		return result;
+	}
+
+	@Override
+	public GameStats getGameStats() {
+		if (gameStats != null)
+			return gameStats;
+		else {
+
+			GameStats gs = new GameStats(Pair.of(shotsHome, shotsAway), Pair.defaultValue(), Pair.defaultValue(),
+					Pair.defaultValue(), Pair.defaultValue());
+			return gs;
+		}
+	}
+
+	@Override
+	public ExtendedFixture withGameStats(GameStats gameStats) {
+		this.gameStats = gameStats;
+		this.shotsHome = (int) gameStats.shots.home;
+		this.shotsAway = (int) gameStats.shots.away;
+		return this;
 	}
 
 }

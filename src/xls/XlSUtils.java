@@ -35,6 +35,7 @@ import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.HTEntry;
 import main.AsianLines;
+import main.Combinable;
 import main.ExtendedFixture;
 import main.FullFixture;
 import main.GoalLines;
@@ -46,6 +47,7 @@ import settings.Settings;
 import settings.SettingsAsian;
 import settings.ShotsSettings;
 import tables.Table;
+import utils.FixtureListCombiner;
 import utils.FixtureUtils;
 import utils.LinearRegression;
 import utils.Pair;
@@ -4715,10 +4717,11 @@ public class XlSUtils {
 
 		System.out.println("ways size " + ways.size());
 
-		HashMap<String, String> dictionary = deduceDictionary(odds, ways);
-		System.out.println(dictionary);
+		FixtureListCombiner combiner = new FixtureListCombiner(odds, ways, competition);
+		ArrayList<? extends Combinable> combinedGeneric = combiner.combineWithDictionary();
 
-		ArrayList<ExtendedFixture> combined = combineWithDictionary(odds, ways, competition, dictionary);
+		ArrayList<ExtendedFixture> combined = combinedGeneric.stream().map(ExtendedFixture.class::cast)
+				.collect(Collectors.toCollection(ArrayList::new));
 
 		System.out.println(combined.size());
 		// System.out.println(combined);
@@ -5029,131 +5032,21 @@ public class XlSUtils {
 				0);
 		System.out.println("ways size " + ways.size());
 
-		HashMap<String, String> dictionary = deduceDictionary(odds, ways);
-		System.out.println(dictionary);
+		
+		FixtureListCombiner combiner = new FixtureListCombiner(odds, ways, competition);
+		ArrayList<? extends Combinable> combinedGeneric = combiner.combineWithDictionary();
 
-		ArrayList<ExtendedFixture> combined = combineWithDictionary(odds, ways, competition, dictionary);
-		ArrayList<FullFixture> fullCombined = new ArrayList<>();
-		for (ExtendedFixture i : combined) {
-			fullCombined.add((FullFixture) i);
-		}
+		ArrayList<FullFixture> combined = combinedGeneric.stream().map(FullFixture.class::cast)
+				.collect(Collectors.toCollection(ArrayList::new));
+		
 
 		System.out.println(combined.size());
 		// System.out.println(combined);
 		if (combined.size() == odds.size())
-			storeInExcelFull(fullCombined, competition, year, "fullodds");
+			storeInExcelFull(combined, competition, year, "fullodds");
 
 		workbook.close();
 		workbookWay.close();
-
-	}
-
-	public static ArrayList<ExtendedFixture> combineWithDictionary(ArrayList<ExtendedFixture> odds,
-			ArrayList<ExtendedFixture> ways, String competition, HashMap<String, String> dictionary) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-
-		for (ExtendedFixture i : odds) {
-			ExtendedFixture match = findCorresponding(i, ways, competition, dictionary);
-			if (match == null) {
-				System.out.println(i);
-				break;
-			} else
-				result.add(match);
-
-		}
-
-		return result;
-	}
-
-	private static ExtendedFixture findCorresponding(ExtendedFixture oddsFixture, ArrayList<ExtendedFixture> ways,
-			String competition, HashMap<String, String> dictionary) {
-
-		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-
-		for (ExtendedFixture i : ways) {
-			if (oddsFixture.homeTeam.equals(reverseDictionary.get(i.homeTeam))
-					&& oddsFixture.awayTeam.equals(reverseDictionary.get(i.awayTeam))
-					&& (Math.abs(i.date.getTime() - oddsFixture.date.getTime()) <= 24 * 60 * 60 * 1000)) {
-
-				ExtendedFixture ef = oddsFixture.withShots(i.shotsHome, i.shotsAway);
-				return ef;
-			}
-		}
-
-		return null;
-	}
-
-	public static HashMap<String, String> deduceDictionary(ArrayList<ExtendedFixture> odds,
-			ArrayList<ExtendedFixture> ways) {
-
-		if (odds.size() != ways.size())
-			System.out.println("Deducing dictionary with different sizes: " + odds.size() + " " + ways.size());
-		HashMap<String, String> dictionary = new HashMap<>();
-
-		ArrayList<String> teamsOdds = Utils.getTeamsList(odds);
-		ArrayList<String> teamsWays = Utils.getTeamsList(ways);
-
-		ArrayList<String> matchedOdds = new ArrayList<>();
-		ArrayList<String> matchedWays = new ArrayList<>();
-
-		// find direct matchesss
-		for (String i : teamsOdds) {
-			for (String j : teamsWays) {
-				if (i.equals(j)) {
-					matchedOdds.add(i);
-					matchedWays.add(j);
-					dictionary.put(i, i);
-				}
-			}
-		}
-
-		for (String team : teamsOdds) {
-			if (matchedOdds.contains(team))
-				continue;
-
-			ArrayList<String> possibleCandidates = new ArrayList<>();
-			ArrayList<ExtendedFixture> fixtures = Utils.getFixturesList(team, odds);
-			for (String tways : teamsWays) {
-				if (!matchedWays.contains(tways)) {
-					ArrayList<ExtendedFixture> fwa = Utils.getFixturesList(tways, ways);
-					if (Utils.matchesFixtureLists(team, fixtures, fwa)) {
-						possibleCandidates.add(tways);
-						// matchedOdds.add(team);
-						// matchedWays.add(tways);
-						// dictionary.put(team, tways);
-						// break;
-					}
-				}
-			}
-
-			if (possibleCandidates.isEmpty())
-				System.out.println("No possible candidates for: " + team);
-
-			String bestMatch = null;
-			double bestSimilarity = -1d;
-			for (String pos : possibleCandidates) {
-				double similarity = Utils.similarity(team, pos);
-				if (similarity > bestSimilarity) {
-					bestSimilarity = similarity;
-					bestMatch = pos;
-				}
-			}
-
-			matchedOdds.add(team);
-			if (bestMatch != null) {
-				matchedWays.add(bestMatch);
-				dictionary.put(team, bestMatch);
-			} else {
-				System.out.println();
-			}
-
-		}
-
-		if (matchedOdds.size() != teamsOdds.size())
-			System.err.println("Deducing dictionary failed");
-
-		return dictionary;
 
 	}
 

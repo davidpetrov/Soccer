@@ -18,4 +18,8 @@ public class Pair {
 	public String toString() {
 		return home + " : " + away;
 	}
+
+	public static Pair defaultValue() {
+		return new Pair(-1, -1);
+	}
 }

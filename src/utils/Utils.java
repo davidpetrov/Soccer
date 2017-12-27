@@ -1740,6 +1740,7 @@ public class Utils {
 	}
 
 	public static float getNormalizedYield(ArrayList<FinalEntry> all) {
+
 		return getNormalizedProfit(all) / all.size();
 	}
 

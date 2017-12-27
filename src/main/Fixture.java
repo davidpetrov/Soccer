@@ -9,7 +9,7 @@ import odds.AsianOdds;
 import odds.MatchOdds;
 import odds.OverUnderOdds;
 
-public class Fixture {
+public class Fixture implements Combinable {
 
 	public Date date;
 	public int year;
@@ -22,11 +22,10 @@ public class Fixture {
 	public String status;
 
 	public GameStats gameStats;
-	
+
 	ArrayList<MatchOdds> matchOdds;
 	ArrayList<AsianOdds> asianOdds;
 	ArrayList<OverUnderOdds> overUnderOdds;
-
 
 	public Fixture(Date date, int year, String competition, String homeTeam, String awayTeam, Result result) {
 		super();
@@ -127,6 +126,31 @@ public class Fixture {
 	public Fixture withGameStats(GameStats gameStats) {
 		this.gameStats = gameStats;
 		return this;
+	}
+
+	@Override
+	public String getHomeTeam() {
+		return homeTeam;
+	}
+
+	@Override
+	public String getAwayTeam() {
+		return awayTeam;
+	}
+
+	@Override
+	public Date getDate() {
+		return date;
+	}
+
+	@Override
+	public Result getResult() {
+		return result;
+	}
+
+	@Override
+	public GameStats getGameStats() {
+		return gameStats;
 	}
 
 }

@@ -62,6 +62,7 @@ import org.openqa.selenium.json.Json;
 import constants.Constants;
 import entries.FinalEntry;
 import main.AsianLines;
+import main.Combinable;
 import main.ExtendedFixture;
 import main.Fixture;
 import main.FullFixture;
@@ -78,6 +79,7 @@ import predictions.Predictions.OnlyTodayMatches;
 import predictions.UpdateType;
 import runner.RunnerOdds;
 import runner.UpdateRunner;
+import utils.FixtureListCombiner;
 import utils.Pair;
 import utils.Utils;
 import xls.XlSUtils;
@@ -96,9 +98,13 @@ public class Scraper {
 
 		// =================================================================
 
-		// ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
-		// System.out.println(eng.size());
-		// eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
+		
+		
+		
+		
+		 ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
+		 System.out.println(eng.size());
+		 eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
 
 		// for (int i = 2012; i <= 2012; i++) {
 		// ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
@@ -119,8 +125,8 @@ public class Scraper {
 		// System.out.println(list.size());
 		// ====================================================================
 
-		ArrayList<Fixture> stats = GameStatsCollector.of("ENG", 2016).collect();
-		SQLiteJDBC.storeGameStats(stats,"ENG",2016);
+//		ArrayList<Fixture> stats = GameStatsCollector.of("ENG", 2016).collect();
+//		SQLiteJDBC.storeGameStats(stats,"ENG",2016);
 
 		// ArrayList<ExtendedFixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -303,9 +309,11 @@ public class Scraper {
 
 			System.out.println(list.size() + "shots");
 
-			HashMap<String, String> dictionary = XlSUtils.deduceDictionary(odds, list);
+			FixtureListCombiner combiner = new FixtureListCombiner(odds, list, competition);
+			ArrayList<? extends Combinable> combinedGeneric = combiner.combineWithDictionary();
 
-			combined = XlSUtils.combineWithDictionary(odds, list, competition, dictionary);
+			combined =  combinedGeneric.stream().map(ExtendedFixture.class::cast).collect(Collectors.toCollection(ArrayList::new));
+			
 			System.out.println(combined.size() + " combined");
 			System.out.println(competition + " "
 					+ (combined.size() == list.size() ? " combined successfull" : " combined failed"));
@@ -809,7 +817,7 @@ public class Scraper {
 		}
 
 		String iframe;
-		Pair shots = null;
+		Pair shots = Pair.of(-1, -1);
 		// Possession can't be parsed using jsoup only
 		// possible if using selenium but performance would be worse
 

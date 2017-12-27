@@ -21,7 +21,9 @@ import odds.AsianOdds;
 import odds.MatchOdds;
 import odds.OverUnderOdds;
 import settings.Settings;
+import utils.FixtureListCombiner;
 import utils.Lines;
+import utils.Pair;
 import utils.Utils;
 import xls.XlSUtils;
 
@@ -1057,21 +1059,9 @@ public class SQLiteJDBC {
 				int htHome = rs.getInt("HTHome");
 				int htAway = rs.getInt("HTAway");
 
-				// long start = System.currentTimeMillis();
-				// ArrayList<MatchOdds> matchOdds = selectMatchOdds(date,
-				// homeTeamName, awayTeamName);
-				// ArrayList<AsianOdds> asianOdds = selectAsianOdds(date,
-				// homeTeamName, awayTeamName);
-				// ArrayList<OverUnderOdds> overUnderOdds =
-				// selectOverUnderOdds(date, homeTeamName, awayTeamName);
-
 				Fixture f = new Fixture(format.parse(date), year, competition, homeTeamName, awayTeamName,
 						new Result(homeGoals, awayGoals)).withHTResult(new Result(htHome, htAway));
-						// .withMatchOddsList(matchOdds).withAsianOddsList(asianOdds)
-						// .withOverUnderOddsList(overUnderOdds);
 
-				// System.out.println("odds loading " +
-				// (System.currentTimeMillis() - start) / 1000d + "sec");
 				result.add(f);
 			}
 			rs.close();
@@ -1084,6 +1074,75 @@ public class SQLiteJDBC {
 		}
 
 		addOddsData(result, competition, year);
+		ArrayList<Fixture> combined = addGameStatsData(result, competition, year);
+
+		return combined;
+	}
+
+	private static ArrayList<Fixture> addGameStatsData(ArrayList<Fixture> result, String competition, int year) {
+		ArrayList<Fixture> gameStats = selectGameStats(competition, year);
+
+		FixtureListCombiner combiner = new FixtureListCombiner(result, gameStats, competition);
+		ArrayList<? extends Combinable> combined = combiner.combineWithDictionary();
+
+		return combined.stream().map(Fixture.class::cast).collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	private static ArrayList<Fixture> selectGameStats(String competition, int year) {
+		ArrayList<Fixture> result = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			c.setAutoCommit(false);
+
+			stmt = c.createStatement();
+
+			ResultSet matchRs = stmt.executeQuery(
+					"select * from GameStats " + " where competition=" + addQuotes(competition) + " and year =" + year);
+			while (matchRs.next()) {
+				String date = matchRs.getString("date");
+				String homeTeam = matchRs.getString("hometeamname");
+				String awayTeam = matchRs.getString("awayteamname");
+				int homeGoals = matchRs.getInt("homeGoals");
+				int awayGoals = matchRs.getInt("awayGoals");
+				int hthome = matchRs.getInt("hthome");
+				int htaway = matchRs.getInt("htaway");
+				int allEuroShotsHome = matchRs.getInt("alllEuroShotsHome");
+				int allEuroShotsAway = matchRs.getInt("allEuroShotsAway");
+				int shotsHome = matchRs.getInt("shotsHome");
+				int shotsAway = matchRs.getInt("shotsAway");
+				int shotsWideHome = matchRs.getInt("shotsWideHome");
+				int shotsWideAway = matchRs.getInt("shotsWideAway");
+				int cornersHome = matchRs.getInt("cornersHome");
+				int cornersAway = matchRs.getInt("cornersAway");
+				int foulsHome = matchRs.getInt("foulsHome");
+				int foulsAway = matchRs.getInt("foulsAway");
+				int offsidesHome = matchRs.getInt("offsidesHome");
+				int offsidesAway = matchRs.getInt("offsidesAway");
+				int possessionHome = matchRs.getInt("possessionHome");
+
+				GameStats gs = new GameStats(Pair.of(shotsHome, shotsAway), Pair.of(shotsWideHome, shotsWideAway),
+						Pair.of(cornersHome, cornersAway), Pair.of(foulsHome, foulsAway),
+						Pair.of(offsidesHome, offsidesAway))
+								.withAllEuroShots(Pair.of(allEuroShotsHome, allEuroShotsAway))
+								.withPossession(possessionHome);
+
+				Fixture f = new Fixture(format.parse(date), year, competition, homeTeam, awayTeam,
+						new Result(homeGoals, awayGoals)).withHTResult(new Result(hthome, htaway)).withGameStats(gs);
+
+				result.add(f);
+			}
+
+			matchRs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
 
 		return result;
 	}
@@ -1269,7 +1328,7 @@ public class SQLiteJDBC {
 						+ f.gameStats.shots.home + "," + f.gameStats.shots.away + "," + f.gameStats.shotsWide.home + ","
 						+ f.gameStats.shotsWide.away + "," + f.gameStats.corners.home + "," + f.gameStats.corners.away
 						+ "," + f.gameStats.fouls.home + "," + f.gameStats.fouls.away + "," + f.gameStats.offsides.home
-						+ "," + f.gameStats.offsides.away + "," + f.gameStats.posssessionHome + " );";
+						+ "," + f.gameStats.offsides.away + "," + f.gameStats.possessionHome + " );";
 				try {
 					stmt.executeUpdate(sql);
 				} catch (SQLException e) {
