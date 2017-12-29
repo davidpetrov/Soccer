@@ -1,8 +1,6 @@
 package scraper;
 
 import java.io.File;
-
-import org.json.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -14,7 +12,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -22,13 +19,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
@@ -39,13 +34,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Maps.EntryTransformer;
-import com.google.gson.JsonObject;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -57,17 +50,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.json.Json;
 
 import constants.Constants;
 import entries.FinalEntry;
-import main.AsianLines;
-import main.Combinable;
-import main.ExtendedFixture;
 import main.Fixture;
-import main.FullFixture;
-import main.GoalLines;
-import main.Line;
 import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
@@ -98,13 +84,9 @@ public class Scraper {
 
 		// =================================================================
 
-		
-		
-		
-		
-		 ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
-		 System.out.println(eng.size());
-		 eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
+		ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
+		System.out.println(eng.size());
+		eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
 
 		// for (int i = 2012; i <= 2012; i++) {
 		// ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
@@ -125,19 +107,20 @@ public class Scraper {
 		// System.out.println(list.size());
 		// ====================================================================
 
-//		ArrayList<Fixture> stats = GameStatsCollector.of("ENG", 2016).collect();
-//		SQLiteJDBC.storeGameStats(stats,"ENG",2016);
+		// ArrayList<Fixture> stats = GameStatsCollector.of("ENG",
+		// 2016).collect();
+		// SQLiteJDBC.storeGameStats(stats,"ENG",2016);
 
-		// ArrayList<ExtendedFixture> shotsList = collect("ENG", 2016, null);
+		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
 		// shotsList = new ArrayList<>();
 		// XlSUtils.storeInExcel(shotsList, "BRA", 2017, "manual");
 
 		//
-		// ArrayList<ExtendedFixture> list = oddsInParallel("ENG", 2013, null);
+		// ArrayList<Fixture> list = oddsInParallel("ENG", 2013, null);
 
-		// ArrayList<ExtendedFixture> list = odds("BRA", 2017, null);
+		// ArrayList<Fixture> list = odds("BRA", 2017, null);
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
 		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
 		// fastOdds("ENG", 2017, null);
@@ -149,7 +132,7 @@ public class Scraper {
 		// SQLiteJDBC.storePlayerFixtures(list3);
 		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
-		// ArrayList<FullFixture> list2 = fullOdds("SPA", 2013,
+		// ArrayList<Fixture> list2 = fullOdds("SPA", 2013,
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
 		// XlSUtils.storeInExcelFull(list2, "SPA", 2013, "fullodds");
 
@@ -158,7 +141,7 @@ public class Scraper {
 		// ////
 		// XlSUtils.fillMissingShotsData("BRA", 2017, false);
 
-		// ArrayList<ExtendedFixture> next = nextMatches("BRB", null);
+		// ArrayList<Fixture> next = nextMatches("BRB", null);
 		// nextMatchesValues("ENG2", null, OnlyTodayMatches.FALSE, null, 27,
 		// 11);
 		// collect("FR", 2017, null);
@@ -271,6 +254,7 @@ public class Scraper {
 		return result;
 	}
 
+	//TODO refactor
 	public static void checkAndUpdate(String competition, OnlyTodayMatches onlyTodaysMatches)
 			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
@@ -282,19 +266,19 @@ public class Scraper {
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sh = workbook.getSheet(competition);
 
-		ArrayList<ExtendedFixture> all = sh == null ? new ArrayList<>() : XlSUtils.selectAll(sh, 0);
+		ArrayList<Fixture> all = sh == null ? new ArrayList<>() : XlSUtils.selectAll(sh, 0);
 		// problem when no pendingma fixtures?
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
 
-		ArrayList<ExtendedFixture> toAdd = new ArrayList<>();
-		ArrayList<ExtendedFixture> combined = new ArrayList<>();
+		ArrayList<Fixture> toAdd = new ArrayList<>();
+		ArrayList<Fixture> combined = new ArrayList<>();
 		// check if update of previous results is necessary
 		if (new Date().after(oldestTocheck)) {
-			ArrayList<ExtendedFixture> odds = oddsUpToDate(competition, collectYear, oldestTocheck, null);
+			ArrayList<Fixture> odds = oddsUpToDate(competition, collectYear, oldestTocheck, null);
 			System.out.println(odds.size() + " odds ");
 
-			ArrayList<ExtendedFixture> list = new ArrayList<>();
+			ArrayList<Fixture> list = new ArrayList<>();
 			int count = 0;
 			int maxTries = 1;
 			while (true) {
@@ -310,10 +294,11 @@ public class Scraper {
 			System.out.println(list.size() + "shots");
 
 			FixtureListCombiner combiner = new FixtureListCombiner(odds, list, competition);
-			ArrayList<? extends Combinable> combinedGeneric = combiner.combineWithDictionary();
+			ArrayList<? extends Fixture> combinedGeneric = combiner.combineWithDictionary();
 
-			combined =  combinedGeneric.stream().map(ExtendedFixture.class::cast).collect(Collectors.toCollection(ArrayList::new));
-			
+			combined = combinedGeneric.stream().map(Fixture.class::cast)
+					.collect(Collectors.toCollection(ArrayList::new));
+
 			System.out.println(combined.size() + " combined");
 			System.out.println(competition + " "
 					+ (combined.size() == list.size() ? " combined successfull" : " combined failed"));
@@ -323,9 +308,9 @@ public class Scraper {
 
 		// add the combined(updated) fixtures to the list of all finished
 		// fixtures
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			boolean continueFlag = false;
-			for (ExtendedFixture comb : combined) {
+			for (Fixture comb : combined) {
 				if (i.homeTeam.equals(comb.homeTeam) && i.awayTeam.equals(comb.awayTeam)
 						&& (Math.abs(i.date.getTime() - comb.date.getTime()) <= 24 * 60 * 60 * 1000)) {
 					continueFlag = true;
@@ -337,15 +322,15 @@ public class Scraper {
 
 		workbook.close();
 		System.out.println("to add " + toAdd.size());
-		ArrayList<ExtendedFixture> next = new ArrayList<>();
+		ArrayList<Fixture> next = new ArrayList<>();
 
 		next = nextMatches(competition, null, onlyTodaysMatches);
 
-		ArrayList<ExtendedFixture> withNext = new ArrayList<>();
+		ArrayList<Fixture> withNext = new ArrayList<>();
 
-		for (ExtendedFixture i : toAdd) {
+		for (Fixture i : toAdd) {
 			boolean continueFlag = false;
-			for (ExtendedFixture n : next) {
+			for (Fixture n : next) {
 				if (i.homeTeam.equals(n.homeTeam) && i.awayTeam.equals(n.awayTeam)
 						&& (Math.abs(i.date.getTime() - n.date.getTime()) <= 24 * 60 * 60 * 1000)) {
 					continueFlag = true;
@@ -360,15 +345,15 @@ public class Scraper {
 
 		if (withNext.size() >= all.size()) {
 			XlSUtils.storeInExcel(withNext, competition, CURRENT_YEAR, "odds");
-			XlSUtils.fillMissingShotsData(competition, CURRENT_YEAR, false);
+			XlSUtils.fillMissingShotsData(competition, CURRENT_YEAR);
 		}
 
 		System.out.println(competition + " successfully updated");
 
 	}
 
-	private static ArrayList<ExtendedFixture> oddsUpToDate(String competition, int currentYear, Date yesterday,
-			String add) throws InterruptedException {
+	private static ArrayList<Fixture> oddsUpToDate(String competition, int currentYear, Date yesterday, String add)
+			throws InterruptedException {
 		String address;
 		if (add == null) {
 			address = EntryPoints.getOddsLink(competition, currentYear);
@@ -376,7 +361,7 @@ public class Scraper {
 			address = add;
 		System.out.println(address);
 
-		Set<ExtendedFixture> result = new HashSet<>();
+		Set<Fixture> result = new HashSet<>();
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
@@ -423,7 +408,7 @@ public class Scraper {
 				}
 
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
+					Fixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 
 					if (ef != null) {
 						if (ef.date.before(yesterday)) {
@@ -459,16 +444,17 @@ public class Scraper {
 
 		driver.close();
 
-		ArrayList<ExtendedFixture> fin = new ArrayList<>();
+		ArrayList<Fixture> fin = new ArrayList<>();
 		fin.addAll(result);
 		return fin;
 
 	}
 
-	private static ArrayList<ExtendedFixture> collectUpToDate(String competition, int currentYear, Date yesterday,
-			String add) throws IOException, ParseException, InterruptedException {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		Set<ExtendedFixture> set = new HashSet<>();
+	
+	private static ArrayList<Fixture> collectUpToDate(String competition, int currentYear, Date yesterday, String add)
+			throws IOException, ParseException, InterruptedException {
+		ArrayList<Fixture> result = new ArrayList<>();
+		Set<Fixture> set = new HashSet<>();
 		String address;
 		if (add == null) {
 			address = EntryPoints.getLink(competition, currentYear);
@@ -508,7 +494,7 @@ public class Scraper {
 
 			for (int i = fixtures.size() - 1; i >= 0; i--) {
 				Document fixture = Jsoup.connect(BASE + fixtures.get(i).attr("href")).timeout(0).get();
-				ExtendedFixture ef = getFixture(fixture, competition);
+				Fixture ef = getFixture(fixture, competition);
 				if (ef != null && ef.date.before(yesterday)) {
 					breakFlag = true;
 					break;
@@ -539,18 +525,18 @@ public class Scraper {
 		if (result.size() != set.size())
 			System.out.println("size problem of shots data");
 
-		ArrayList<ExtendedFixture> setlist = new ArrayList<>();
+		ArrayList<Fixture> setlist = new ArrayList<>();
 		set.addAll(result);
 		setlist.addAll(set);
 		return setlist;
 	}
 
-	private static ArrayList<ExtendedFixture> nextMatches(String competition, Object object,
-			OnlyTodayMatches onlyTodaysMatches) throws ParseException, InterruptedException, IOException {
+	private static ArrayList<Fixture> nextMatches(String competition, Object object, OnlyTodayMatches onlyTodaysMatches)
+			throws ParseException, InterruptedException, IOException {
 		String address = EntryPoints.getOddsLink(competition, EntryPoints.CURRENT);
 		System.out.println(address);
 
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		ArrayList<Fixture> result = new ArrayList<>();
 		Set<String> teams = new HashSet<>();
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
@@ -585,7 +571,7 @@ public class Scraper {
 			if (teams.contains(homeTeam) && teams.contains(awayTeam))
 				continue;
 
-			ExtendedFixture ef = getOddsFixture(driver, i, competition, true, onlyTodaysMatches);
+			Fixture ef = getOddsFixture(driver, i, competition, true, onlyTodaysMatches);
 			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
 					&& !teams.contains(ef.awayTeam)) {
 				result.add(ef);
@@ -602,13 +588,13 @@ public class Scraper {
 		return result;
 	}
 
-	public static ArrayList<ExtendedFixture> nextMatchesValues(String competition, Object object,
+	public static ArrayList<Fixture> nextMatchesValues(String competition, Object object,
 			OnlyTodayMatches onlyTodaysMatches, ArrayList<FinalEntry> predictions, int day, int month)
 					throws ParseException, InterruptedException, IOException {
 		String address = EntryPoints.getOddsLink(competition, EntryPoints.CURRENT);
 		System.out.println(address);
 
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		ArrayList<Fixture> result = new ArrayList<>();
 		Set<String> teams = new HashSet<>();
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
@@ -643,7 +629,7 @@ public class Scraper {
 			if (teams.contains(homeTeam) && teams.contains(awayTeam))
 				continue;
 
-			ExtendedFixture ef = getFullFixtureOUValue(driver, i, competition, predictions, day, month);
+			Fixture ef = getFixtureOUValue(driver, i, competition, predictions, day, month);
 			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
 					&& !teams.contains(ef.awayTeam)) {
 				result.add(ef);
@@ -660,10 +646,10 @@ public class Scraper {
 		return result;
 	}
 
-	public static ArrayList<ExtendedFixture> collect(String competition, int year, String add)
+	public static ArrayList<Fixture> collect(String competition, int year, String add)
 			throws IOException, ParseException, InterruptedException {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		Set<ExtendedFixture> set = new HashSet<>();
+		ArrayList<Fixture> result = new ArrayList<>();
+		Set<Fixture> set = new HashSet<>();
 		String address;
 		if (add == null) {
 			address = EntryPoints.getLink(competition, year);
@@ -687,7 +673,7 @@ public class Scraper {
 				// System.out.println(linkM.text());
 				if (isScore(linkM.text())) {
 					Document fixture = Jsoup.connect(BASE + linkM.attr("href")).get();
-					ExtendedFixture ef = getFixture(fixture, competition);
+					Fixture ef = getFixture(fixture, competition);
 					result.add(ef);
 					set.add(ef);
 				}
@@ -711,7 +697,7 @@ public class Scraper {
 		System.out.println(result.size());
 		System.out.println(set.size());
 
-		ArrayList<ExtendedFixture> setlist = new ArrayList<>();
+		ArrayList<Fixture> setlist = new ArrayList<>();
 		set.addAll(result);
 		setlist.addAll(set);
 		return setlist;
@@ -787,7 +773,8 @@ public class Scraper {
 
 	}
 
-	public static ExtendedFixture getFixture(Document fixture, String competition) throws IOException, ParseException {
+	//TODO clean
+	public static Fixture getFixture(Document fixture, String competition) throws IOException, ParseException {
 
 		// System.out.println(fixture.select("dt:contains(Half-time) +
 		// dd").first().text());
@@ -854,7 +841,7 @@ public class Scraper {
 		String homeTeam = Utils.replaceNonAsciiWhitespace(getHome(teams));
 		String awayTeam = Utils.replaceNonAsciiWhitespace(getAway(teams));
 
-		ExtendedFixture ef = new ExtendedFixture(date, homeTeam, awayTeam, result, "BRA").withHTResult(ht)
+		Fixture ef = new Fixture(date, competition, homeTeam, awayTeam, result).withHTResult(ht)
 				.withShots((int) shots.home, (int) shots.away);
 		if (matchday != -1)
 			ef = ef.withMatchday(matchday);
@@ -870,6 +857,7 @@ public class Scraper {
 		return Pair.of(homeStats, awayStats);
 	}
 
+	//TODO refactor
 	public static ArrayList<PlayerFixture> getFixtureFull(Document fixture, String competition)
 			throws IOException, ParseException {
 		boolean verbose = false;
@@ -905,7 +893,7 @@ public class Scraper {
 
 		// Lineups
 		// =====================================================================
-		ExtendedFixture fix = new ExtendedFixture(date, homeTeam, awayTeam, result, competition);
+		Fixture fix = new Fixture(date, competition, homeTeam, awayTeam, result);
 		System.out.println(fix);
 		// if (homeTeam.equals("Freiburg") && awayTeam.equals("Kln"))
 		// System.out.println("dadsa");
@@ -1182,7 +1170,7 @@ public class Scraper {
 		//
 		// System.out.println(shotsHome + " s " + shotsAway);
 		//
-		// ExtendedFixture ef = new ExtendedFixture(date, homeTeam, awayTeam,
+		// Fixture ef = new Fixture(date, homeTeam, awayTeam,
 		// result, "BRA").withHTResult(ht)
 		// .withShots(shotsHome, shotsAway);
 		// if (matchday != -1)
@@ -1222,7 +1210,7 @@ public class Scraper {
 
 	}
 
-	public static ArrayList<ExtendedFixture> odds(String competition, int year, String add)
+	public static ArrayList<Fixture> odds(String competition, int year, String add)
 			throws IOException, ParseException, InterruptedException {
 
 		String address;
@@ -1232,7 +1220,7 @@ public class Scraper {
 			address = add;
 		System.out.println(address);
 
-		Set<ExtendedFixture> result = new HashSet<>();
+		Set<Fixture> result = new HashSet<>();
 
 		// System.setProperty("webdriver.chrome.drive",
 		// "C:/Windows/system32/chromedriver.exe");
@@ -1282,7 +1270,7 @@ public class Scraper {
 
 				// System.out.println(links);
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
+					Fixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 					if (ef != null)
 						result.add(ef);
 
@@ -1305,7 +1293,7 @@ public class Scraper {
 
 		driver.close();
 
-		ArrayList<ExtendedFixture> fin = new ArrayList<>();
+		ArrayList<Fixture> fin = new ArrayList<>();
 		fin.addAll(result);
 		System.out.println(fin.size());
 		return fin;
@@ -1375,7 +1363,7 @@ public class Scraper {
 				}
 
 				for (String i : links) {
-					Fixture f = getFullFixtureTest(driver, i, competition, year);
+					Fixture f = getFixtureTest(driver, i, competition, year);
 					if (f != null)
 						result.add(f);
 
@@ -1415,7 +1403,6 @@ public class Scraper {
 		String pass = "";
 		Path wiki_path = Paths.get(new File("").getAbsolutePath(), "pass.txt");
 
-		Charset charset = Charset.forName("ISO-8859-1");
 		try {
 			List<String> lines = Files.readAllLines(wiki_path, Charset.defaultCharset());
 
@@ -1432,7 +1419,7 @@ public class Scraper {
 		driver.findElements(By.xpath("//button[contains(.,'" + label + "')]")).get(1).click();
 	}
 
-	public static ArrayList<ExtendedFixture> oddsByPage(String competition, int year, String add, int page) {
+	public static ArrayList<Fixture> oddsByPage(String competition, int year, String add, int page) {
 		String address;
 		if (add == null) {
 			address = EntryPoints.getOddsLink(competition, year);
@@ -1441,7 +1428,7 @@ public class Scraper {
 			address = add;
 		System.out.println(address);
 
-		Set<ExtendedFixture> result = new HashSet<>();
+		Set<Fixture> result = new HashSet<>();
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		WebDriver driver = new ChromeDriver();
@@ -1464,7 +1451,7 @@ public class Scraper {
 
 				// System.out.println(links);
 				for (String i : links) {
-					ExtendedFixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
+					Fixture ef = getOddsFixture(driver, i, competition, false, OnlyTodayMatches.FALSE);
 					if (ef != null)
 						result.add(ef);
 
@@ -1490,16 +1477,16 @@ public class Scraper {
 
 		driver.close();
 
-		ArrayList<ExtendedFixture> fin = new ArrayList<>();
+		ArrayList<Fixture> fin = new ArrayList<>();
 		fin.addAll(result);
 		System.out.println("Thread at page " + page + "finished successfuly with " + fin.size());
 		return fin;
 
 	}
 
-	public static ArrayList<ExtendedFixture> oddsInParallel(String competition, int year, String add)
+	public static ArrayList<Fixture> oddsInParallel(String competition, int year, String add)
 			throws InterruptedException, ExecutionException {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		ArrayList<Fixture> result = new ArrayList<>();
 
 		String address;
 		if (add == null) {
@@ -1532,12 +1519,12 @@ public class Scraper {
 		driver.close();
 
 		ExecutorService pool = Executors.newFixedThreadPool(2);
-		ArrayList<Future<ArrayList<ExtendedFixture>>> threadArray = new ArrayList<Future<ArrayList<ExtendedFixture>>>();
+		ArrayList<Future<ArrayList<Fixture>>> threadArray = new ArrayList<Future<ArrayList<Fixture>>>();
 		for (int i = 1; i <= maxPage; i++) {
 			threadArray.add(pool.submit(new RunnerOdds(competition, year, add, i)));
 		}
 
-		for (Future<ArrayList<ExtendedFixture>> fd : threadArray) {
+		for (Future<ArrayList<Fixture>> fd : threadArray) {
 			result.addAll(fd.get());
 		}
 
@@ -1545,78 +1532,6 @@ public class Scraper {
 
 		System.out.println("Final odds size " + result.size());
 		return result;
-	}
-
-	public static ArrayList<ExtendedFixture> fastOdds(String competition, int year, String add)
-			throws IOException, ParseException, InterruptedException {
-
-		String address;
-		if (add == null) {
-			address = EntryPoints.getOddsLink(competition, year);
-			System.out.println(address);
-		} else
-			address = add;
-		System.out.println(address);
-
-		Set<ExtendedFixture> result = new HashSet<>();
-
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
-		WebDriver driver = new ChromeDriver();
-		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		driver.manage().window().maximize();
-		driver.navigate().to(address + "/results/");
-
-		// Get page count
-		int maxPage = 1;
-		List<WebElement> pages = driver.findElements(By.cssSelector("a[href*='#/page/']"));
-		for (WebElement i : pages) {
-			if (isNumeric(i.getText())) {
-				if (Integer.parseInt(i.getText().trim()) > maxPage)
-					maxPage = Integer.parseInt(i.getText().trim());
-			}
-		}
-
-		for (int page = 1; page <= maxPage; page++) {
-			try {
-				driver.navigate().to(address + "/results/#/page/" + page + "/");
-
-				String[] splitAddress = address.split("/");
-				String leagueYear = splitAddress[splitAddress.length - 1];
-				List<WebElement> list = driver.findElements(By.cssSelector("a[href*='" + leagueYear + "']"));
-				ArrayList<String> links = new ArrayList<>();
-				for (WebElement i : list) {
-					// better logic here?
-					if (i.getText().contains("-") && isFixtureLink(i.getAttribute("href")))
-						links.add(i.getAttribute("href"));
-				}
-
-				System.out.println(links);
-				for (String i : links) {
-					ExtendedFixture ef = getFastOddsFixture(driver, i, competition);
-					if (ef != null)
-						result.add(ef);
-
-					break;
-
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				page--;
-				System.out.println("Starting over from page:" + page);
-				driver.close();
-				Thread.sleep(30000);
-				driver = new ChromeDriver();
-				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-				driver.manage().window().maximize();
-			}
-		}
-
-		driver.close();
-
-		ArrayList<ExtendedFixture> fin = new ArrayList<>();
-		fin.addAll(result);
-		System.out.println(fin.size());
-		return fin;
 	}
 
 	private static boolean isFixtureLink(String attribute) {
@@ -1651,9 +1566,9 @@ public class Scraper {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static ExtendedFixture getOddsFixture(WebDriver driver, String i, String competition,
-			boolean liveMatchesFlag, OnlyTodayMatches onlyToday)
-					throws ParseException, InterruptedException, IOException {
+	//TODO refactor
+	public static Fixture getOddsFixture(WebDriver driver, String i, String competition, boolean liveMatchesFlag,
+			OnlyTodayMatches onlyToday) throws ParseException, InterruptedException, IOException {
 		// System.out.println(i);
 		// int count = 0;
 		// int maxTries = 10;
@@ -1926,14 +1841,20 @@ public class Scraper {
 
 		}
 
-		ExtendedFixture ef = new ExtendedFixture(date, home, away, fullResult, competition).withHTResult(htResult)
-				.with1X2Odds(homeOdds, drawOdds, awayOdds).withAsian(line, asianHome, asianAway)
-				.withOdds(overOdds, underOdds, overOdds, underOdds).withShots(-1, -1);
+		Date now = new Date();
+		MatchOdds mo = new MatchOdds("Pinnacle", now, homeOdds, drawOdds, awayOdds);
+		AsianOdds ao = new AsianOdds("Pinnacle", now, line, asianHome, asianAway);
+		OverUnderOdds overUnder = new OverUnderOdds("Pinnacle", now, 2.5f, overOdds, underOdds);
+
+		Fixture ef = new Fixture(date, competition, home, away, fullResult).withHTResult(htResult);
+		ef.matchOdds.add(mo);
+		ef.asianOdds.add(ao);
+		ef.overUnderOdds.add(overUnder);
+
 		return ef;
 	}
 
-	public static Fixture getFullFixtureTest(WebDriver driver, String i, String competition, int year)
-			throws Exception {
+	public static Fixture getFixtureTest(WebDriver driver, String i, String competition, int year) throws Exception {
 		long start = System.currentTimeMillis();
 		driver.navigate()
 				.to(/* "http://www.oddsportal.com/soccer/england/premier-league/burnley-watford-j95WUhWk/" */i);
@@ -1997,7 +1918,7 @@ public class Scraper {
 				booksMap);
 		HashMap<Float, HashMap<String, ArrayList<AsianOdds>>> asianOdds = getAsianDataFromJS(driver, booksMap);
 
-		Fixture f = new Fixture(date, year, competition, home, away, fullResult).withHTResult(htResult)
+		Fixture f = new Fixture(date, competition, home, away, fullResult).withHTResult(htResult).withYear(year)
 				.withOUodds(overUnderOdds).withAsianOdds(asianOdds).withMatchOdds(matchOdds);
 
 		// match odds analysis over pinnacle
@@ -2100,7 +2021,7 @@ public class Scraper {
 					JSONArray hentry = history.getJSONArray(j);
 					float odds = (float) hentry.getDouble(0);
 					// sometimes null sometimes integer unknown meaning
-					Object unknown = hentry.get(1);
+					// Object unknown = hentry.get(1);
 					Calendar cal = Calendar.getInstance();
 					cal.setTimeInMillis(hentry.getLong(2) * 1000);
 					Date date = cal.getTime();
@@ -2397,7 +2318,7 @@ public class Scraper {
 					JSONArray hentry = history.getJSONArray(j);
 					float odds = (float) hentry.getDouble(0);
 					// sometimes null sometimes integer unknown meaning
-					Object unknown = hentry.get(1);
+					// Object unknown = hentry.get(1);
 					Calendar cal = Calendar.getInstance();
 					cal.setTimeInMillis(hentry.getLong(2) * 1000);
 					Date date = cal.getTime();
@@ -2637,10 +2558,10 @@ public class Scraper {
 
 	}
 
-	public static FullFixture getFullFixtureOUValue(WebDriver driver, String i, String competition,
+	public static Fixture getFixtureOUValue(WebDriver driver, String i, String competition,
 			ArrayList<FinalEntry> predictions, int day, int month) throws ParseException, InterruptedException {
 		// stupid hash for search
-		HashMap<ExtendedFixture, FinalEntry> map = new HashMap<>();
+		HashMap<Fixture, FinalEntry> map = new HashMap<>();
 		for (FinalEntry pred : predictions) {
 			map.put(pred.fixture, pred);
 		}
@@ -2655,7 +2576,7 @@ public class Scraper {
 		dateString = dateString.split(",")[1] + dateString.split(",")[2];
 		Date date = FORMATFULL.parse(dateString);
 
-		FinalEntry prediction = map.get(new ExtendedFixture(date, home, away, new Result(-1, -1), i));
+		FinalEntry prediction = map.get(new Fixture(date, competition, home, away, new Result(-1, -1)));
 
 		LocalDate searchDate = LocalDate.of(2017, month, day);
 		if (!date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(searchDate)
@@ -3214,430 +3135,6 @@ public class Scraper {
 
 	}
 
-	public static FullFixture getFullFixture(WebDriver driver, String i, String competition)
-			throws ParseException, InterruptedException {
-		// System.out.println(i);
-
-		driver.navigate().to(i);
-
-		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
-		String home = title.split(" - ")[0].trim();
-		String away = title.split(" - ")[1].trim();
-		System.out.println(home + " : " + away);
-
-		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
-		Date date = FORMATFULL.parse(dateString);
-
-		System.out.println(date);
-
-		// Result
-		Result fullResult = new Result(-1, -1);
-		Result htResult = new Result(-1, -1);
-		try {
-			WebElement resElement = driver.findElement(By.xpath("//*[@id='event-status']/p"));
-			if (resElement != null) {
-				String resString = resElement.getText();
-				if (resString.contains("penalties") || resString.contains("ET")) {
-					return null;
-				}
-				if (resString.contains("awarded") && resString.contains(home)) {
-					fullResult = new Result(3, 0);
-					htResult = new Result(3, 0);
-				} else if (resString.contains("awarded") && resString.contains(away)) {
-					fullResult = new Result(0, 3);
-					htResult = new Result(0, 3);
-				} else if (resString.contains("(") && resString.contains(")")) {
-					String full = resString.split(" ")[2];
-					String half = resString.split(" ")[3].substring(1, 4);
-
-					fullResult = new Result(Integer.parseInt(full.split(":")[0]), Integer.parseInt(full.split(":")[1]));
-					htResult = new Result(Integer.parseInt(half.split(":")[0]), Integer.parseInt(half.split(":")[1]));
-				} else {
-					fullResult = new Result(-1, -1);
-					htResult = new Result(-1, -1);
-				}
-			}
-
-		} catch (Exception e) {
-			System.out.println("next match");
-		}
-		// System.out.println(fullResult + " " + htResult);
-
-		WebElement table = driver.findElement(By.xpath("//div[@id='odds-data-table']"));
-		List<WebElement> rows = table.findElements(By.xpath("//div[1]/table/tbody/tr"));
-		Odds pinnOdds = null;
-
-		ArrayList<Odds> matchOdds = new ArrayList<>();
-		for (WebElement row : rows) {
-			List<WebElement> columns = row.findElements(By.xpath("td"));
-			if (columns.size() < 4)
-				continue;
-			String bookmaker = columns.get(0).getText().trim();
-			if (Arrays.asList(Constants.FAKEBOOKS).contains(bookmaker))
-				continue;
-			float homeOdds = Float.parseFloat(columns.get(1).getText().trim());
-			float drawOdds = Float.parseFloat(columns.get(2).getText().trim());
-			float awayOdds = Float.parseFloat(columns.get(3).getText().trim());
-
-			Odds modds = new MatchOdds(bookmaker, new Date(), homeOdds, drawOdds, awayOdds);
-			matchOdds.add(modds);
-
-			if (bookmaker.equals("Pinnacle"))
-				pinnOdds = modds;
-
-			// System.out.println(modds);
-		}
-
-		checkValueOverPinnacleOdds(matchOdds, pinnOdds);
-
-		// Over and under odds
-		float overOdds = -1f, underOdds = -1f;
-		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
-		for (WebElement t : tabs)
-
-		{
-			if (t.getText().contains("O/U")) {
-				t.click();
-				break;
-			}
-		}
-
-		WebElement div25 = null;
-		main.Line twoAndHalf = null;
-
-		main.Line def = new Line(-1f, -1f, -1f, "Pinn");
-		GoalLines GLS = new GoalLines(def, def, def, def, def);
-
-		WebElement optGoals = null;
-		float minGoals = 100f;
-		List<WebElement> divsGoals = driver.findElements(By.xpath("//*[@id='odds-data-table']/div"));
-		for (WebElement div : divsGoals)
-
-		{
-			String text = div.getText();
-			if (div.getText().contains("+2.5")) {
-				div25 = div;
-			}
-			if (text.split("\n").length > 3) {
-				try {
-					float diff = Math.abs(Float.parseFloat(text.split("\n")[2].trim())
-							- Float.parseFloat(text.split("\n")[3].trim()));
-					if (diff < minGoals) {
-						minGoals = diff;
-						optGoals = div;
-					}
-				} catch (Exception e) {
-					// System.out.println("asian problem" + home + " " + away);
-				}
-			}
-		}
-
-		int indexOfOptimalGoals = optGoals == null ? -1 : divsGoals.indexOf(optGoals);
-
-		ArrayList<main.Line> goalLines = new ArrayList<>();
-
-		if (optGoals != null)
-
-		{
-			int lower = (indexOfOptimalGoals - 6) < 0 ? 0 : (indexOfOptimalGoals - 6);
-			int higher = (indexOfOptimalGoals + 6) > (divsGoals.size() - 1) ? (divsGoals.size() - 1)
-					: (indexOfOptimalGoals + 6);
-
-			long startt = System.currentTimeMillis();
-			for (int j = lower; j <= higher; j++) {
-				WebElement currentDiv = divsGoals.get(j);
-				if (currentDiv == null || currentDiv.getText().split("\n").length < 3)
-					continue;
-
-				Actions actions = new Actions(driver);
-				actions.moveToElement(currentDiv).click().perform();
-				// currentDiv.click();
-				WebElement goalLineTable = currentDiv.findElement(By.xpath("//table"));
-
-				// find the row
-				List<WebElement> rowsGoals = goalLineTable.findElements(By.xpath("//tbody/tr"));
-				float line = -1f, over = -1f, under = -1f;
-
-				// System.out.println(rowsGoals.size());
-				for (int r = rowsGoals.size() - 1; r >= 0; r--) {
-					WebElement row = rowsGoals.get(r);
-					if (row.getText().contains("Pinnacle")) {
-						// System.out.println(rowsGoals.indexOf(row));
-						String textOdds = row.getText();
-						line = Float.parseFloat(textOdds.split("\n")[1].trim());
-						over = Float.parseFloat(textOdds.split("\n")[2].trim());
-						under = Float.parseFloat(textOdds.split("\n")[3].trim());
-						break;
-					}
-
-					if (row.getText().contains("Average"))
-						break;
-				}
-
-				if (over != -1f) {
-					goalLines.add(new main.Line(line, over, under, "Pinn"));
-					if (line == 2.5)
-						twoAndHalf = new main.Line(line, over, under, "Pinn");
-				}
-
-				List<WebElement> closeLink = currentDiv.findElements(By.className("odds-co"));
-				if (!closeLink.isEmpty()) {
-					// closeLink.get(0).click();
-					actions.moveToElement(closeLink.get(0)).click().perform();
-				}
-
-				if (goalLines.size() == 6)
-					break;
-			}
-			// System.out.println("one click cycle " +
-			// (System.currentTimeMillis() - startt) / 1000d + "sec");
-			System.out.println(goalLines);
-
-			int indexMinDiff = -1;
-			float minDiff = 100f;
-			for (int l = 0; l < goalLines.size(); l++) {
-				float diff = Math.abs(goalLines.get(l).home - goalLines.get(l).away);
-				if (diff < minDiff) {
-					minDiff = diff;
-					indexMinDiff = l;
-				}
-			}
-
-			int start = indexMinDiff - 2 < 0 ? 0 : indexMinDiff - 2;
-			int end = indexMinDiff + 2 > goalLines.size() - 1 ? goalLines.size() - 1 : indexMinDiff + 2;
-
-			int expectedCaseSize = end - start + 1;
-			if (goalLines.size() == 5) {
-				GLS = new GoalLines(goalLines.get(0), goalLines.get(1), goalLines.get(2), goalLines.get(3),
-						goalLines.get(4));
-			} else if (goalLines.size() > 5) {
-				if (expectedCaseSize == 5) {
-					ArrayList<main.Line> bestLines = new ArrayList<>();
-					for (int c = start; c <= end; c++) {
-						bestLines.add(goalLines.get(c));
-					}
-
-					GLS = new GoalLines(bestLines.get(0), bestLines.get(1), bestLines.get(2), bestLines.get(3),
-							bestLines.get(4));
-
-				} else if (expectedCaseSize == 4) {
-					if (indexMinDiff - 2 < 0) {
-						GLS = new GoalLines(goalLines.get(indexMinDiff - 1), goalLines.get(indexMinDiff),
-								goalLines.get(indexMinDiff + 1), goalLines.get(indexMinDiff + 2),
-								goalLines.get(indexMinDiff + 3));
-					} else if (indexMinDiff + 2 > goalLines.size() - 1) {
-						GLS = new GoalLines(goalLines.get(indexMinDiff - 3), goalLines.get(indexMinDiff - 2),
-								goalLines.get(indexMinDiff - 1), goalLines.get(indexMinDiff),
-								goalLines.get(indexMinDiff + 1));
-					} else {
-						System.out.println("tuka");
-					}
-
-				} else {
-					System.out.println("tuka");
-				}
-			} else {
-				if (goalLines.size() == 4) {
-					if (indexMinDiff - 2 < 0) {
-						GLS = new GoalLines(new main.Line(-1, -1, -1, "Pinn"), goalLines.get(0), goalLines.get(1),
-								goalLines.get(2), goalLines.get(3));
-					} else {
-						GLS = new GoalLines(goalLines.get(0), goalLines.get(1), goalLines.get(2), goalLines.get(3),
-								new main.Line(-1, -1, -1, "Pinn"));
-					}
-				} else {
-					if (goalLines.size() == 1)
-						GLS.main = goalLines.get(0);
-					System.out.println("tuka");
-				}
-			}
-
-			if (twoAndHalf == null) {
-				System.out.println("Missing 2.5 goal line");
-				div25.click();
-
-				WebElement goalLineTable = div25.findElement(By.xpath("//table"));
-
-				// getFirstResult for over 2.5 if pinaccle lacks the line
-				List<WebElement> rowsGoals = goalLineTable.findElements(By.xpath("//tbody/tr"));
-
-				if (rowsGoals.size() >= 2) {
-					WebElement row = rowsGoals.get(1);
-					String textOdds = row.getText();
-					try {
-						overOdds = Float.parseFloat(textOdds.split("\n")[2].trim());
-						underOdds = Float.parseFloat(textOdds.split("\n")[3].trim());
-					} catch (Exception e) {
-
-					}
-				}
-			} else {
-				for (main.Line line : goalLines) {
-					if (line.line == 2.5) {
-						overOdds = line.home;
-						underOdds = line.away;
-						break;
-					}
-				}
-			}
-		}
-
-		// -----------------------------------------------------------------------
-		// Asian handicap
-		for (
-
-		WebElement t : tabs)
-
-		{
-			if (t.getText().contains("AH")) {
-				t.click();
-				break;
-			}
-		}
-
-		// Asian with closest line
-		AsianLines asianLines = new AsianLines(def, def, def, def, def);
-
-		WebElement opt = null;
-		float min = 100f;
-		List<WebElement> divsAsian = driver.findElements(By.xpath("//*[@id='odds-data-table']/div"));
-		for (WebElement div : divsAsian)
-
-		{
-			String text = div.getText();
-			if (text.split("\n").length > 3) {
-				try {
-					float diff = Math.abs(Float.parseFloat(text.split("\n")[2].trim())
-							- Float.parseFloat(text.split("\n")[3].trim()));
-					if (diff < min) {
-						min = diff;
-						opt = div;
-					}
-				} catch (Exception e) {
-					// System.out.println("asian problem" + home + " " + away);
-				}
-			}
-		}
-
-		int indexOfOptimal = opt == null ? -1 : divsAsian.indexOf(opt);
-
-		ArrayList<main.Line> lines = new ArrayList<>();
-
-		if (opt != null)
-
-		{
-			int lower = (indexOfOptimal - 5) < 0 ? 0 : (indexOfOptimal - 5);
-			int higher = (indexOfOptimal + 5) > (divsAsian.size() - 1) ? (divsAsian.size() - 1) : (indexOfOptimal + 5);
-
-			for (int j = lower; j <= higher; j++) {
-				WebElement currentDiv = divsAsian.get(j);
-				if (currentDiv == null || currentDiv.getText().split("\n").length < 3)
-					continue;
-
-				// currentDiv.click();
-				Actions actions = new Actions(driver);
-				actions.moveToElement(currentDiv).click().perform();
-
-				WebElement AHTable = currentDiv.findElement(By.xpath("//table"));
-
-				// find the row
-				List<WebElement> rowsAsian = AHTable.findElements(By.xpath("//tbody/tr"));
-				float line = -1f, asianHome = -1f, asianAway = -1f;
-
-				for (int r = rowsAsian.size() - 1; r >= 0; r--) {
-					WebElement row = rowsAsian.get(r);
-					if (row.getText().contains("Pinnacle")) {
-						String textOdds = row.getText();
-						line = Float.parseFloat(textOdds.split("\n")[1].trim());
-						asianHome = Float.parseFloat(textOdds.split("\n")[2].trim());
-						asianAway = Float.parseFloat(textOdds.split("\n")[3].trim());
-						break;
-					}
-
-					if (row.getText().contains("Average"))
-						break;
-				}
-
-				if (asianHome != -1f)
-					lines.add(new main.Line(line, asianHome, asianAway, "Pinn"));
-
-				List<WebElement> closeLink = currentDiv.findElements(By.className("odds-co"));
-				if (!closeLink.isEmpty()) {
-
-					actions.moveToElement(closeLink.get(0)).click().perform();
-					// closeLink.get(0).click();
-				}
-
-				if (lines.size() == 6)
-					break;
-
-			}
-			System.out.println(lines);
-
-			int indexMinDiff = -1;
-			float minDiff = 100f;
-			for (int l = 0; l < lines.size(); l++) {
-				float diff = Math.abs(lines.get(l).home - lines.get(l).away);
-				if (diff < minDiff) {
-					minDiff = diff;
-					indexMinDiff = l;
-				}
-			}
-
-			int start = indexMinDiff - 2 < 0 ? 0 : indexMinDiff - 2;
-			int end = indexMinDiff + 2 > lines.size() - 1 ? lines.size() - 1 : indexMinDiff + 2;
-
-			int expectedCaseSize = end - start + 1;
-			if (lines.size() == 5) {
-				asianLines = new AsianLines(lines.get(0), lines.get(1), lines.get(2), lines.get(3), lines.get(4));
-			} else if (lines.size() > 5) {
-				if (expectedCaseSize == 5) {
-					ArrayList<main.Line> bestLines = new ArrayList<>();
-					for (int c = start; c <= end; c++) {
-						bestLines.add(lines.get(c));
-					}
-
-					asianLines = new AsianLines(lines.get(0), lines.get(1), lines.get(2), lines.get(3), lines.get(4));
-
-				} else if (expectedCaseSize == 4) {
-					if (indexMinDiff - 2 < 0) {
-						asianLines = new AsianLines(lines.get(indexMinDiff - 1), lines.get(indexMinDiff),
-								lines.get(indexMinDiff + 1), lines.get(indexMinDiff + 2), lines.get(indexMinDiff + 3));
-					} else if (indexMinDiff + 2 > lines.size() - 1) {
-						asianLines = new AsianLines(lines.get(indexMinDiff - 3), lines.get(indexMinDiff - 2),
-								lines.get(indexMinDiff - 1), lines.get(indexMinDiff), lines.get(indexMinDiff + 1));
-					} else {
-						System.out.println("tuka");
-					}
-
-				} else {
-					System.out.println("tuka");
-				}
-			} else {
-				if (lines.size() == 4) {
-					if (indexMinDiff - 2 < 0) {
-						asianLines = new AsianLines(new main.Line(-1, -1, -1, "Pinn"), lines.get(0), lines.get(1),
-								lines.get(2), lines.get(3));
-					} else {
-						asianLines = new AsianLines(lines.get(0), lines.get(1), lines.get(2), lines.get(3),
-								new main.Line(-1, -1, -1, "Pinn"));
-					}
-				} else {
-					if (lines.size() == 1)
-						asianLines.main = lines.get(0);
-					System.out.println("tuka");
-				}
-			}
-		}
-
-		ExtendedFixture ef = new FullFixture(date, home, away, fullResult, competition).withHTResult(htResult)
-				.with1X2Odds(-1f, -1f, -1f).withAsian(asianLines.main.line, asianLines.main.home, asianLines.main.away)
-				.withOdds(overOdds, underOdds, overOdds, underOdds).withShots(-1, -1);
-
-		return ((FullFixture) ef).withAsianLines(asianLines).withGoalLines(GLS);
-
-	}
-
 	private static void checkValueOverPinnacleOdds(ArrayList<Odds> matchOdds, Odds pinnOdds) {
 		if (matchOdds.isEmpty() || pinnOdds == null)
 			return;
@@ -3703,201 +3200,6 @@ public class Scraper {
 			}
 		}
 
-	}
-
-	public static ExtendedFixture getFastOddsFixture(WebDriver driver, String i, String competition)
-			throws ParseException, IOException {
-		// System.out.println(i);
-		driver.navigate().to(i);
-
-		Document fixture = Jsoup.connect(i).get();
-
-		String title = fixture.select("h1").first().text();
-
-		String home = title.split(" - ")[0].trim();
-		String away = title.split(" - ")[1].trim();
-		System.out.println(home + " : " + away);
-
-		Element dt = fixture.select("p[class^=date]").first();
-
-		String millisString = dt.outerHtml().split(" ")[3].split("-")[0].substring(1);
-
-		long timeInMillis = Long.parseLong(millisString) * 1000;
-
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(timeInMillis);
-		Date date = cal.getTime();
-		System.out.println(date);
-
-		// Result
-		Result fullResult = new Result(-1, -1);
-		Result htResult = new Result(-1, -1);
-		try {
-
-			Element resultJsoup = fixture.select("p[class^=result]").first();
-			System.out.println(resultJsoup.text());
-
-			String resString = resultJsoup.text();
-			if (resString.contains("penalties") || resString.contains("ET")) {
-				return null;
-			}
-			if (resString.contains("awarded") && resString.contains(home)) {
-				fullResult = new Result(3, 0);
-				htResult = new Result(3, 0);
-			} else if (resString.contains("awarded") && resString.contains(away)) {
-				fullResult = new Result(0, 3);
-				htResult = new Result(0, 3);
-			} else if (resString.contains("(") && resString.contains(")")) {
-				String full = resString.split(" ")[2];
-				String half = resString.split(" ")[3].substring(1, 4);
-
-				fullResult = new Result(Integer.parseInt(full.split(":")[0]), Integer.parseInt(full.split(":")[1]));
-				htResult = new Result(Integer.parseInt(half.split(":")[0]), Integer.parseInt(half.split(":")[1]));
-			} else {
-				fullResult = new Result(-1, -1);
-				htResult = new Result(-1, -1);
-			}
-
-		} catch (Exception e) {
-			System.out.println("next match");
-		}
-
-		System.out.println(fullResult + " " + htResult);
-
-		WebElement table = driver.findElement(By.xpath("//div[@id='odds-data-table']"));
-
-		String winnerSuffix = "#1X2;2";
-		fixture = Jsoup.connect(i + winnerSuffix).get();
-
-		Elements tableJsoup = fixture.select("div#odds-data-table").select("div");
-		System.out.println(fixture.text());
-
-		Elements rowsJsoup = tableJsoup.select("tr");
-
-		// find the row
-		List<WebElement> customer = table.findElements(By.xpath("//div[1]/table/tbody/tr"));
-		int pinnIndex = -2;
-		int Index365 = -2;
-
-		for (WebElement row : customer) {
-			if (row.getText().contains("Pinnacle"))
-				pinnIndex = customer.indexOf(row) + 1;
-			if (row.getText().contains("bet365"))
-				pinnIndex = customer.indexOf(row) + 1;
-		}
-		if (pinnIndex < 0) {
-			System.out.println("Could not find pinnacle");
-			pinnIndex = Index365;
-			if (pinnIndex < 0)
-				pinnIndex = 2;
-		}
-
-		float homeOdds = Float
-				.parseFloat(table.findElement(By.xpath("//div[1]/table/tbody/tr[" + pinnIndex + "]/td[2]")).getText());
-		float drawOdds = Float
-				.parseFloat(table.findElement(By.xpath("//div[1]/table/tbody/tr[" + pinnIndex + "]/td[3]")).getText());
-		float awayOdds = Float
-				.parseFloat(table.findElement(By.xpath("//div[1]/table/tbody/tr[" + pinnIndex + "]/td[4]")).getText());
-
-		// System.out.println(homeOdds);
-		// System.out.println(drawOdds);
-		// System.out.println(awayOdds);
-
-		// Over and under odds
-		float overOdds = -1f, underOdds = -1f;
-		List<WebElement> tabs = driver.findElements(By.xpath("//*[@id='bettype-tabs']/ul/li"));
-		for (WebElement t : tabs) {
-			if (t.getText().contains("O/U")) {
-				t.click();
-				break;
-			}
-		}
-
-		WebElement div25 = null;
-		List<WebElement> divs = driver.findElements(By.xpath("//*[@id='odds-data-table']/div"));
-		for (WebElement div : divs) {
-			if (div.getText().contains("+2.5")) {
-				// System.out.println(div.getText());
-				div25 = div;
-				div.click();
-				break;
-			}
-		}
-
-		WebElement OUTable = div25.findElement(By.xpath("//table"));
-
-		// find the row
-		List<WebElement> rows = OUTable.findElements(By.xpath("//tr"));
-
-		for (WebElement row : rows) {
-			if (row.getText().contains("Pinnacle")) {
-				String textOdds = row.getText();
-				overOdds = Float.parseFloat(textOdds.split("\n")[2].trim());
-				underOdds = Float.parseFloat(textOdds.split("\n")[3].trim());
-			}
-		}
-
-		// System.out.println("over: " + overOdds + " " + underOdds);
-
-		// Asian handicap
-		for (WebElement t : tabs) {
-			if (t.getText().contains("AH")) {
-				t.click();
-				break;
-			}
-		}
-
-		// Asian with closest line
-		WebElement opt = null;
-		float min = 100f;
-		List<WebElement> divsAsian = driver.findElements(By.xpath("//*[@id='odds-data-table']/div"));
-		for (WebElement div : divsAsian) {
-			String text = div.getText();
-			if (text.split("\n").length > 3) {
-				try {
-					float diff = Math.abs(Float.parseFloat(text.split("\n")[2].trim())
-							- Float.parseFloat(text.split("\n")[3].trim()));
-					if (diff < min) {
-						min = diff;
-						opt = div;
-					}
-				} catch (Exception e) {
-					System.out.println("asian problem" + home + " " + away);
-				}
-			}
-		}
-
-		float line = -1f, asianHome = -1f, asianAway = -1f;
-		// if (home.equals("Sport Recife") && away.equals("Corinthians")){
-		// System.out.println(min);
-		// System.out.println(opt.getText());
-		// }
-
-		if (opt != null) {
-			opt.click();
-
-			WebElement AHTable = opt.findElement(By.xpath("//table"));
-
-			// find the row
-			List<WebElement> rowsAsian = AHTable.findElements(By.xpath("//tr"));
-
-			for (WebElement row : rowsAsian) {
-				if (row.getText().contains("Pinnacle")) {
-					String textOdds = row.getText();
-					line = Float.parseFloat(textOdds.split("\n")[1].trim());
-					asianHome = Float.parseFloat(textOdds.split("\n")[2].trim());
-					asianAway = Float.parseFloat(textOdds.split("\n")[3].trim());
-				}
-			}
-
-			// System.out.println(line + " " + asianHome + " " + asianAway);
-
-		}
-
-		ExtendedFixture ef = new ExtendedFixture(date, home, away, fullResult, competition).withHTResult(htResult)
-				.with1X2Odds(homeOdds, drawOdds, awayOdds).withAsian(line, asianHome, asianAway)
-				.withOdds(overOdds, underOdds, overOdds, underOdds).withShots(-1, -1);
-		return ef;
 	}
 
 	private static String getAway(String teams) {

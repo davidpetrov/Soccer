@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 
 import entries.HomeEntry;
-import main.ExtendedFixture;
+import main.Fixture;
 import utils.FixtureUtils;
 import utils.Utils;
 
@@ -16,18 +16,18 @@ public class HomeUtils {
 	public static float realistic(HSSFSheet sheet, int year) throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<ExtendedFixture> all = XlSUtils.selectAll(sheet, 1);
+		ArrayList<Fixture> all = XlSUtils.selectAll(sheet, 1);
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 5; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<HomeEntry> finals = new ArrayList<>();
 			for (int j = 0; j < current.size(); j++) {
-				ExtendedFixture f = current.get(j);
+				Fixture f = current.get(j);
 				// float score = shotsHomeWin(f, sheet);
-				if (f.homeOdds >= 2.2f && f.homeOdds <= 3.7f) {
+				if (f.getMaxClosingHomeOdds() >= 2.2f && f.getMaxClosingHomeOdds() <= 3.7f) {
 					HomeEntry d = new HomeEntry(f, true, 1f);
 					finals.add(d);
 				}
@@ -47,7 +47,7 @@ public class HomeUtils {
 		return profit;
 	}
 
-	public static float shotsHomeWin(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+	public static float shotsHomeWin(Fixture f, HSSFSheet sheet) throws ParseException {
 
 		float avgHome = XlSUtils.selectAvgShotsHome(sheet, f.date);
 		float avgAway = XlSUtils.selectAvgShotsAway(sheet, f.date);

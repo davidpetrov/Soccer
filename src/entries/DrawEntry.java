@@ -1,14 +1,14 @@
 package entries;
 
-import main.ExtendedFixture;
+import main.Fixture;
 
 public class DrawEntry {
 
-	public ExtendedFixture fixture;
+	public Fixture fixture;
 	public boolean prediction;
 	public float expectancy;
 
-	public DrawEntry(ExtendedFixture fixture, boolean prediction, float expectancy) {
+	public DrawEntry(Fixture fixture, boolean prediction, float expectancy) {
 		super();
 		this.fixture = fixture;
 		this.prediction = prediction;
@@ -18,7 +18,7 @@ public class DrawEntry {
 	@Override
 	public String toString() {
 		String out = prediction ? "draw" : "12";
-		float coeff = prediction ? fixture.drawOdds : 1f;
+		float coeff = prediction ? fixture.getMaxClosingDrawOdds() : 1f;
 		return fixture.date + " " + fixture.homeTeam + " : " + fixture.awayTeam + " " + " " + out + " " + coeff + " "
 				+ success() + "\n";
 	}
@@ -29,7 +29,7 @@ public class DrawEntry {
 
 	public float getProfit() {
 		if (success())
-			return fixture.drawOdds - 1f;
+			return fixture.getMaxClosingDrawOdds() - 1f;
 		else
 			return -1f;
 	}

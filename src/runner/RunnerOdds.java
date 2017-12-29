@@ -3,10 +3,10 @@ package runner;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
-import main.ExtendedFixture;
+import main.Fixture;
 import scraper.Scraper;
 
-public class RunnerOdds implements Callable<ArrayList<ExtendedFixture>> {
+public class RunnerOdds implements Callable<ArrayList<Fixture>> {
 
 	public String competition;
 	public int year;
@@ -21,8 +21,8 @@ public class RunnerOdds implements Callable<ArrayList<ExtendedFixture>> {
 	}
 
 	@Override
-	public ArrayList<ExtendedFixture> call() throws Exception {
-		ArrayList<ExtendedFixture> tobet = Scraper.oddsByPage(competition, year, add, page);
+	public ArrayList<Fixture> call() throws Exception {
+		ArrayList<Fixture> tobet = Scraper.oddsByPage(competition, year, add, page);
 		return tobet;
 	}
 }

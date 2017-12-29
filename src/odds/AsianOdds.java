@@ -8,7 +8,7 @@ public class AsianOdds extends Odds {
 	public float homeOdds;
 	public float awayOdds;
 
-	public AsianOdds(String bookmaker, Date date, float line, float homeOdds, float awayOdds) {
+	public AsianOdds(String bookmaker, Date time, float line, float homeOdds, float awayOdds) {
 		super();
 		this.time = time;
 		this.bookmaker = bookmaker;
@@ -50,6 +50,10 @@ public class AsianOdds extends Odds {
 		return new AsianOdds(bookmaker, time, line, truehomeOdds, trueawayOdds);
 	}
 
+	public float getOddsDiff() {
+		return Math.abs(homeOdds - awayOdds);
+	}
+
 	public AsianOdds withIsClosing() {
 		this.isClosing = true;
 		return this;
@@ -87,7 +91,7 @@ public class AsianOdds extends Odds {
 			return false;
 		return true;
 	}
-	
+
 	public AsianOdds withFixtureFields(Date date, String homeTeam, String awayTeam) {
 		this.fixtureDate = date;
 		this.homeTeamName = homeTeam;

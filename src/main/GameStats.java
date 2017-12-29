@@ -5,7 +5,7 @@ import utils.Pair;
 public class GameStats {
 
 	// check for better presentation, i.e not with pair
-	Pair shots;
+	public Pair shots;
 	Pair shotsWide;
 	Pair corners;
 	Pair fouls;
@@ -34,6 +34,18 @@ public class GameStats {
 	public GameStats withPossession(int possessionHome) {
 		this.possessionHome = possessionHome;
 		return this;
+	}
+
+	public float getShotsAway() {
+		return shots.away;
+	}
+
+	public float getShotsHome() {
+		return shots.home;
+	}
+
+	public static GameStats initial() {
+		return new GameStats(Pair.of(-1, -1), Pair.of(-1, -1), Pair.of(-1, -1), Pair.of(-1, -1), Pair.of(-1, -1));
 	}
 
 }

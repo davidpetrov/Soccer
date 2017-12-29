@@ -8,12 +8,12 @@ import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 
 import constants.Constants;
-import main.ExtendedFixture;
+import main.Fixture;
 import xls.XlSUtils;
 
 public class Classifiers {
 
-	public static float shots(ExtendedFixture f, ArrayList<ExtendedFixture> all) {
+	public static float shots(Fixture f, ArrayList<Fixture> all) {
 		// The shots data from soccerway(opta) does not add the goals as shots,
 		// must be added for more accurate predictions and equivalancy with
 		// alleurodata
@@ -63,9 +63,9 @@ public class Classifiers {
 	 * @param halfTimeOverOne
 	 * @return
 	 */
-	public static float halfTime(ExtendedFixture f, ArrayList<ExtendedFixture> all, float halfTimeOverOne) {
-		ArrayList<ExtendedFixture> lastHomeTeam = FixtureUtils.selectLastAll(all, f.homeTeam, 50, f.date);
-		ArrayList<ExtendedFixture> lastAwayTeam = FixtureUtils.selectLastAll(all, f.awayTeam, 50, f.date);
+	public static float halfTime(Fixture f, ArrayList<Fixture> all, float halfTimeOverOne) {
+		ArrayList<Fixture> lastHomeTeam = FixtureUtils.selectLastAll(all, f.homeTeam, 50, f.date);
+		ArrayList<Fixture> lastAwayTeam = FixtureUtils.selectLastAll(all, f.awayTeam, 50, f.date);
 
 		// float overOneAvg = (Utils.countOverHalfTime(lastHomeTeam, 1) +
 		// Utils.countOverHalfTime(lastAwayTeam, 1)) / 2;

@@ -1,10 +1,11 @@
 package entries;
 
-import main.ExtendedFixture;
+import main.Fixture;
+import main.Fixture;
 import main.Result;
 
 public class FinalEntry implements Comparable<FinalEntry> {
-	public ExtendedFixture fixture;
+	public Fixture fixture;
 	public Float prediction;
 	public Result result;
 	public float threshold;
@@ -12,9 +13,8 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float lower;
 	public float value;
 
-	public FinalEntry(ExtendedFixture fixture, float prediction, Result result, float threshold, float lower,
-			float upper) {
-		this.fixture = fixture;
+	public FinalEntry(Fixture f, float prediction, Result result, float threshold, float lower, float upper) {
+		this.fixture = f;
 		this.prediction = prediction;
 		this.result = result;
 		this.threshold = threshold;
@@ -51,7 +51,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	}
 
 	public float getValue() {
-		float gain = prediction > threshold ? fixture.maxOver : fixture.maxUnder;
+		float gain = prediction > threshold ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
 		return getCertainty() * gain;
 	}
 
@@ -59,7 +59,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public String toString() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		String out = prediction >= upper ? "over" : "under";
-		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
+		float coeff = prediction >= upper ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
 		if (fixture.result.goalsHomeTeam == -1)
 			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
 					+ fixture.awayTeam + " " + out + " " + String.format("%.2f", coeff) + "\n";
@@ -90,7 +90,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float getProfit() {
 		if (fixture.getTotalGoals() < 0)
 			return 0f;
-		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
+		float coeff = prediction >= upper ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
 		if (success())
 			return coeff - 1f;
 		else
@@ -101,7 +101,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float getNormalizedProfit() {
 		if (fixture.getTotalGoals() < 0)
 			return 0f;
-		float coeff = prediction >= upper ? fixture.maxOver : fixture.maxUnder;
+		float coeff = prediction >= upper ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
 		float betUnit = 1f / (coeff - 1);
 		if (success())
 			return 1f;

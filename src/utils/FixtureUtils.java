@@ -3,12 +3,14 @@ package utils;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 
 import entries.FinalEntry;
-import main.ExtendedFixture;
+import main.Fixture;
+import main.Fixture;
 import main.Result;
 import settings.Settings;
 
@@ -21,9 +23,9 @@ public class FixtureUtils {
 	 * @param all
 	 * @return the max match day i.e. the last one played
 	 */
-	public static int addMatchDay(ArrayList<ExtendedFixture> all) {
+	public static int addMatchDay(ArrayList<Fixture> all) {
 		int max = -1;
-		for (ExtendedFixture f : all) {
+		for (Fixture f : all) {
 			if (f.matchday == -1 || f.matchday == 0) {
 				f.matchday = selectLastAll(all, f.homeTeam, 50, f.date).size() + 1;
 				if (f.matchday > max)
@@ -44,10 +46,9 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static ArrayList<ExtendedFixture> selectLastAll(ArrayList<ExtendedFixture> all, String team, int count,
-			Date date) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture i : all) {
+	public static ArrayList<Fixture> selectLastAll(ArrayList<Fixture> all, String team, int count, Date date) {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture i : all) {
 			if ((i.homeTeam.equals(team) || i.awayTeam.equals(team)) && i.date.before(date)) {
 				result.add(i);
 			}
@@ -65,9 +66,9 @@ public class FixtureUtils {
 	 * @return
 	 */
 
-	public static ArrayList<ExtendedFixture> getLastFixtures(ArrayList<ExtendedFixture> fixtures, int n) {
+	public static ArrayList<Fixture> getLastFixtures(ArrayList<Fixture> fixtures, int n) {
 		int returnedSize = fixtures.size() >= n ? n : fixtures.size();
-		Collections.sort(fixtures, Collections.reverseOrder());
+		fixtures.sort(Comparator.comparing(Fixture::getDate).reversed());
 
 		return new ArrayList<>(fixtures.subList(0, returnedSize));
 	}
@@ -80,9 +81,9 @@ public class FixtureUtils {
 	 * @param i
 	 * @return
 	 */
-	public static ArrayList<ExtendedFixture> getByMatchday(ArrayList<ExtendedFixture> all, int i) {
-		ArrayList<ExtendedFixture> filtered = new ArrayList<>();
-		for (ExtendedFixture f : all) {
+	public static ArrayList<Fixture> getByMatchday(ArrayList<Fixture> all, int i) {
+		ArrayList<Fixture> filtered = new ArrayList<>();
+		for (Fixture f : all) {
 			if (f.matchday == i)
 				filtered.add(f);
 		}
@@ -97,17 +98,17 @@ public class FixtureUtils {
 	 * @param i
 	 * @return
 	 */
-	public static ArrayList<ExtendedFixture> getBeforeMatchday(ArrayList<ExtendedFixture> all, int i) {
-		ArrayList<ExtendedFixture> filtered = new ArrayList<>();
-		for (ExtendedFixture f : all) {
+	public static ArrayList<Fixture> getBeforeMatchday(ArrayList<Fixture> all, int i) {
+		ArrayList<Fixture> filtered = new ArrayList<>();
+		for (Fixture f : all) {
 			if (f.matchday < i)
 				filtered.add(f);
 		}
 		return filtered;
 	}
 
-	public static ArrayList<FinalEntry> runWithSettingsList(ArrayList<ExtendedFixture> all,
-			ArrayList<ExtendedFixture> current, Settings settings) {
+	public static ArrayList<FinalEntry> runWithSettingsList(ArrayList<Fixture> all, ArrayList<Fixture> current,
+			Settings settings) {
 		ArrayList<FinalEntry> finals = calculateScores(all, current, settings);
 
 		return FinalsUtils.restrict(finals, settings);
@@ -122,10 +123,10 @@ public class FixtureUtils {
 	 * @param settings
 	 * @return
 	 */
-	public static ArrayList<FinalEntry> calculateScores(ArrayList<ExtendedFixture> all,
-			ArrayList<ExtendedFixture> current, Settings settings) {
+	public static ArrayList<FinalEntry> calculateScores(ArrayList<Fixture> all, ArrayList<Fixture> current,
+			Settings settings) {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (ExtendedFixture f : current) {
+		for (Fixture f : current) {
 
 			float finalScore = 0f;
 
@@ -161,13 +162,13 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static float selectAvgShotsHome(ArrayList<ExtendedFixture> all, Date date) {
+	public static float selectAvgShotsHome(ArrayList<Fixture> all, Date date) {
 		float sum = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date)) {
-				sum += i.shotsHome;
+				sum += i.getShotsHome();
 				count++;
 			}
 
@@ -182,13 +183,13 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static float selectAvgShotsAway(ArrayList<ExtendedFixture> all, Date date) {
+	public static float selectAvgShotsAway(ArrayList<Fixture> all, Date date) {
 		float sum = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date)) {
-				sum += i.shotsAway;
+				sum += i.gameStats.getShotsAway();
 				count++;
 			}
 
@@ -206,15 +207,15 @@ public class FixtureUtils {
 	 * @return
 	 * 
 	 */
-	public static Pair selectAvgShots(ArrayList<ExtendedFixture> all, Date date, boolean manual, float goalsWeight) {
+	public static Pair selectAvgShots(ArrayList<Fixture> all, Date date, boolean manual, float goalsWeight) {
 		float sumHome = 0f;
 		float sumAway = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date)) {
-				sumHome += i.shotsHome;
-				sumAway += i.shotsAway;
+				sumHome += i.getShotsHome();
+				sumAway += i.getShotsAway();
 				if (manual) {
 					sumHome += goalsWeight * i.result.goalsHomeTeam;
 					sumAway += goalsWeight * i.result.goalsAwayTeam;
@@ -239,14 +240,13 @@ public class FixtureUtils {
 	 * @return
 	 * 
 	 */
-	public static Pair selectAvgShotsByType(ArrayList<ExtendedFixture> all, Date date, boolean manual,
-			float goalsWeight) {
+	public static Pair selectAvgShotsByType(ArrayList<Fixture> all, Date date, boolean manual, float goalsWeight) {
 		float sumUnder = 0f;
 		float sumOver = 0f;
 		int countUnder = 0;
 		int countOver = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date))
 				if (i.getTotalGoals() < 2.5) {
 					sumUnder += i.getShotsTotal();
@@ -274,16 +274,16 @@ public class FixtureUtils {
 	 * @param goalsWeight
 	 * @return
 	 */
-	public static Pair selectAvgShotsHome(ArrayList<ExtendedFixture> all, String homeTeam, Date date, boolean manual,
+	public static Pair selectAvgShotsHome(ArrayList<Fixture> all, String homeTeam, Date date, boolean manual,
 			float goalsWeight) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date) && i.homeTeam.equals(homeTeam)) {
-				sumFor += i.shotsHome;
-				sumAgainst += i.shotsAway;
+				sumFor += i.getShotsHome();
+				sumAgainst += i.getShotsAway();
 				if (manual) {
 					sumFor += goalsWeight * i.result.goalsHomeTeam;
 					sumAgainst += goalsWeight * i.result.goalsAwayTeam;
@@ -305,16 +305,16 @@ public class FixtureUtils {
 	 * @param goalsWeight
 	 * @return
 	 */
-	public static Pair selectAvgShotsAway(ArrayList<ExtendedFixture> all, String awayTeam, Date date, boolean manual,
+	public static Pair selectAvgShotsAway(ArrayList<Fixture> all, String awayTeam, Date date, boolean manual,
 			float goalsWeight) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date) && i.awayTeam.equals(awayTeam)) {
-				sumFor += i.shotsAway;
-				sumAgainst += i.shotsHome;
+				sumFor += i.gameStats.getShotsAway();
+				sumAgainst += i.gameStats.getShotsHome();
 				if (manual) {
 					sumFor += goalsWeight * i.result.goalsAwayTeam;
 					sumAgainst += goalsWeight * i.result.goalsHomeTeam;
@@ -335,12 +335,12 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static Pair selectAvgHomeTeam(ArrayList<ExtendedFixture> all, String homeTeam, Date date) {
+	public static Pair selectAvgHomeTeam(ArrayList<Fixture> all, String homeTeam, Date date) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date) && i.homeTeam.equals(homeTeam)) {
 				sumFor += i.result.goalsHomeTeam;
 				sumAgainst += i.result.goalsAwayTeam;
@@ -362,12 +362,12 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static Pair selectAvgAwayTeam(ArrayList<ExtendedFixture> all, String awayTeam, Date date) {
+	public static Pair selectAvgAwayTeam(ArrayList<Fixture> all, String awayTeam, Date date) {
 		float sumFor = 0f;
 		float sumAgainst = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date) && i.awayTeam.equals(awayTeam)) {
 				sumFor += i.result.goalsAwayTeam;
 				sumAgainst = i.result.goalsHomeTeam;
@@ -387,12 +387,12 @@ public class FixtureUtils {
 	 * @param date
 	 * @return
 	 */
-	public static Pair selectAvgHomeAway(ArrayList<ExtendedFixture> all, Date date) {
+	public static Pair selectAvgHomeAway(ArrayList<Fixture> all, Date date) {
 		float sumHome = 0f;
 		float sumAway = 0f;
 		int count = 0;
 
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.date.before(date)) {
 				sumHome += i.result.goalsHomeTeam;
 				sumAway = i.result.goalsAwayTeam;
@@ -403,7 +403,5 @@ public class FixtureUtils {
 		float against = count == 0 ? 0f : sumAway / count;
 		return Pair.of(forr, against);
 	}
-
-	
 
 }

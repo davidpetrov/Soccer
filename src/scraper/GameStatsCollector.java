@@ -106,7 +106,7 @@ public class GameStatsCollector {
 
 		GameStats gameStats = getGameStats(fixture);
 
-		Fixture f = new Fixture(date, matchday, competition, homeTeam, awayTeam, result).withHTResult(ht)
+		Fixture f = new Fixture(date, competition, homeTeam, awayTeam, result).withHTResult(ht).withYear(year)
 				.withGameStats(gameStats);
 		// System.out.println(f);
 

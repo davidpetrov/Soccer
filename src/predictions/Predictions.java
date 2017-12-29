@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,7 +21,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 
 import entries.FinalEntry;
 import main.Test.DataType;
-import predictions.Predictions.OnlyTodayMatches;
 import runner.RunnerAsianPredictions;
 import runner.RunnerPredictions;
 import scraper.Scraper;
@@ -43,7 +40,7 @@ public class Predictions {
 		// CHECKLIST.add("ENG3");
 		// CHECKLIST.add("ENG4");
 		// CHECKLIST.add("ENG5");
-		// CHECKLIST.add("IT");
+		 CHECKLIST.add("IT");
 		// CHECKLIST.add("IT2");
 		// CHECKLIST.add("FR");
 		// CHECKLIST.add("FR2");
@@ -58,7 +55,7 @@ public class Predictions {
 		// CHECKLIST.add("POR");
 		// CHECKLIST.add("GRE");
 		// CHECKLIST.add("TUR");
-		 CHECKLIST.add("BUL");
+//		 CHECKLIST.add("BUL");
 		// CHECKLIST.add("RUS");
 		// CHECKLIST.add("AUS");
 		// CHECKLIST.add("DEN");
@@ -75,19 +72,14 @@ public class Predictions {
 		// CHECKLIST.add("BRB");
 
 //		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-//		 UpdateType.AUTOMATIC, 26, 12);
-//		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-//		 OnlyTodayMatches.TRUE, 26, 12);
+//		 UpdateType.AUTOMATIC, 29, 12);
+		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
+		 OnlyTodayMatches.TRUE, 30, 12);
 
 //		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
-//		 OnlyTodayMatches.FALSE, 8, 12);
+//		 OnlyTodayMatches.TRUE, 29, 12);
 		
 //		Scraper.checkAndUpdate("ENG3", OnlyTodayMatches.FALSE);
-//		Scraper.checkAndUpdate("ENG5", OnlyTodayMatches.FALSE);
-//		Scraper.checkAndUpdate("BEL", OnlyTodayMatches.FALSE);
-//		Scraper.checkAndUpdate("SWI", OnlyTodayMatches.FALSE);
-		Scraper.checkAndUpdate("ENG", OnlyTodayMatches.FALSE);
-//		Scraper.checkAndUpdate("FR", OnlyTodayMatches.FALSE);
 
 
 
@@ -223,7 +215,7 @@ public class Predictions {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		ArrayList<FinalEntry> all = new ArrayList<>();
 
-		ExecutorService pool = Executors.newFixedThreadPool(3);
+		ExecutorService pool = Executors.newFixedThreadPool(1);
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? Scraper.getTodaysLeagueList(day, month)
 				: CHECKLIST;

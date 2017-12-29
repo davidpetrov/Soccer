@@ -5,15 +5,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import main.Combinable;
+import main.Fixture;
 
 public class FixtureListCombiner {
-	ArrayList<? extends Combinable> odds;
-	ArrayList<? extends Combinable> gameStats;
+	ArrayList<? extends Fixture> odds;
+	ArrayList<? extends Fixture> gameStats;
 	String competition;
 
-	public FixtureListCombiner(ArrayList<? extends Combinable> odds, ArrayList<? extends Combinable> gameStats,
-			String competition) {
+	public FixtureListCombiner(ArrayList<? extends Fixture> odds, ArrayList<? extends Fixture> gameStats, String competition) {
 		super();
 		this.odds = odds;
 		this.gameStats = gameStats;
@@ -82,10 +81,10 @@ public class FixtureListCombiner {
 	private ArrayList<String> getPossibleCandidates(String team, ArrayList<String> teamsgameStats,
 			ArrayList<String> matchedgameStats) {
 		ArrayList<String> possibleCandidates = new ArrayList<>();
-		ArrayList<? extends Combinable> fixtures = getFixturesList(team, odds);
+		ArrayList<? extends Fixture> fixtures = getFixturesList(team, odds);
 		for (String tgameStats : teamsgameStats) {
 			if (!matchedgameStats.contains(tgameStats)) {
-				ArrayList<? extends Combinable> fwa = getFixturesList(tgameStats, gameStats);
+				ArrayList<? extends Fixture> fwa = getFixturesList(tgameStats, gameStats);
 				if (matchesFixtureLists(team, fixtures, fwa)) {
 					possibleCandidates.add(tgameStats);
 				}
@@ -95,7 +94,7 @@ public class FixtureListCombiner {
 		return possibleCandidates;
 	}
 
-	public ArrayList<? extends Combinable> combineWithDictionary() {
+	public ArrayList<? extends Fixture> combineWithDictionary() {
 		HashMap<String, String> dictionary = deduceDictionary();
 
 		return odds.stream().map(i -> findCorresponding(i, gameStats, dictionary))
@@ -103,18 +102,17 @@ public class FixtureListCombiner {
 
 	}
 
-	private Combinable findCorresponding(Combinable i2, ArrayList<? extends Combinable> gameStats,
-			HashMap<String, String> dictionary) {
+	private Fixture findCorresponding(Fixture i2, ArrayList<? extends Fixture> gameStats, HashMap<String, String> dictionary) {
 
 		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-		for (Combinable i : gameStats) {
+		for (Fixture i : gameStats) {
 			if (i2.getHomeTeam().equals(reverseDictionary.get(i.getHomeTeam()))
 					&& i2.getAwayTeam().equals(reverseDictionary.get(i.getAwayTeam()))
 					&& (Math.abs(i.getDate().getTime() - i2.getDate().getTime()) <= 24 * 60 * 60 * 1000)) {
 
-				Combinable ef = i2.withGameStats(i.getGameStats());
+				Fixture ef = i2.withGameStats(i.getGameStats());
 				return ef;
 			}
 		}
@@ -124,16 +122,16 @@ public class FixtureListCombiner {
 
 	/**
 	 * Checks if two lists of fixtures are the same, but different team names
+	 * 
 	 * @param team
 	 * @param fixtures
 	 * @param fwa
 	 * @return
 	 */
-	private boolean matchesFixtureLists(String team, ArrayList<? extends Combinable> fixtures,
-			ArrayList<? extends Combinable> fwa) {
-		for (Combinable i : fixtures) {
+	private boolean matchesFixtureLists(String team, ArrayList<? extends Fixture> fixtures, ArrayList<? extends Fixture> fwa) {
+		for (Fixture i : fixtures) {
 			boolean foundMatch = false;
-			for (Combinable j : fwa) {
+			for (Fixture j : fwa) {
 				if (Math.abs(i.getDate().getTime() - j.getDate().getTime()) <= 24 * 60 * 60 * 1000
 						&& i.getResult().equals(j.getResult())) {
 					foundMatch = true;
@@ -148,9 +146,9 @@ public class FixtureListCombiner {
 		return true;
 	}
 
-	private ArrayList<String> getTeamsList(ArrayList<? extends Combinable> odds) {
+	private ArrayList<String> getTeamsList(ArrayList<? extends Fixture> odds) {
 		ArrayList<String> result = new ArrayList<>();
-		for (Combinable i : odds) {
+		for (Fixture i : odds) {
 			if (!result.contains(i.getHomeTeam()))
 				result.add(i.getHomeTeam());
 			if (!result.contains(i.getAwayTeam()))
@@ -165,7 +163,7 @@ public class FixtureListCombiner {
 	 * @param fixtures
 	 * @return list of the fixtures for the given team
 	 */
-	private ArrayList<? extends Combinable> getFixturesList(String team, ArrayList<? extends Combinable> fixtures) {
+	private ArrayList<? extends Fixture> getFixturesList(String team, ArrayList<? extends Fixture> fixtures) {
 		return fixtures.stream().filter(i -> i.getHomeTeam().equals(team) || i.getAwayTeam().equals(team))
 				.collect(Collectors.toCollection(ArrayList::new));
 	}

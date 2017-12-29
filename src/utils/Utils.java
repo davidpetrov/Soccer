@@ -44,8 +44,8 @@ import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.FullEntry;
 import entries.HTEntry;
-import main.ExtendedFixture;
-import main.FullFixture;
+import main.Fixture;
+import main.Fixture;
 import main.GoalLines;
 import main.Line;
 import main.Player;
@@ -69,37 +69,37 @@ public class Utils {
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	static long start = System.currentTimeMillis();
 
-	public static ArrayList<ExtendedFixture> getLastFixtures(ArrayList<ExtendedFixture> fixtures, int n) {
-		ArrayList<ExtendedFixture> last = new ArrayList<>();
+	public static ArrayList<Fixture> getLastFixtures(ArrayList<Fixture> fixtures, int n) {
+		ArrayList<Fixture> last = new ArrayList<>();
 		int returnedSize = fixtures.size() >= n ? n : fixtures.size();
-		Collections.sort(fixtures, Collections.reverseOrder());
+		fixtures.sort(Comparator.comparing(Fixture::getDate).reversed());
 		for (int i = 0; i < returnedSize; i++) {
 			last.add(fixtures.get(i));
 		}
 		return last;
 	}
 
-	public static ArrayList<ExtendedFixture> getHomeFixtures(ExtendedFixture f, ArrayList<ExtendedFixture> fixtures) {
-		ArrayList<ExtendedFixture> home = new ArrayList<>();
-		for (ExtendedFixture i : fixtures) {
+	public static ArrayList<Fixture> getHomeFixtures(Fixture f, ArrayList<Fixture> fixtures) {
+		ArrayList<Fixture> home = new ArrayList<>();
+		for (Fixture i : fixtures) {
 			if (f.homeTeam.equals(i.homeTeam))
 				home.add(i);
 		}
 		return home;
 	}
 
-	public static ArrayList<ExtendedFixture> getAwayFixtures(ExtendedFixture f, ArrayList<ExtendedFixture> fixtures) {
-		ArrayList<ExtendedFixture> away = new ArrayList<>();
-		for (ExtendedFixture i : fixtures) {
+	public static ArrayList<Fixture> getAwayFixtures(Fixture f, ArrayList<Fixture> fixtures) {
+		ArrayList<Fixture> away = new ArrayList<>();
+		for (Fixture i : fixtures) {
 			if (f.awayTeam.equals(i.awayTeam))
 				away.add(i);
 		}
 		return away;
 	}
 
-	public static float countOverGamesPercent(ArrayList<ExtendedFixture> fixtures) {
+	public static float countOverGamesPercent(ArrayList<Fixture> fixtures) {
 		int count = 0;
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			if (f.getTotalGoals() > 2.5d)
 				count++;
 		}
@@ -107,9 +107,9 @@ public class Utils {
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
 	}
 
-	public static float countBTSPercent(ArrayList<ExtendedFixture> fixtures) {
+	public static float countBTSPercent(ArrayList<Fixture> fixtures) {
 		int count = 0;
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			if (f.bothTeamScore())
 				count++;
 		}
@@ -117,9 +117,9 @@ public class Utils {
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
 	}
 
-	public static float findAvg(ArrayList<ExtendedFixture> all) {
+	public static float findAvg(ArrayList<Fixture> all) {
 		float total = 0;
-		for (ExtendedFixture f : all) {
+		for (Fixture f : all) {
 			total += f.getTotalGoals();
 		}
 		return total / all.size();
@@ -323,9 +323,9 @@ public class Utils {
 		return totalUnder;
 	}
 
-	public static float avgFor(String team, ArrayList<ExtendedFixture> fixtures) {
+	public static float avgFor(String team, ArrayList<Fixture> fixtures) {
 		float total = 0;
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			if (f.homeTeam.equals(team))
 				total += f.result.goalsHomeTeam;
 			if (f.awayTeam.equals(team))
@@ -355,15 +355,15 @@ public class Utils {
 	public static ArrayList<FinalEntry> filterByOdds(ArrayList<FinalEntry> finals, float minOdds, float maxOdds) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
-			float coeff = fe.isOver() ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float coeff = fe.isOver() ? fe.fixture.getMaxClosingOverOdds() : fe.fixture.getMaxClosingUnderOdds();
 			if (coeff > minOdds && coeff <= maxOdds)
 				filtered.add(fe);
 		}
 		return filtered;
 	}
 
-	public static ArrayList<ExtendedFixture> onlyFixtures(ArrayList<FinalEntry> finals) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
+	public static ArrayList<Fixture> onlyFixtures(ArrayList<FinalEntry> finals) {
+		ArrayList<Fixture> result = new ArrayList<>();
 		for (FinalEntry fe : finals)
 			result.add(fe.fixture);
 		return result;
@@ -402,11 +402,11 @@ public class Utils {
 		for (FinalEntry i : finals) {
 			if (i.prediction > i.upper) {
 				overCnt++;
-				overProfit += i.success() ? (i.fixture.maxOver - 1f) : -1f;
+				overProfit += i.success() ? (i.fixture.getMaxClosingOverOdds() - 1f) : -1f;
 			}
 			if (i.prediction < i.lower) {
 				underCnt++;
-				underProfit += i.success() ? (i.fixture.maxUnder - 1f) : -1f;
+				underProfit += i.success() ? (i.fixture.getMaxClosingUnderOdds() - 1f) : -1f;
 			}
 		}
 
@@ -414,10 +414,10 @@ public class Utils {
 		System.out.println(underCnt + " unders with profit: " + underProfit);
 	}
 
-	public static float countOverHalfTime(ArrayList<ExtendedFixture> fixtures, int i) {
+	public static float countOverHalfTime(ArrayList<Fixture> fixtures, int i) {
 
 		int count = 0;
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			if (f.getHalfTimeGoals() >= i)
 				count++;
 		}
@@ -425,10 +425,10 @@ public class Utils {
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
 	}
 
-	public static float countHalfTimeGoalAvgExact(ArrayList<ExtendedFixture> fixtures, int i) {
+	public static float countHalfTimeGoalAvgExact(ArrayList<Fixture> fixtures, int i) {
 
 		int count = 0;
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			if (f.getHalfTimeGoals() == i)
 				count++;
 		}
@@ -436,49 +436,49 @@ public class Utils {
 		return fixtures.size() == 0 ? 0 : ((float) count / fixtures.size());
 	}
 
-	// public static ArrayList<ExtendedFixture>
-	// filterByOdds(ArrayList<ExtendedFixture> data, float min, float max) {
-	// ArrayList<ExtendedFixture> filtered = new ArrayList<>();
-	// for (ExtendedFixture i : data) {
-	// if (i.maxOver <= max && i.maxOver >= min)
+	// public static ArrayList<Fixture>
+	// filterByOdds(ArrayList<Fixture> data, float min, float max) {
+	// ArrayList<Fixture> filtered = new ArrayList<>();
+	// for (Fixture i : data) {
+	// if (i.getMaxClosingOverOdds() <= max && i.getMaxClosingOverOdds() >= min)
 	// filtered.add(i);
 	// }
 	// return filtered;
 	// }
 
-	public static float countOversWhenDraw(ArrayList<ExtendedFixture> all) {
+	public static float countOversWhenDraw(ArrayList<Fixture> all) {
 		int count = 0;
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			if (i.result.goalsHomeTeam == i.result.goalsAwayTeam && i.getTotalGoals() > 2.5f)
 				count++;
 		}
 		return all.size() == 0 ? 0 : ((float) count / all.size());
 	}
 
-	public static float countOversWhenNotDraw(ArrayList<ExtendedFixture> all) {
+	public static float countOversWhenNotDraw(ArrayList<Fixture> all) {
 		int count = 0;
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			if (i.result.goalsHomeTeam != i.result.goalsAwayTeam && i.getTotalGoals() > 2.5f)
 				count++;
 		}
 		return all.size() == 0 ? 0 : ((float) count / all.size());
 	}
 
-	public static float countDraws(ArrayList<ExtendedFixture> all) {
+	public static float countDraws(ArrayList<Fixture> all) {
 		int count = 0;
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			if (i.result.goalsHomeTeam == i.result.goalsAwayTeam)
 				count++;
 		}
 		return all.size() == 0 ? 0 : ((float) count / all.size());
 	}
 
-	public static void byWeekDay(ArrayList<ExtendedFixture> all) {
+	public static void byWeekDay(ArrayList<Fixture> all) {
 		int[] days = new int[8];
 		int[] overs = new int[8];
 		String[] literals = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
 
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			Calendar c = Calendar.getInstance();
 			c.setTime(i.date);
 			int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
@@ -650,8 +650,9 @@ public class Utils {
 						// System.out.println(curr);
 						for (int j = 0; j < n; j++) {
 							if (curr.get(j).success()) {
-								coeff *= curr.get(j).prediction >= curr.get(j).upper ? curr.get(j).fixture.maxOver
-										: curr.get(j).fixture.maxUnder;
+								coeff *= curr.get(j).prediction >= curr.get(j).upper
+										? curr.get(j).fixture.getMaxClosingOverOdds()
+										: curr.get(j).fixture.getMaxClosingUnderOdds();
 								successes++;
 								notlosses++;
 							} else if ((curr.get(j).prediction >= curr.get(j).upper
@@ -718,9 +719,9 @@ public class Utils {
 	}
 
 	public static void analysys(ArrayList<FinalEntry> all, String description, boolean verbose) {
-		trueOddsProportional(all);
 		ArrayList<Stats> stats = new ArrayList<>();
 
+		Utils.removeMarginProportional(all);
 		ArrayList<FinalEntry> noEquilibriums = Utils.noequilibriums(all);
 		ArrayList<FinalEntry> equilibriums = Utils.equilibriums(all);
 
@@ -869,6 +870,11 @@ public class Utils {
 				.forEach(System.out::println);
 	}
 
+	private static void removeMarginProportional(ArrayList<FinalEntry> all) {
+		all.stream().forEach(fe -> fe.fixture.overUnderOdds.stream().forEach(OverUnderOdds::removeMarginProportional));
+		
+	}
+
 	private static HashMap<String, Float> thresholdsByLeague(ArrayList<FinalEntry> all) {
 		HashMap<String, Float> result = new HashMap<>();
 
@@ -878,34 +884,6 @@ public class Utils {
 			else
 				result.put(i.fixture.competition, i.threshold);
 		return result;
-	}
-
-	private static void trueOddsEqual(ArrayList<FinalEntry> all) {
-		for (FinalEntry i : all) {
-			float sum = 1f / i.fixture.maxOver + 1f / i.fixture.maxUnder;
-			i.fixture.maxOver = 1f / ((1f / i.fixture.maxOver) / sum);
-			i.fixture.maxUnder = 1f / ((1f / i.fixture.maxUnder) / sum);
-
-			if (i.fixture.asianHome > 1f && i.fixture.asianAway > 1f) {
-				float sumAsian = 1f / i.fixture.asianHome + 1f / i.fixture.asianAway;
-				i.fixture.asianHome = 1f / ((1f / i.fixture.asianHome) / sumAsian);
-				i.fixture.asianAway = 1f / ((1f / i.fixture.asianAway) / sumAsian);
-			}
-		}
-	}
-
-	private static void trueOddsProportional(ArrayList<FinalEntry> all) {
-		for (FinalEntry i : all) {
-			float margin = 1f / i.fixture.maxOver + 1f / i.fixture.maxUnder - 1f;
-			i.fixture.maxOver = 2 * i.fixture.maxOver / (2f - margin * i.fixture.maxOver);
-			i.fixture.maxUnder = 2 * i.fixture.maxUnder / (2f - margin * i.fixture.maxUnder);
-
-			if (i.fixture.asianHome > 1f && i.fixture.asianAway > 1f) {
-				float marginAsian = 1f / i.fixture.asianHome + 1f / i.fixture.asianAway - 1f;
-				i.fixture.asianHome = 2 * i.fixture.asianHome / (2f - marginAsian * i.fixture.asianHome);
-				i.fixture.asianAway = 2 * i.fixture.asianAway / (2f - marginAsian * i.fixture.asianAway);
-			}
-		}
 	}
 
 	private static ArrayList<Stats> byCertaintyandCOT(ArrayList<FinalEntry> all, String prefix, boolean verbose) {
@@ -995,7 +973,7 @@ public class Utils {
 		ArrayList<FinalEntry> over22 = new ArrayList<>();
 
 		for (FinalEntry i : all) {
-			float odds = i.isOver() ? i.fixture.maxOver : i.fixture.maxUnder;
+			float odds = i.isOver() ? i.fixture.getMaxClosingOverOdds() : i.fixture.getMaxClosingUnderOdds();
 			if (odds <= 1.4f) {
 				under14.add(i);
 			} else if (odds <= 1.8f) {
@@ -1106,12 +1084,14 @@ public class Utils {
 					break;
 				}
 				if (all.get(i).success() && all.get(i + 1).success() && all.get(i + 2).success()) {
-					float c1 = all.get(i).prediction > all.get(i).upper ? all.get(i).fixture.maxOver
-							: all.get(i).fixture.maxUnder;
-					float c2 = all.get(i + 1).prediction > all.get(i + 1).upper ? all.get(i + 1).fixture.maxOver
-							: all.get(i + 1).fixture.maxUnder;
-					float c3 = all.get(i + 2).prediction > all.get(i + 2).upper ? all.get(i + 2).fixture.maxOver
-							: all.get(i + 2).fixture.maxUnder;
+					float c1 = all.get(i).prediction > all.get(i).upper ? all.get(i).fixture.getMaxClosingOverOdds()
+							: all.get(i).fixture.getMaxClosingUnderOdds();
+					float c2 = all.get(i + 1).prediction > all.get(i + 1).upper
+							? all.get(i + 1).fixture.getMaxClosingOverOdds()
+							: all.get(i + 1).fixture.getMaxClosingUnderOdds();
+					float c3 = all.get(i + 2).prediction > all.get(i + 2).upper
+							? all.get(i + 2).fixture.getMaxClosingOverOdds()
+							: all.get(i + 2).fixture.getMaxClosingUnderOdds();
 					bankroll += unit * (c1 * c2 * c3 - 1f);
 					yes++;
 				} else {
@@ -1157,7 +1137,8 @@ public class Utils {
 		for (FinalEntry i : all) {
 			cal.setTime(i.fixture.date);
 			if (cal.get(Calendar.MONTH) == month) {
-				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+				float gain = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
+						: i.fixture.getMaxClosingUnderOdds();
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
 				succ += i.success() ? 1 : 0;
 				alls++;
@@ -1168,7 +1149,8 @@ public class Utils {
 				previous = bank;
 				betSize = bank * percent;
 				month = cal.get(Calendar.MONTH);
-				float gain = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+				float gain = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
+						: i.fixture.getMaxClosingUnderOdds();
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
 				alls = 1;
 				succ = i.success() ? 1 : 0;
@@ -1306,14 +1288,14 @@ public class Utils {
 				under++;
 				if (i.fixture.result.goalsHomeTeam == i.fixture.result.goalsAwayTeam) {
 					drawUnder++;
-					profitUnder += i.fixture.drawOdds;
+					profitUnder += i.fixture.getMaxClosingDrawOdds();
 				}
 
 			} else if (i.prediction >= i.upper) {
 				over++;
 				if (i.fixture.result.goalsHomeTeam == i.fixture.result.goalsAwayTeam) {
 					drawOver++;
-					profitOver += i.fixture.drawOdds;
+					profitOver += i.fixture.getMaxClosingDrawOdds();
 				}
 			}
 		}
@@ -1324,14 +1306,14 @@ public class Utils {
 				+ Results.format((float) (profitOver - over) * 100 / over) + "%");
 	}
 
-	public static Table createTable(ArrayList<ExtendedFixture> data, String sheetName, int year, int i) {
+	public static Table createTable(ArrayList<Fixture> data, String sheetName, int year, int i) {
 		HashMap<String, Position> teams = getTeams(data);
 
 		Table table = new Table(sheetName, year, i);
 
 		for (String team : teams.keySet()) {
-			ExtendedFixture f = new ExtendedFixture(null, team, team, null, null);
-			ArrayList<ExtendedFixture> all = Utils.getHomeFixtures(f, data);
+			Fixture f = new Fixture(null, team, team, null, null);
+			ArrayList<Fixture> all = Utils.getHomeFixtures(f, data);
 			all.addAll(Utils.getAwayFixtures(f, data));
 			Position pos = createPosition(team, all);
 			table.positions.add(pos);
@@ -1341,11 +1323,11 @@ public class Utils {
 		return table;
 	}
 
-	private static Position createPosition(String team, ArrayList<ExtendedFixture> all) {
+	private static Position createPosition(String team, ArrayList<Fixture> all) {
 		Position pos = new Position();
 		pos.team = team;
 
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			if (i.homeTeam.equals(team)) {
 				pos.played++;
 				pos.homeplayed++;
@@ -1404,10 +1386,10 @@ public class Utils {
 		return pos;
 	}
 
-	private static HashMap<String, Position> getTeams(ArrayList<ExtendedFixture> data) {
+	private static HashMap<String, Position> getTeams(ArrayList<Fixture> data) {
 		HashMap<String, Position> teams = new HashMap<>();
 
-		for (ExtendedFixture i : data) {
+		for (Fixture i : data) {
 			if (!teams.containsKey(i.homeTeam)) {
 				Position pos = new Position();
 				pos.team = i.homeTeam;
@@ -1500,19 +1482,19 @@ public class Utils {
 		return result;
 	}
 
-	public static float basicSimilar(ExtendedFixture f, HSSFSheet sheet, Table table) throws ParseException {
+	public static float basicSimilar(Fixture f, HSSFSheet sheet, Table table) throws ParseException {
 		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
 		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
 
-		ArrayList<ExtendedFixture> lastHomeTeam = filter(f.homeTeam,
-				XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date), filterHome);
-		ArrayList<ExtendedFixture> lastAwayTeam = filter(f.awayTeam,
-				XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date), filterAway);
+		ArrayList<Fixture> lastHomeTeam = filter(f.homeTeam, XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date),
+				filterHome);
+		ArrayList<Fixture> lastAwayTeam = filter(f.awayTeam, XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date),
+				filterAway);
 
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = filter(f.homeTeam,
-				XlSUtils.selectLastHome(sheet, f.homeTeam, 25, f.date), filterHome);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = filter(f.awayTeam,
-				XlSUtils.selectLastAway(sheet, f.awayTeam, 25, f.date), filterAway);
+		ArrayList<Fixture> lastHomeHomeTeam = filter(f.homeTeam, XlSUtils.selectLastHome(sheet, f.homeTeam, 25, f.date),
+				filterHome);
+		ArrayList<Fixture> lastAwayAwayTeam = filter(f.awayTeam, XlSUtils.selectLastAway(sheet, f.awayTeam, 25, f.date),
+				filterAway);
 
 		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
@@ -1522,24 +1504,24 @@ public class Utils {
 		return 0.6f * allGamesAVG + 0.3f * homeAwayAVG + 0.1f * BTSAVG;
 	}
 
-	public static float similarPoisson(ExtendedFixture f, HSSFSheet sheet, Table table) throws ParseException {
+	public static float similarPoisson(Fixture f, HSSFSheet sheet, Table table) throws ParseException {
 		ArrayList<String> filterHome = table.getSimilarTeams(f.awayTeam);
 		ArrayList<String> filterAway = table.getSimilarTeams(f.homeTeam);
 
-		ArrayList<ExtendedFixture> lastHomeTeam = filter(f.homeTeam,
-				XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date), filterHome);
-		ArrayList<ExtendedFixture> lastAwayTeam = filter(f.awayTeam,
-				XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date), filterAway);
+		ArrayList<Fixture> lastHomeTeam = filter(f.homeTeam, XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date),
+				filterHome);
+		ArrayList<Fixture> lastAwayTeam = filter(f.awayTeam, XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date),
+				filterAway);
 
 		float lambda = Utils.avgFor(f.homeTeam, lastHomeTeam);
 		float mu = Utils.avgFor(f.awayTeam, lastAwayTeam);
 		return Utils.poissonOver(lambda, mu);
 	}
 
-	private static ArrayList<ExtendedFixture> filter(String team, ArrayList<ExtendedFixture> selectLastAll,
+	private static ArrayList<Fixture> filter(String team, ArrayList<Fixture> selectLastAll,
 			ArrayList<String> filterHome) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture i : selectLastAll) {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture i : selectLastAll) {
 			if (i.homeTeam.equals(team) && filterHome.contains(i.awayTeam))
 				result.add(i);
 			if (i.awayTeam.equals(team) && filterHome.contains(i.homeTeam))
@@ -1573,38 +1555,38 @@ public class Utils {
 		return 5 * bestCot / 6;
 	}
 
-	public static ArrayList<FinalEntry> allOvers(ArrayList<ExtendedFixture> current) {
+	public static ArrayList<FinalEntry> allOvers(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (ExtendedFixture i : current) {
+		for (Fixture i : current) {
 			FinalEntry n = new FinalEntry(i, 1f, i.result, 0.55f, 0.55f, 0.55f);
 			result.add(n);
 		}
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> allUnders(ArrayList<ExtendedFixture> current) {
+	public static ArrayList<FinalEntry> allUnders(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (ExtendedFixture i : current) {
+		for (Fixture i : current) {
 			FinalEntry n = new FinalEntry(i, 0f, i.result, 0.55f, 0.55f, 0.55f);
 			result.add(n);
 		}
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> higherOdds(ArrayList<ExtendedFixture> current) {
+	public static ArrayList<FinalEntry> higherOdds(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (ExtendedFixture i : current) {
-			float prediction = i.maxOver >= i.maxUnder ? 1f : 0f;
+		for (Fixture i : current) {
+			float prediction = i.getMaxClosingOverOdds() >= i.getMaxClosingUnderOdds() ? 1f : 0f;
 			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
 			result.add(n);
 		}
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> lowerOdds(ArrayList<ExtendedFixture> current) {
+	public static ArrayList<FinalEntry> lowerOdds(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (ExtendedFixture i : current) {
-			float prediction = i.maxOver >= i.maxUnder ? 0f : 1f;
+		for (Fixture i : current) {
+			float prediction = i.getMaxClosingOverOdds() >= i.getMaxClosingUnderOdds() ? 0f : 1f;
 			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
 			result.add(n);
 		}
@@ -1711,7 +1693,8 @@ public class Utils {
 	public static float getAvgOdds(ArrayList<FinalEntry> finals) {
 		float total = 0f;
 		for (FinalEntry i : finals) {
-			float coeff = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+			float coeff = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
+					: i.fixture.getMaxClosingUnderOdds();
 			total += coeff;
 		}
 		return finals.size() == 0 ? 0 : total / finals.size();
@@ -1747,7 +1730,8 @@ public class Utils {
 	private static float getNormalizedStakeSum(ArrayList<FinalEntry> all) {
 		float stakeSum = 0f;
 		for (FinalEntry i : all) {
-			float coeff = i.prediction >= i.upper ? i.fixture.maxOver : i.fixture.maxUnder;
+			float coeff = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
+					: i.fixture.getMaxClosingUnderOdds();
 			float betUnit = 1f / (coeff - 1);
 			stakeSum += betUnit;
 		}
@@ -1778,33 +1762,18 @@ public class Utils {
 	 * @param all
 	 * @return the avg return of the picks a.k.a the avg vigorish
 	 */
-	public static float avgReturn(ArrayList<ExtendedFixture> all) {
+	public static float avgReturn(ArrayList<Fixture> all) {
 		float total = 0f;
-		for (ExtendedFixture i : all) {
-			total += 1f / i.maxOver + 1f / i.maxUnder;
+		for (Fixture i : all) {
+			total += 1f / i.getMaxClosingOverOdds() + 1f / i.getMaxClosingUnderOdds();
 		}
 		return all.size() == 0 ? 0 : total / all.size();
 	}
 
-	public static void fairValue(ArrayList<ExtendedFixture> current) {
-
-		for (ExtendedFixture i : current) {
-			float sum = 1f / i.maxOver + 1f / i.maxUnder;
-			i.maxOver = 1f / ((1f / i.maxOver) / sum);
-			i.maxUnder = 1f / ((1f / i.maxUnder) / sum);
-
-			if (i.asianHome > 1f && i.asianAway > 1f) {
-				float sumAsian = 1f / i.asianHome + 1f / i.asianAway;
-				i.asianHome = 1f / ((1f / i.asianHome) / sumAsian);
-				i.asianAway = 1f / ((1f / i.asianAway) / sumAsian);
-			}
-		}
-	}
-
-	public static ArrayList<FinalEntry> runRandom(ArrayList<ExtendedFixture> current) {
+	public static ArrayList<FinalEntry> runRandom(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		Random random = new Random();
-		for (ExtendedFixture i : current) {
+		for (Fixture i : current) {
 			boolean next = random.nextBoolean();
 			float prediction = next ? 1f : 0f;
 			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
@@ -1814,18 +1783,11 @@ public class Utils {
 	}
 
 	// for update of results from soccerway
-	public static Date findLastPendingFixture(ArrayList<ExtendedFixture> all) {
+	public static Date findLastPendingFixture(ArrayList<Fixture> all) {
 
-		all.sort(new Comparator<ExtendedFixture>() {
-
-			@Override
-			public int compare(ExtendedFixture o1, ExtendedFixture o2) {
-				return o1.date.compareTo(o2.date);
-			}
-		});
-
+		all.sort(Comparator.comparing(Fixture::getDate));
 		boolean noPendings = true;
-		for (ExtendedFixture i : all)
+		for (Fixture i : all)
 			if (i.result.goalsHomeTeam == -1) {
 				noPendings = false;
 				break;
@@ -1851,88 +1813,85 @@ public class Utils {
 
 	}
 
-	public static ArrayList<FinalEntry> mainGoalLine(ArrayList<FinalEntry> finals,
-			HashMap<ExtendedFixture, FullFixture> map) {
-		ArrayList<FinalEntry> fulls = new ArrayList<>();
-		for (FinalEntry f : finals) {
+	// TODO
+	// public static ArrayList<FinalEntry>
+	// bestValueByDistibution(ArrayList<FinalEntry> finals,
+	// HashMap<Fixture, Fixture> map, ArrayList<Fixture> all, HSSFSheet sheet) {
+	// ArrayList<FinalEntry> fulls = new ArrayList<>();
+	// for (FinalEntry f : finals) {
+	//
+	// int[] distributionHome = getGoalDistribution(f.fixture, all,
+	// f.fixture.homeTeam);
+	// int[] distributionAway = getGoalDistribution(f.fixture, all,
+	// f.fixture.awayTeam);
+	// FullEntry best = findBestLineFullEntry(f, distributionHome,
+	// distributionAway, map);
+	//
+	// fulls.add(best);
+	// }
+	//
+	// return fulls;
+	// }
 
-			fulls.add(new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper,
-					map.get(f.fixture).goalLines.main));
-		}
+	// private static FullEntry findBestLineFullEntry(FinalEntry f, int[]
+	// distributionHome, int[] distributionAway,
+	// HashMap<Fixture, Fixture> map) {
+	// FullEntry best = new FullEntry(f.fixture, f.prediction, f.result,
+	// f.threshold, f.lower, f.upper,
+	// map.get(f.fixture).goalLines.main);
+	// Fixture full = map.get(f.fixture);
+	// Result originalResult = new Result(full.result.goalsHomeTeam,
+	// full.result.goalsAwayTeam);
+	// float bestValue = Float.NEGATIVE_INFINITY;
+	//
+	// for (Line i : map.get(f.fixture).goalLines.getArrayLines()) {
+	// float valueHome = 0;
+	// int homeSize = 0;
+	// for (int s : distributionHome)
+	// homeSize += s;
+	//
+	// for (int goals = 0; goals < distributionHome.length; goals++) {
+	// full.result = new Result(goals, 0);
+	// valueHome += distributionHome[goals]
+	// * new FullEntry(full, f.prediction, new Result(goals, 0), f.threshold,
+	// f.lower, f.upper, i)
+	// .getProfit();
+	// }
+	//
+	// valueHome /= homeSize;
+	//
+	// float valueAway = 0;
+	// int awaySize = 0;
+	// for (int s : distributionAway)
+	// awaySize += s;
+	//
+	// for (int goals = 0; goals < distributionAway.length; goals++) {
+	// full.result = new Result(goals, 0);
+	// valueAway += distributionAway[goals]
+	// * new FullEntry(full, f.prediction, new Result(goals, 0), f.threshold,
+	// f.lower, f.upper, i)
+	// .getProfit();
+	// }
+	//
+	// valueAway /= awaySize;
+	//
+	// float finalValue = (valueAway + valueHome) / 2;
+	//
+	// if (finalValue > bestValue) {
+	// bestValue = finalValue;
+	// best.line = i;
+	// }
+	// }
+	//
+	// best.result = originalResult;
+	// best.fixture.result = originalResult;
+	// return best;
+	//
+	// }
 
-		return fulls;
-	}
-
-	// TO DO
-	public static ArrayList<FinalEntry> bestValueByDistibution(ArrayList<FinalEntry> finals,
-			HashMap<ExtendedFixture, FullFixture> map, ArrayList<ExtendedFixture> all, HSSFSheet sheet) {
-		ArrayList<FinalEntry> fulls = new ArrayList<>();
-		for (FinalEntry f : finals) {
-
-			int[] distributionHome = getGoalDistribution(f.fixture, all, f.fixture.homeTeam);
-			int[] distributionAway = getGoalDistribution(f.fixture, all, f.fixture.awayTeam);
-			FullEntry best = findBestLineFullEntry(f, distributionHome, distributionAway, map);
-
-			fulls.add(best);
-		}
-
-		return fulls;
-	}
-
-	private static FullEntry findBestLineFullEntry(FinalEntry f, int[] distributionHome, int[] distributionAway,
-			HashMap<ExtendedFixture, FullFixture> map) {
-		FullEntry best = new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper,
-				map.get(f.fixture).goalLines.main);
-		FullFixture full = map.get(f.fixture);
-		Result originalResult = new Result(full.result.goalsHomeTeam, full.result.goalsAwayTeam);
-		float bestValue = Float.NEGATIVE_INFINITY;
-
-		for (Line i : map.get(f.fixture).goalLines.getArrayLines()) {
-			float valueHome = 0;
-			int homeSize = 0;
-			for (int s : distributionHome)
-				homeSize += s;
-
-			for (int goals = 0; goals < distributionHome.length; goals++) {
-				full.result = new Result(goals, 0);
-				valueHome += distributionHome[goals]
-						* new FullEntry(full, f.prediction, new Result(goals, 0), f.threshold, f.lower, f.upper, i)
-								.getProfit();
-			}
-
-			valueHome /= homeSize;
-
-			float valueAway = 0;
-			int awaySize = 0;
-			for (int s : distributionAway)
-				awaySize += s;
-
-			for (int goals = 0; goals < distributionAway.length; goals++) {
-				full.result = new Result(goals, 0);
-				valueAway += distributionAway[goals]
-						* new FullEntry(full, f.prediction, new Result(goals, 0), f.threshold, f.lower, f.upper, i)
-								.getProfit();
-			}
-
-			valueAway /= awaySize;
-
-			float finalValue = (valueAway + valueHome) / 2;
-
-			if (finalValue > bestValue) {
-				bestValue = finalValue;
-				best.line = i;
-			}
-		}
-
-		best.result = originalResult;
-		best.fixture.result = originalResult;
-		return best;
-
-	}
-
-	private static int[] getGoalDistribution(ExtendedFixture fixture, ArrayList<ExtendedFixture> all, String team) {
+	private static int[] getGoalDistribution(Fixture fixture, ArrayList<Fixture> all, String team) {
 		int[] distribution = new int[20];
-		for (ExtendedFixture i : all) {
+		for (Fixture i : all) {
 			if ((i.homeTeam.equals(team) || i.awayTeam.equals(team)) && i.date.before(fixture.date)) {
 				int totalGoals = i.getTotalGoals();
 				distribution[totalGoals]++;
@@ -1942,45 +1901,9 @@ public class Utils {
 
 	}
 
-	// offset of main line
-	public static ArrayList<FinalEntry> customGoalLine(ArrayList<FinalEntry> finals,
-			HashMap<ExtendedFixture, FullFixture> map, float offset) {
-		ArrayList<FinalEntry> fulls = new ArrayList<>();
-
-		for (FinalEntry f : finals) {
-			boolean isOver = f.prediction > f.threshold;
-			FullEntry full = new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper, null);
-			if (offset == 0.25f) {
-				if (isOver)
-					full.line = map.get(f.fixture).goalLines.line2;
-				else
-					full.line = map.get(f.fixture).goalLines.line3;
-			} else if (offset == 0.5f) {
-				if (isOver)
-					full.line = map.get(f.fixture).goalLines.line1;
-				else
-					full.line = map.get(f.fixture).goalLines.line4;
-			} else if (offset == -0.25f) {
-				if (isOver)
-					full.line = map.get(f.fixture).goalLines.line3;
-				else
-					full.line = map.get(f.fixture).goalLines.line2;
-			} else if (offset == -0.5f) {
-				if (isOver)
-					full.line = map.get(f.fixture).goalLines.line4;
-				else
-					full.line = map.get(f.fixture).goalLines.line1;
-			}
-
-			fulls.add(full);
-		}
-
-		return fulls;
-	}
-
-	public static ArrayList<String> getTeamsList(ArrayList<ExtendedFixture> odds) {
+	public static ArrayList<String> getTeamsList(ArrayList<Fixture> odds) {
 		ArrayList<String> result = new ArrayList<>();
-		for (ExtendedFixture i : odds) {
+		for (Fixture i : odds) {
 			if (!result.contains(i.homeTeam))
 				result.add(i.homeTeam);
 			if (!result.contains(i.awayTeam))
@@ -1995,9 +1918,9 @@ public class Utils {
 	 * @param fixtures
 	 * @return list of the fixtures for the given team
 	 */
-	public static ArrayList<ExtendedFixture> getFixturesList(String team, ArrayList<ExtendedFixture> fixtures) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture i : fixtures)
+	public static ArrayList<Fixture> getFixturesList(String team, ArrayList<Fixture> fixtures) {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture i : fixtures)
 			if (i.homeTeam.equals(team) || i.awayTeam.equals(team))
 				result.add(i);
 
@@ -2014,14 +1937,13 @@ public class Utils {
 	 * @param fwa
 	 * @return
 	 */
-	public static boolean matchesFixtureLists(String teamFor, ArrayList<ExtendedFixture> fixtures,
-			ArrayList<ExtendedFixture> fwa) {
+	public static boolean matchesFixtureLists(String teamFor, ArrayList<Fixture> fixtures, ArrayList<Fixture> fwa) {
 		// System.out.println(fixtures);
 		// System.out.println(fwa);
-		for (ExtendedFixture i : fixtures) {
+		for (Fixture i : fixtures) {
 			boolean foundMatch = false;
 			boolean isHomeSide = teamFor.equals(i.homeTeam);
-			for (ExtendedFixture j : fwa) {
+			for (Fixture j : fwa) {
 				if (Math.abs(i.date.getTime() - j.date.getTime()) <= 24 * 60 * 60 * 1000 && i.result.equals(j.result)) {
 					foundMatch = true;
 					break;
@@ -2034,26 +1956,28 @@ public class Utils {
 
 		return true;
 	}
-
-	public static ArrayList<FinalEntry> specificLine(ArrayList<FinalEntry> finals,
-			HashMap<ExtendedFixture, FullFixture> map, float line) {
-		ArrayList<FinalEntry> fulls = new ArrayList<>();
-
-		for (FinalEntry f : finals) {
-			// boolean isOver = f.prediction > f.threshold;
-			FullEntry full = new FullEntry(f.fixture, f.prediction, f.result, f.threshold, f.lower, f.upper, null);
-			for (Line l : map.get(f.fixture).goalLines.getArrayLines()) {
-				if (l.line == line) {
-					full.line = l;
-					fulls.add(full);
-					continue;
-				}
-			}
-
-		}
-
-		return fulls;
-	}
+	// TODO
+	// public static ArrayList<FinalEntry> specificLine(ArrayList<FinalEntry>
+	// finals, HashMap<Fixture, Fixture> map,
+	// float line) {
+	// ArrayList<FinalEntry> fulls = new ArrayList<>();
+	//
+	// for (FinalEntry f : finals) {
+	// // boolean isOver = f.prediction > f.threshold;
+	// FullEntry full = new FullEntry(f.fixture, f.prediction, f.result,
+	// f.threshold, f.lower, f.upper, null);
+	// for (Line l : map.get(f.fixture).goalLines.getArrayLines()) {
+	// if (l.line == line) {
+	// full.line = l;
+	// fulls.add(full);
+	// continue;
+	// }
+	// }
+	//
+	// }
+	//
+	// return fulls;
+	// }
 
 	/**
 	 * Calculates the similarity (a number within 0 and 1) between two strings.
@@ -2107,74 +2031,6 @@ public class Utils {
 		return costs[s2.length()];
 	}
 
-	public static ArrayList<FinalEntry> estimateOposite(ArrayList<ExtendedFixture> current,
-			HashMap<ExtendedFixture, FullFixture> map, HSSFSheet sheet) throws ParseException {
-		ArrayList<FinalEntry> fulls = new ArrayList<>();
-		for (ExtendedFixture f : current) {
-			FullEntry fe = worse(f, estimateBoth(f, map, sheet), f.line, f.asianHome, f.asianAway, map);
-			fulls.add(fe);
-		}
-
-		return fulls;
-	}
-
-	/**
-	 * The oposite of the main goal line with advantage
-	 * 
-	 * @param f
-	 * @param map
-	 * @param sheet
-	 * @return
-	 * @throws ParseException
-	 */
-	private static Pair estimateBoth(ExtendedFixture f, HashMap<ExtendedFixture, FullFixture> map, HSSFSheet sheet)
-			throws ParseException {
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date);
-
-		float over = Utils.estimateTheLineFull(f, f.homeTeam, lastHomeHomeTeam, f.line, true, map);
-		float under = Utils.estimateTheLineFull(f, f.awayTeam, lastAwayAwayTeam, f.line, false, map);
-
-		return Pair.of(over, under);
-	}
-
-	private static float estimateTheLineFull(ExtendedFixture f, String homeTeam,
-			ArrayList<ExtendedFixture> lastHomeTeam, float line, boolean b, HashMap<ExtendedFixture, FullFixture> map) {
-		if (lastHomeTeam.size() == 0)
-			return 0;
-		ArrayList<String> results = new ArrayList<>();
-		for (ExtendedFixture i : lastHomeTeam) {
-			float prediction = b ? 1f : 0f;
-			FullEntry ae = new FullEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f, mapget(map, i).goalLines.main);
-			results.add(ae.successFull());
-		}
-
-		float coeff = b ? map.get(f).goalLines.main.home : map.get(f).goalLines.main.away;
-		return outcomes(results, coeff);
-	}
-
-	private static FullFixture mapget(HashMap<ExtendedFixture, FullFixture> map, ExtendedFixture i) {
-		for (Entry<ExtendedFixture, FullFixture> entry : map.entrySet())
-			if (entry.getKey().homeTeam.equals(i.homeTeam) && entry.getKey().awayTeam.equals(i.awayTeam)
-					&& entry.getKey().date.equals(i.date))
-				return entry.getValue();
-
-		return null;
-	}
-
-	private static FullEntry worse(ExtendedFixture f, Pair pair, float line, float home2, float away2,
-			HashMap<ExtendedFixture, FullFixture> map) {
-		FullEntry home = new FullEntry(f, pair.home, f.result, f.matchday, 0.55f, 0.55f, map.get(f).goalLines.main);
-		FullEntry away = new FullEntry(f, pair.away, f.result, f.matchday, 0.55f, 0.55f, map.get(f).goalLines.main);
-		if (home.prediction < away.prediction) {
-			home.prediction = 1f;
-			return home;
-		} else {
-			away.prediction = 0f;
-			return away;
-		}
-	}
-
 	public static float outcomes(ArrayList<String> results, float coeff) {
 		int wins = 0;
 		int halfwins = 0;
@@ -2201,16 +2057,16 @@ public class Utils {
 				- ((float) losses / results.size());
 	}
 
-	public static LinearRegression getRegression(String homeTeam, ArrayList<ExtendedFixture> lastHome) {
+	public static LinearRegression getRegression(String homeTeam, ArrayList<Fixture> lastHome) {
 		ArrayList<Double> homeGoals = new ArrayList<>();
 		ArrayList<Double> homeShots = new ArrayList<>();
-		for (ExtendedFixture i : lastHome) {
+		for (Fixture i : lastHome) {
 			if (i.homeTeam.equals(homeTeam)) {
 				homeGoals.add((double) i.result.goalsHomeTeam);
-				homeShots.add((double) i.shotsHome);
+				homeShots.add((double) i.gameStats.getShotsHome());
 			} else {
 				homeGoals.add((double) i.result.goalsAwayTeam);
-				homeShots.add((double) i.shotsAway);
+				homeShots.add((double) i.gameStats.getShotsAway());
 			}
 		}
 
@@ -2252,9 +2108,9 @@ public class Utils {
 	 * @param current
 	 */
 
-	public static ArrayList<ExtendedFixture> inMonth(ArrayList<ExtendedFixture> current, int i, int j) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture c : current) {
+	public static ArrayList<Fixture> inMonth(ArrayList<Fixture> current, int i, int j) {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture c : current) {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(c.date);
 			int month = cal.get(Calendar.MONTH);
@@ -2278,11 +2134,10 @@ public class Utils {
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> runWithPlayersData(ArrayList<ExtendedFixture> current,
-			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary, ArrayList<ExtendedFixture> all, float th)
-					throws ParseException {
+	public static ArrayList<FinalEntry> runWithPlayersData(ArrayList<Fixture> current, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary, ArrayList<Fixture> all, float th) throws ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-		for (ExtendedFixture i : current) {
+		for (Fixture i : current) {
 			float eval = evaluatePlayers(i, pfs, dictionary, all);
 			FinalEntry fe = new FinalEntry(i, eval/* >=0.55f ? 0f : 1f */, i.result, th, th, th);
 			// fe.prediction = fe.isOver() ? 0f : 1f;
@@ -2292,8 +2147,8 @@ public class Utils {
 		return result;
 	}
 
-	public static float evaluatePlayers(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
-			HashMap<String, String> dictionary, ArrayList<ExtendedFixture> all) throws ParseException {
+	public static float evaluatePlayers(Fixture ef, ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary,
+			ArrayList<Fixture> all) throws ParseException {
 		// The shots data from soccerway(opta) does not add the goals as shots,
 		// must be added for more accurate predictions and equivalancy with
 		// alleurodata
@@ -2346,8 +2201,8 @@ public class Utils {
 
 	}
 
-	private static float estimateGoalFromPlayerStats(ExtendedFixture ef, ArrayList<PlayerFixture> pfs,
-			HashMap<String, String> dictionary, boolean home, ArrayList<ExtendedFixture> all) throws ParseException {
+	private static float estimateGoalFromPlayerStats(Fixture ef, ArrayList<PlayerFixture> pfs,
+			HashMap<String, String> dictionary, boolean home, ArrayList<Fixture> all) throws ParseException {
 		ArrayList<PlayerFixture> homePlayers = getPlayers(ef, home, pfs, dictionary);
 		if (!Utils.validatePlayers(homePlayers))
 			System.out.println("Not a valid squad for " + ef);
@@ -2414,7 +2269,7 @@ public class Utils {
 		return result;
 	}
 
-	private static ArrayList<Player> createStatistics(ExtendedFixture i, boolean home, ArrayList<PlayerFixture> pfs,
+	private static ArrayList<Player> createStatistics(Fixture i, boolean home, ArrayList<PlayerFixture> pfs,
 			HashMap<String, String> dictionary) {
 		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
@@ -2492,7 +2347,7 @@ public class Utils {
 		}
 	}
 
-	private static ArrayList<PlayerFixture> getPlayers(ExtendedFixture i, boolean home, ArrayList<PlayerFixture> pfs,
+	private static ArrayList<PlayerFixture> getPlayers(Fixture i, boolean home, ArrayList<PlayerFixture> pfs,
 			HashMap<String, String> dictionary) {
 		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
@@ -2517,8 +2372,8 @@ public class Utils {
 		return result;
 	}
 
-	public static ArrayList<ExtendedFixture> getFixtures(ArrayList<PlayerFixture> pfs) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
+	public static ArrayList<Fixture> getFixtures(ArrayList<PlayerFixture> pfs) {
+		ArrayList<Fixture> result = new ArrayList<>();
 		for (PlayerFixture i : pfs) {
 			if (!result.contains(i.fixture))
 				result.add(i.fixture);
@@ -2526,18 +2381,18 @@ public class Utils {
 		return result;
 	}
 
-	public static ArrayList<ExtendedFixture> notPending(ArrayList<ExtendedFixture> all) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture i : all) {
+	public static ArrayList<Fixture> notPending(ArrayList<Fixture> all) {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture i : all) {
 			if (i.getTotalGoals() >= 0)
 				result.add(i);
 		}
 		return result;
 	}
 
-	public static ArrayList<ExtendedFixture> pending(ArrayList<ExtendedFixture> all) {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture i : all) {
+	public static ArrayList<Fixture> pending(ArrayList<Fixture> all) {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture i : all) {
 			if (i.getTotalGoals() < 0)
 				result.add(i);
 		}
@@ -2807,7 +2662,8 @@ public class Utils {
 	 */
 	public static void weightedPredictions(ArrayList<FinalEntry> all, float oddsImpliedProbabilityWeight) {
 		for (FinalEntry i : all) {
-			float gain = i.prediction > i.threshold ? i.fixture.maxOver : i.fixture.maxUnder;
+			float gain = i.prediction > i.threshold ? i.fixture.getMaxClosingOverOdds()
+					: i.fixture.getMaxClosingUnderOdds();
 			i.prediction = (i.prediction + oddsImpliedProbabilityWeight / gain) / (oddsImpliedProbabilityWeight + 1f);
 		}
 	}

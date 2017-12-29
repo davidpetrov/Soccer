@@ -1,13 +1,13 @@
 package entries;
 
-import main.ExtendedFixture;
+import main.Fixture;
 import main.Result;
 
 public class FullEntry extends FinalEntry {
 
 	public main.Line line;
 
-	public FullEntry(ExtendedFixture fixture, float prediction, Result result, float threshold, float lower,
+	public FullEntry(Fixture fixture, float prediction, Result result, float threshold, float lower,
 			float upper, main.Line line) {
 		super(fixture, prediction, result, threshold, lower, upper);
 		this.line = line;

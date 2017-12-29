@@ -3,7 +3,7 @@ package tables;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import main.ExtendedFixture;
+import main.Fixture;
 
 public class Table {
 
@@ -32,7 +32,7 @@ public class Table {
 		return Integer.MIN_VALUE;
 	}
 
-	public int getPositionDiff(ExtendedFixture f) {
+	public int getPositionDiff(Fixture f) {
 		return getPosition(f.homeTeam) - getPosition(f.awayTeam);
 	}
 

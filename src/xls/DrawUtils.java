@@ -12,7 +12,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 import entries.AsianEntry;
 import entries.DrawEntry;
-import main.ExtendedFixture;
+import main.Fixture;
 import settings.SettingsAsian;
 import settings.SettingsDraws;
 import utils.FixtureUtils;
@@ -21,7 +21,7 @@ import utils.Utils;
 
 public class DrawUtils {
 
-	public static float poissonDraw(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+	public static float poissonDraw(Fixture f, HSSFSheet sheet) throws ParseException {
 
 		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
 		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
@@ -36,12 +36,12 @@ public class DrawUtils {
 		return Utils.poissonDraw(lambda, mu, 0);
 	}
 
-	public static float basic(ExtendedFixture f, HSSFSheet sheet, float d, float e) throws ParseException {
-		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 10, f.date);
-		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 10, f.date);
+	public static float basic(Fixture f, HSSFSheet sheet, float d, float e) throws ParseException {
+		ArrayList<Fixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 10, f.date);
+		ArrayList<Fixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 10, f.date);
 
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 5, f.date);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 5, f.date);
+		ArrayList<Fixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 5, f.date);
+		ArrayList<Fixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 5, f.date);
 
 		float allGamesAVG = (Utils.countDraws(lastHomeTeam) + Utils.countDraws(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countDraws(lastHomeHomeTeam) + Utils.countDraws(lastAwayAwayTeam)) / 2;
@@ -52,19 +52,19 @@ public class DrawUtils {
 	public static float realistic(HSSFSheet sheet, int year) throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
+		ArrayList<Fixture> all = XlSUtils.selectAllAll(sheet);
 
 		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			// SettingsDraws set = runForLeague(sheet, data, year);
 
 			ArrayList<DrawEntry> finals = new ArrayList<>();
 
 			for (int j = 0; j < data.size(); j++) {
-				ExtendedFixture f = data.get(j);
+				Fixture f = data.get(j);
 				float score = shotsDraw(f, sheet);
 				float value = score;
 				if (score != 0f) {
@@ -77,7 +77,7 @@ public class DrawUtils {
 
 			finals = new ArrayList<>();
 			for (int j = 0; j < current.size(); j++) {
-				ExtendedFixture f = current.get(j);
+				Fixture f = current.get(j);
 				float score = shotsDraw(f, sheet);
 				float value = score;
 				if (score != 0f) {
@@ -116,7 +116,7 @@ public class DrawUtils {
 		return result;
 	}
 
-	private static SettingsDraws runForLeague(HSSFSheet sheet, ArrayList<ExtendedFixture> data, int year) throws ParseException {
+	private static SettingsDraws runForLeague(HSSFSheet sheet, ArrayList<Fixture> data, int year) throws ParseException {
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		SettingsDraws best = null;
 
@@ -132,7 +132,7 @@ public class DrawUtils {
 			int y = 20 - x;
 			ArrayList<DrawEntry> finals = new ArrayList<>();
 			for (int i = 0; i < data.size(); i++) {
-				ExtendedFixture f = data.get(i);
+				Fixture f = data.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 				DrawEntry ae = new DrawEntry(f, true, finalScore);
 			}
@@ -215,7 +215,7 @@ public class DrawUtils {
 		return best;
 	}
 
-	public static float shotsDraw(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+	public static float shotsDraw(Fixture f, HSSFSheet sheet) throws ParseException {
 		// float avgTotal = selectAvgShotsTotal(sheet, f.date);
 
 		float avgHome = XlSUtils.selectAvgShotsHome(sheet, f.date);

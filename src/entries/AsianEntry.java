@@ -1,18 +1,18 @@
 package entries;
 
-import main.ExtendedFixture;
+import main.Fixture;
 import results.Results;
 import utils.Utils;
 
 public class AsianEntry {
-	public ExtendedFixture fixture;
+	public Fixture fixture;
 	public boolean prediction;
 	public float line;
 	public float home;
 	public float away;
 	public float expectancy;
 
-	public AsianEntry(ExtendedFixture fixture, boolean prediction, float line, float home, float away,
+	public AsianEntry(Fixture fixture, boolean prediction, float line, float home, float away,
 			float expectancy) {
 		this.fixture = fixture;
 		this.prediction = prediction;

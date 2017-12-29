@@ -1,13 +1,13 @@
 package entries;
 
-import main.ExtendedFixture;
+import main.Fixture;
 
 public class Entry implements Comparable<Entry> {
-	public ExtendedFixture fixture;
+	public Fixture fixture;
 	Float result;
 	String alg;
 
-	public Entry(ExtendedFixture fixture, float result, String alg) {
+	public Entry(Fixture fixture, float result, String alg) {
 		this.fixture = fixture;
 		this.result = result;
 		this.alg = alg;

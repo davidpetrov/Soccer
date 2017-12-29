@@ -1,7 +1,7 @@
 package main;
 
 public class PlayerFixture {
-	public ExtendedFixture fixture;
+	public Fixture fixture;
 	public String team;
 	public String name;
 	public int minutesPlayed;
@@ -10,7 +10,7 @@ public class PlayerFixture {
 	public int goals;
 	public int assists;
 
-	public PlayerFixture(ExtendedFixture fixture, String team, String name, int minutesPlayed, boolean lineup,
+	public PlayerFixture(Fixture fixture, String team, String name, int minutesPlayed, boolean lineup,
 			boolean substitute, int goals, int assists) {
 		super();
 		this.fixture = fixture;
@@ -63,6 +63,5 @@ public class PlayerFixture {
 			return false;
 		return true;
 	}
-	
-	
+
 }

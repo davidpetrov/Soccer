@@ -35,13 +35,16 @@ import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.HTEntry;
 import main.AsianLines;
-import main.Combinable;
-import main.ExtendedFixture;
-import main.FullFixture;
+import main.Fixture;
+import main.Fixture;
+import main.Fixture;
 import main.GoalLines;
 import main.PlayerFixture;
 import main.Result;
 import main.SQLiteJDBC;
+import odds.AsianOdds;
+import odds.MatchOdds;
+import odds.OverUnderOdds;
 import scraper.Names;
 import settings.Settings;
 import settings.SettingsAsian;
@@ -69,9 +72,9 @@ public class XlSUtils {
 		return -1;
 	}
 
-	public static ArrayList<ExtendedFixture> selectLastAll(HSSFSheet sheet, String team, int count, Date date)
+	public static ArrayList<Fixture> selectLastAll(HSSFSheet sheet, String team, int count, Date date)
 			throws ParseException {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 
@@ -89,7 +92,7 @@ public class XlSUtils {
 				fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 
 			if ((home.equals(team) || away.equals(team)) && fdate.before(date)) {
-				ExtendedFixture f = getFixture(sheet, row);
+				Fixture f = getFixture(sheet, row);
 				if (f != null)
 					results.add(f);
 				else
@@ -100,9 +103,9 @@ public class XlSUtils {
 		return Utils.getLastFixtures(results, count);
 	}
 
-	public static ArrayList<ExtendedFixture> selectLastHome(HSSFSheet sheet, String team, int count, Date date)
+	public static ArrayList<Fixture> selectLastHome(HSSFSheet sheet, String team, int count, Date date)
 			throws ParseException {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 
@@ -118,7 +121,7 @@ public class XlSUtils {
 			else
 				fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if (home.equals(team) && fdate.before(date) && row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
-				ExtendedFixture f = getFixture(sheet, row);
+				Fixture f = getFixture(sheet, row);
 				if (f != null)
 					results.add(f);
 				else
@@ -129,9 +132,9 @@ public class XlSUtils {
 		return Utils.getLastFixtures(results, count);
 	}
 
-	public static ArrayList<ExtendedFixture> selectLastAway(HSSFSheet sheet, String team, int count, Date date)
+	public static ArrayList<Fixture> selectLastAway(HSSFSheet sheet, String team, int count, Date date)
 			throws ParseException {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
 
@@ -147,7 +150,7 @@ public class XlSUtils {
 			else
 				fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if (away.equals(team) && fdate.before(date) && row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null) {
-				ExtendedFixture f = getFixture(sheet, row);
+				Fixture f = getFixture(sheet, row);
 				if (f != null)
 					results.add(f);
 				else
@@ -159,12 +162,12 @@ public class XlSUtils {
 		return Utils.getLastFixtures(results, count);
 	}
 
-	public static float basic2(ExtendedFixture f, HSSFSheet sheet, float d, float e, float z) throws ParseException {
-		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 10, f.date);
-		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 10, f.date);
+	public static float basic2(Fixture f, HSSFSheet sheet, float d, float e, float z) throws ParseException {
+		ArrayList<Fixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 10, f.date);
+		ArrayList<Fixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 10, f.date);
 
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 5, f.date);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 5, f.date);
+		ArrayList<Fixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 5, f.date);
+		ArrayList<Fixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 5, f.date);
 		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
 				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
@@ -173,12 +176,12 @@ public class XlSUtils {
 		return d * allGamesAVG + e * homeAwayAVG + z * BTSAVG;
 	}
 
-	public static float reverseOfFortune(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
-		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date);
-		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date);
+	public static float reverseOfFortune(Fixture f, HSSFSheet sheet) throws ParseException {
+		ArrayList<Fixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date);
+		ArrayList<Fixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date);
 
-		ArrayList<ExtendedFixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 25, f.date);
-		ArrayList<ExtendedFixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 25, f.date);
+		ArrayList<Fixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 25, f.date);
+		ArrayList<Fixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 25, f.date);
 		float allGamesAVG = (Utils.countOverGamesPercent(lastHomeTeam) + Utils.countOverGamesPercent(lastAwayTeam)) / 2;
 		float homeAwayAVG = (Utils.countOverGamesPercent(lastHomeHomeTeam)
 				+ Utils.countOverGamesPercent(lastAwayAwayTeam)) / 2;
@@ -196,39 +199,40 @@ public class XlSUtils {
 			return 0.5f;
 	}
 
-	public static float drawBased(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
-		float drawChance = f.drawOdds / (f.awayOdds + f.drawOdds + f.homeOdds);
-		ArrayList<ExtendedFixture> all = selectToDate(sheet, f.date);
+	public static float drawBased(Fixture f, HSSFSheet sheet) throws ParseException {
+		float drawChance = f.getMaxClosingDrawOdds()
+				/ (f.getMaxClosingAwayOdds() + f.getMaxClosingDrawOdds() + f.getMaxClosingHomeOdds());
+		ArrayList<Fixture> all = selectToDate(sheet, f.date);
 		return drawChance * Utils.countOversWhenDraw(all) + (1 - drawChance) * Utils.countOversWhenNotDraw(all);
 	}
 
-	private static ArrayList<ExtendedFixture> selectToDate(HSSFSheet sheet, Date date) throws ParseException {
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
-		for (ExtendedFixture ef : selectAllAll(sheet)) {
+	private static ArrayList<Fixture> selectToDate(HSSFSheet sheet, Date date) throws ParseException {
+		ArrayList<Fixture> result = new ArrayList<>();
+		for (Fixture ef : selectAllAll(sheet)) {
 			if (ef.date.before(date))
 				result.add(ef);
 		}
 		return result;
 	}
 
-	public static float halfTimeOnly(ExtendedFixture f, HSSFSheet sheet, int over) throws ParseException {
-		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 40, f.date);
-		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 40, f.date);
+	public static float halfTimeOnly(Fixture f, HSSFSheet sheet, int over) throws ParseException {
+		ArrayList<Fixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 40, f.date);
+		ArrayList<Fixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 40, f.date);
 
 		float overAVG = (Utils.countOverHalfTime(lastHomeTeam, over) + Utils.countOverHalfTime(lastAwayTeam, over)) / 2;
 		return overAVG;
 	}
 
-	public static float poisson(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
-		ArrayList<ExtendedFixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 10, f.date);
-		ArrayList<ExtendedFixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 10, f.date);
+	public static float poisson(Fixture f, HSSFSheet sheet) throws ParseException {
+		ArrayList<Fixture> lastHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 10, f.date);
+		ArrayList<Fixture> lastAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 10, f.date);
 
 		float lambda = Utils.avgFor(f.homeTeam, lastHomeTeam);
 		float mu = Utils.avgFor(f.awayTeam, lastAwayTeam);
 		return Utils.poissonOver(lambda, mu);
 	}
 
-	public static float poissonWeighted(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+	public static float poissonWeighted(Fixture f, HSSFSheet sheet) throws ParseException {
 
 		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
 		float leagueAvgAway = XlSUtils.selectAvgLeagueAway(sheet, f.date);
@@ -243,7 +247,7 @@ public class XlSUtils {
 		return Utils.poissonOver(lambda, mu);
 	}
 
-	public static float shots(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+	public static float shots(Fixture f, HSSFSheet sheet) throws ParseException {
 		// float avgTotal = selectAvgShotsTotal(sheet, f.date);
 
 		float avgHome = selectAvgShotsHome(sheet, f.date);
@@ -285,11 +289,11 @@ public class XlSUtils {
 		}
 	}
 
-	public static float regressionShots(ExtendedFixture f, HSSFSheet sheet) throws ParseException {
+	public static float regressionShots(Fixture f, HSSFSheet sheet) throws ParseException {
 		// float avgTotal = selectAvgShotsTotal(sheet, f.date);
 
-		ArrayList<ExtendedFixture> lastHome = selectLastAll(sheet, f.homeTeam, 50, f.date);
-		ArrayList<ExtendedFixture> lastAway = selectLastAll(sheet, f.awayTeam, 50, f.date);
+		ArrayList<Fixture> lastHome = selectLastAll(sheet, f.homeTeam, 50, f.date);
+		ArrayList<Fixture> lastAway = selectLastAll(sheet, f.awayTeam, 50, f.date);
 
 		LinearRegression regressionHome = Utils.getRegression(f.homeTeam, lastHome);
 		LinearRegression regressionAway = Utils.getRegression(f.awayTeam, lastAway);
@@ -807,8 +811,8 @@ public class XlSUtils {
 	}
 
 	// selects all fixtures after the 10 matchday
-	public static ArrayList<ExtendedFixture> selectAll(HSSFSheet sheet, int limit) throws ParseException {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+	public static ArrayList<Fixture> selectAll(HSSFSheet sheet, int limit) throws ParseException {
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy HH:mm");
@@ -831,7 +835,7 @@ public class XlSUtils {
 
 			if (selectLastAll(sheet, home, 10, fdate).size() >= limit
 					&& selectLastAll(sheet, away, 10, fdate).size() >= limit) {
-				ExtendedFixture f = getFixture(sheet, row);
+				Fixture f = getFixture(sheet, row);
 				if (f != null)
 					results.add(f);
 				else
@@ -843,8 +847,8 @@ public class XlSUtils {
 	}
 
 	// selects all fixtures with all lines
-	public static ArrayList<FullFixture> selectAllFull(HSSFSheet sheet, int limit) throws ParseException {
-		ArrayList<FullFixture> results = new ArrayList<>();
+	public static ArrayList<Fixture> selectAllFull(HSSFSheet sheet, int limit) throws ParseException {
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
@@ -862,7 +866,7 @@ public class XlSUtils {
 
 			if (selectLastAll(sheet, home, 10, fdate).size() >= limit
 					&& selectLastAll(sheet, away, 10, fdate).size() >= limit) {
-				FullFixture f = getFullFixture(sheet, row);
+				Fixture f = getFixture(sheet, row);
 				if (f != null)
 					results.add(f);
 				else
@@ -874,8 +878,8 @@ public class XlSUtils {
 	}
 
 	// selects all fixtures after the 10 matchday
-	public static ArrayList<ExtendedFixture> selectAllAll(HSSFSheet sheet) throws ParseException {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+	public static ArrayList<Fixture> selectAllAll(HSSFSheet sheet) throws ParseException {
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 
 		while (rowIterator.hasNext()) {
@@ -888,7 +892,7 @@ public class XlSUtils {
 			Date fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
 			if (selectLastAll(sheet, home, 10, fdate).size() >= 1
 					&& selectLastAll(sheet, away, 10, fdate).size() >= 1) {
-				ExtendedFixture f = getFixture(sheet, row);
+				Fixture f = getFixture(sheet, row);
 				if (f != null)
 					results.add(f);
 				else
@@ -899,89 +903,9 @@ public class XlSUtils {
 		return results;
 	}
 
-	public static ExtendedFixture getFixture(HSSFSheet sheet, Row row) throws ParseException {
-		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy HH:mm");
-		DateFormat XLSformatOld = new SimpleDateFormat("d.M.yyyy");
-		ExtendedFixture f = null;
-		String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
-		String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
-		Date fdate;
-		if (row.getCell(getColumnIndex(sheet, "Date")).getCellType() == 1)
-			try {
-				fdate = XLSformat.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
-			} catch (Exception e) {
-				fdate = XLSformatOld.parse(row.getCell(getColumnIndex(sheet, "Date")).getStringCellValue());
-			}
-		else
-			fdate = row.getCell(getColumnIndex(sheet, "Date")).getDateCellValue();
-		if (row.getCell(getColumnIndex(sheet, "FTHG")) != null && row.getCell(getColumnIndex(sheet, "FTAG")) != null
-				&& row.getCell(getColumnIndex(sheet, "BbAv>2.5")) != null
-				&& row.getCell(getColumnIndex(sheet, "HTHG")) != null
-				&& (row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getCellType() == 0
-						&& row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getCellType() == 0)) {
-			int homeGoals = (int) row.getCell(getColumnIndex(sheet, "FTHG")).getNumericCellValue();
-			int awayGoals = (int) row.getCell(getColumnIndex(sheet, "FTAG")).getNumericCellValue();
-
-			int halfTimeHome = (int) row.getCell(getColumnIndex(sheet, "HTHG")).getNumericCellValue();
-			int halfTimeAway = (int) row.getCell(getColumnIndex(sheet, "HTAG")).getNumericCellValue();
-			float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-			float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-			float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-			float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
-
-			// with 1X2 odds from Pinnacle
-
-			float homeOdds, drawOdds, awayOdds;
-			if (row.getCell(getColumnIndex(sheet, "PSH")) != null
-					&& row.getCell(getColumnIndex(sheet, "PSH")).getCellType() == 0) {
-				homeOdds = (float) row.getCell(getColumnIndex(sheet, "PSH")).getNumericCellValue();
-				drawOdds = (float) row.getCell(getColumnIndex(sheet, "PSD")).getNumericCellValue();
-				awayOdds = (float) row.getCell(getColumnIndex(sheet, "PSA")).getNumericCellValue();
-			} else {
-				homeOdds = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-				drawOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxD")).getNumericCellValue();
-				awayOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxA")).getNumericCellValue();
-			}
-
-			f = new ExtendedFixture(fdate, home, away, new Result(homeGoals, awayGoals), sheet.getSheetName())
-					.withStatus("FINISHED").withOdds(overOdds, underOdds, maxOver, maxUnder)
-					.withHTResult(new Result(halfTimeHome, halfTimeAway)).with1X2Odds(homeOdds, drawOdds, awayOdds);
-
-			// Shots on target
-			if (row.getCell(getColumnIndex(sheet, "HST")) != null && row.getCell(getColumnIndex(sheet, "AST")) != null
-					&& row.getCell(getColumnIndex(sheet, "HST")).getCellType() == 0) {
-				f = f.withShots((int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue(),
-						(int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue());
-				// opta/soccerway source
-				if (Arrays.asList(Constants.MANUAL).contains(sheet)) {
-					f.shotsHome = f.result.goalsHomeTeam + f.shotsHome;
-					f.shotsAway = f.result.goalsAwayTeam + f.shotsAway;
-				}
-			}
-
-			// Asian handicap
-			if (row.getCell(getColumnIndex(sheet, "BbAHh")) != null
-					&& row.getCell(getColumnIndex(sheet, "BbMxAHH")) != null
-					&& row.getCell(getColumnIndex(sheet, "BbMxAHA")) != null
-					&& row.getCell(getColumnIndex(sheet, "BbAHh")).getCellType() == 0) {
-				f = f.withAsian((float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue(),
-						(float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue(),
-						(float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue());
-			}
-
-			// Red cards
-			if (row.getCell(getColumnIndex(sheet, "HR")) != null && row.getCell(getColumnIndex(sheet, "AR")) != null) {
-				f = f.withCards((int) row.getCell(getColumnIndex(sheet, "HR")).getNumericCellValue(),
-						(int) row.getCell(getColumnIndex(sheet, "AR")).getNumericCellValue());
-			}
-
-		}
-		return f;
-	}
-
-	public static FullFixture getFullFixture(HSSFSheet sheet, Row row) throws ParseException {
+	public static Fixture getFixture(HSSFSheet sheet, Row row) throws ParseException {
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
-		FullFixture f = null;
+		Fixture f = null;
 		String home = row.getCell(getColumnIndex(sheet, "HomeTeam")).getStringCellValue();
 		String away = row.getCell(getColumnIndex(sheet, "AwayTeam")).getStringCellValue();
 		Date fdate;
@@ -999,10 +923,8 @@ public class XlSUtils {
 
 			int halfTimeHome = (int) row.getCell(getColumnIndex(sheet, "HTHG")).getNumericCellValue();
 			int halfTimeAway = (int) row.getCell(getColumnIndex(sheet, "HTAG")).getNumericCellValue();
-			float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-			float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-			float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-			float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
+			float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
+			float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
 
 			// with 1X2 odds from Pinnacle
 
@@ -1018,26 +940,22 @@ public class XlSUtils {
 				awayOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxA")).getNumericCellValue();
 			}
 
-			f = new FullFixture(fdate, home, away, new Result(homeGoals, awayGoals), sheet.getSheetName());
-			f.status = "FINISHED";
-			f.overOdds = overOdds;
-			f.underOdds = underOdds;
-			f.maxOver = maxOver;
-			f.maxUnder = maxUnder;
-			f.HTresult = new Result(halfTimeHome, halfTimeAway);
-			f.homeOdds = homeOdds;
-			f.awayOdds = awayOdds;
-			f.drawOdds = drawOdds;
+			f = new Fixture(fdate, sheet.getSheetName(), home, away, new Result(homeGoals, awayGoals))
+					.withHTResult(new Result(halfTimeHome, halfTimeAway)).withStatus("FINISHED");
+			OverUnderOdds ou = new OverUnderOdds("Max", fdate, 2.5f, overOdds, underOdds);
+			MatchOdds mo = new MatchOdds("Max", fdate, homeOdds, drawOdds, awayOdds);
+			f.overUnderOdds.add(ou);
+			f.matchOdds.add(mo);
 
 			// Shots on target
 			if (row.getCell(getColumnIndex(sheet, "HST")) != null && row.getCell(getColumnIndex(sheet, "AST")) != null
 					&& row.getCell(getColumnIndex(sheet, "HST")).getCellType() == 0) {
-				f.shotsHome = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
-				f.shotsAway = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
+				f.gameStats.shots.home = (int) row.getCell(getColumnIndex(sheet, "HST")).getNumericCellValue();
+				f.gameStats.shots.away = (int) row.getCell(getColumnIndex(sheet, "AST")).getNumericCellValue();
 
 				if (Arrays.asList(Constants.MANUAL).contains(sheet.getSheetName())) {
-					f.shotsHome = f.result.goalsHomeTeam + f.shotsHome;
-					f.shotsAway = f.result.goalsAwayTeam + f.shotsAway;
+					f.gameStats.shots.home = f.result.goalsHomeTeam + f.gameStats.shots.home;
+					f.gameStats.shots.away = f.result.goalsAwayTeam + f.gameStats.shots.away;
 				}
 
 			}
@@ -1047,16 +965,21 @@ public class XlSUtils {
 					&& row.getCell(getColumnIndex(sheet, "BbMxAHH")) != null
 					&& row.getCell(getColumnIndex(sheet, "BbMxAHA")) != null
 					&& row.getCell(getColumnIndex(sheet, "BbAHh")).getCellType() == 0) {
-				f.line = (float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue();
-				f.asianHome = (float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue();
-				f.asianAway = (float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue();
+				float line = (float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue();
+				float asianHome = (float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue();
+				float asianAway = (float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue();
+				AsianOdds ao = new AsianOdds("Max", fdate, line, asianHome, asianAway);
+				f.asianOdds.add(ao);
 			}
 
-			// Red cards
-			if (row.getCell(getColumnIndex(sheet, "HR")) != null && row.getCell(getColumnIndex(sheet, "AR")) != null) {
-				f = (FullFixture) f.withCards((int) row.getCell(getColumnIndex(sheet, "HR")).getNumericCellValue(),
-						(int) row.getCell(getColumnIndex(sheet, "AR")).getNumericCellValue());
-			}
+			// // Red cards
+			// if (row.getCell(getColumnIndex(sheet, "HR")) != null &&
+			// row.getCell(getColumnIndex(sheet, "AR")) != null) {
+			// f = (Fixture) f.withCards((int) row.getCell(getColumnIndex(sheet,
+			// "HR")).getNumericCellValue(),
+			// (int) row.getCell(getColumnIndex(sheet,
+			// "AR")).getNumericCellValue());
+			// }
 
 			// Goal lines
 			if (row.getCell(getColumnIndex(sheet, "GLM")) != null
@@ -1102,7 +1025,7 @@ public class XlSUtils {
 
 				AsianLines asianLines = new AsianLines(asian1, asian2, asianmain, asian3, asian4);
 
-				f = f.withAsianLines(asianLines).withGoalLines(GLS);
+				// f = f.withAsianLines(asianLines).withGoalLines(GLS);
 
 			}
 
@@ -1110,8 +1033,8 @@ public class XlSUtils {
 		return f;
 	}
 
-	public static ArrayList<ExtendedFixture> selectForPrediction(HSSFSheet sheet) {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+	public static ArrayList<Fixture> selectForPrediction(HSSFSheet sheet) {
+		ArrayList<Fixture> results = new ArrayList<>();
 		Iterator<Row> rowIterator = sheet.iterator();
 
 		while (rowIterator.hasNext()) {
@@ -1124,22 +1047,23 @@ public class XlSUtils {
 			String div = row.getCell(getColumnIndex(sheet, "Div")).getStringCellValue();
 
 			float overOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv>2.5")).getNumericCellValue();
-			float underOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
-			float maxOver = (float) row.getCell(getColumnIndex(sheet, "BbMx>2.5")).getNumericCellValue();
-			float maxUnder = (float) row.getCell(getColumnIndex(sheet, "BbMx<2.5")).getNumericCellValue();
+			float getMaxClosingUnderOdds = (float) row.getCell(getColumnIndex(sheet, "BbAv<2.5")).getNumericCellValue();
 
-			ExtendedFixture f = new ExtendedFixture(fdate, home, away, new Result(-1, -1), div);
+			Fixture f = new Fixture(fdate, sheet.getSheetName(), home, away, new Result(-1, -1));
 			f.withStatus("FINISHED");
-			f.withOdds(overOdds, underOdds, maxOver, maxUnder);
+			OverUnderOdds ou = new OverUnderOdds("Max", fdate, 2.5f, overOdds, getMaxClosingUnderOdds);
+			f.overUnderOdds.add(ou);
 
 			// Asian handicap
 			if (row.getCell(getColumnIndex(sheet, "BbAHh")) != null
 					&& row.getCell(getColumnIndex(sheet, "BbMxAHH")) != null
 					&& row.getCell(getColumnIndex(sheet, "BbMxAHA")) != null
 					&& row.getCell(getColumnIndex(sheet, "BbAHh")).getCellType() == 0) {
-				f = f.withAsian((float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue(),
-						(float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue(),
-						(float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue());
+				float line = (float) row.getCell(getColumnIndex(sheet, "BbAHh")).getNumericCellValue();
+				float homeOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxAHH")).getNumericCellValue();
+				float awayOdds = (float) row.getCell(getColumnIndex(sheet, "BbMxAHA")).getNumericCellValue();
+				AsianOdds ao = new AsianOdds("Max", fdate, line, homeOdds, awayOdds);
+				f.asianOdds.add(ao);
 			}
 
 			results.add(f);
@@ -1148,7 +1072,7 @@ public class XlSUtils {
 		return results;
 	}
 
-	public static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, float initTH)
+	public static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<Fixture> all, int year, float initTH)
 			throws IOException, ParseException {
 		float bestWinPercent = 0.5f;
 		float bestProfit = Float.NEGATIVE_INFINITY;
@@ -1162,7 +1086,7 @@ public class XlSUtils {
 		float[] htCombos = new float[all.size()];
 
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet);
@@ -1174,7 +1098,7 @@ public class XlSUtils {
 		float overOneHT = checkOptimal(sheet, all, ht1s, ht2s, 0.5f);
 
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 			htCombos[i] = (overOneHT * halfTimeOnly(f, sheet, 1) + (1f - overOneHT) * halfTimeOnly(f, sheet, 2));
 		}
 
@@ -1182,10 +1106,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1210,10 +1134,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1239,10 +1163,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1278,7 +1202,7 @@ public class XlSUtils {
 
 	}
 
-	public static Settings runWithTH(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
+	public static Settings runWithTH(HSSFSheet sheet, ArrayList<Fixture> all, int year)
 			throws IOException, ParseException {
 		float best = Float.NEGATIVE_INFINITY;
 		Settings bestSetts = null;
@@ -1294,7 +1218,7 @@ public class XlSUtils {
 		return bestSetts;
 	}
 
-	public static Settings runForWithTH(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
+	public static Settings runForWithTH(HSSFSheet sheet, ArrayList<Fixture> all, int year)
 			throws IOException, ParseException {
 
 		float[] basics = new float[all.size()];
@@ -1304,7 +1228,7 @@ public class XlSUtils {
 		float[] ht2s = new float[all.size()];
 		float[] htCombos = new float[all.size()];
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet);
@@ -1334,7 +1258,7 @@ public class XlSUtils {
 		return bestSetts;
 	}
 
-	private static Settings helperRunFor(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, float initTH,
+	private static Settings helperRunFor(HSSFSheet sheet, ArrayList<Fixture> all, int year, float initTH,
 			float overOneHT, float[] basics, float[] poissons, float[] weightedPoissons, float[] htCombos) {
 
 		float bestWinPercent = 0.5f;
@@ -1345,10 +1269,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1373,10 +1297,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1402,10 +1326,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1440,8 +1364,8 @@ public class XlSUtils {
 		}
 	}
 
-	private static Settings aggregateRun(ArrayList<HSSFSheet> sheets, ArrayList<ArrayList<ExtendedFixture>> byYear,
-			int start, int end) throws ParseException {
+	private static Settings aggregateRun(ArrayList<HSSFSheet> sheets, ArrayList<ArrayList<Fixture>> byYear, int start,
+			int end) throws ParseException {
 		int size = end - start + 1;
 
 		float bestWinPercent = 0;
@@ -1457,7 +1381,7 @@ public class XlSUtils {
 			return null;
 
 		int maxSize = -1;
-		for (ArrayList<ExtendedFixture> i : byYear)
+		for (ArrayList<Fixture> i : byYear)
 			if (i.size() > maxSize) {
 				maxSize = i.size();
 			}
@@ -1468,7 +1392,7 @@ public class XlSUtils {
 		float[][] htCombos = new float[size][maxSize];
 		for (int j = 0; j < size; j++) {
 			for (int i = 0; i < byYear.get(j).size(); i++) {
-				ExtendedFixture f = byYear.get(j).get(i);
+				Fixture f = byYear.get(j).get(i);
 
 				basics[j][i] = basic2(f, sheets.get(j), 0.6f, 0.3f, 0.1f);
 				poissons[j][i] = poisson(f, sheets.get(j));
@@ -1541,8 +1465,8 @@ public class XlSUtils {
 		return best;
 	}
 
-	public static ArrayList<FinalEntry> intersectAllClassifier(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			int year, float basicThreshold, float poissonThreshold, float weightedThreshold, float htThreshold,
+	public static ArrayList<FinalEntry> intersectAllClassifier(HSSFSheet sheet, ArrayList<Fixture> all, int year,
+			float basicThreshold, float poissonThreshold, float weightedThreshold, float htThreshold,
 			float drawThreshold) throws ParseException {
 		ArrayList<FinalEntry> finalsBasic = new ArrayList<>();
 		ArrayList<FinalEntry> finalsPoisson = new ArrayList<>();
@@ -1551,7 +1475,7 @@ public class XlSUtils {
 		ArrayList<FinalEntry> finalsDraw = new ArrayList<>();
 
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 			float basic = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			float poisson = poisson(f, sheet);
 			float weighted = poissonWeighted(f, sheet);
@@ -1614,7 +1538,7 @@ public class XlSUtils {
 
 	}
 
-	public static Settings runForLeagueWithOddsFull(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year)
+	public static Settings runForLeagueWithOddsFull(HSSFSheet sheet, ArrayList<Fixture> all, int year)
 			throws IOException, ParseException {
 		float bestWinPercent = 0;
 		float bestProfit = Float.NEGATIVE_INFINITY;
@@ -1626,7 +1550,7 @@ public class XlSUtils {
 		float[] poissons = new float[all.size()];
 		float[] weightedPoissons = new float[all.size()];
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet);
@@ -1639,7 +1563,7 @@ public class XlSUtils {
 				int w = y - z;
 				ArrayList<FinalEntry> finals = new ArrayList<>();
 				for (int i = 0; i < all.size(); i++) {
-					ExtendedFixture f = all.get(i);
+					Fixture f = all.get(i);
 					float finalScore = x * 0.05f * basics[i] + z * 0.05f * poissons[i] + w * weightedPoissons[i];
 
 					FinalEntry fe = new FinalEntry(f, finalScore,
@@ -1672,7 +1596,7 @@ public class XlSUtils {
 	}
 
 	// public static float checkHalfTimeOptimal(HSSFSheet sheet,
-	// ArrayList<ExtendedFixture> all, float[] ht1, float[] ht2,
+	// ArrayList<Fixture> all, float[] ht1, float[] ht2,
 	// String type) {
 	// float bestProfit = Float.NEGATIVE_INFINITY;
 	// float overOneValue = 0f;
@@ -1681,7 +1605,7 @@ public class XlSUtils {
 	// int y = 2 - x;
 	// ArrayList<FinalEntry> finals = new ArrayList<>();
 	// for (int j = 0; j < all.size(); j++) {
-	// ExtendedFixture f = all.get(j);
+	// Fixture f = all.get(j);
 	// float finalScore = x * 0.5f * ht1[j] + y * 0.5f * ht2[j];
 	//
 	// FinalEntry fe = new FinalEntry(f, finalScore,
@@ -1704,7 +1628,7 @@ public class XlSUtils {
 	// return overOneValue;
 	// }
 
-	private static float checkOptimal(HSSFSheet sheet, ArrayList<ExtendedFixture> all, float[] basics, float[] similars,
+	private static float checkOptimal(HSSFSheet sheet, ArrayList<Fixture> all, float[] basics, float[] similars,
 			float step) {
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		float overOneValue = 0f;
@@ -1715,7 +1639,7 @@ public class XlSUtils {
 			int y = n - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int j = 0; j < all.size(); j++) {
-				ExtendedFixture f = all.get(j);
+				Fixture f = all.get(j);
 				float finalScore = x * step * basics[j] + y * step * similars[j];
 
 				FinalEntry fe = new FinalEntry(f, finalScore,
@@ -1737,13 +1661,13 @@ public class XlSUtils {
 	}
 
 	// TODO
-	private static float aggregateHalfTimeOptimal(ArrayList<HSSFSheet> sheets,
-			ArrayList<ArrayList<ExtendedFixture>> byYear, int start, int end) {
+	private static float aggregateHalfTimeOptimal(ArrayList<HSSFSheet> sheets, ArrayList<ArrayList<Fixture>> byYear,
+			int start, int end) {
 
 		return 0;
 	}
 
-	// public static Settings findInterval(ArrayList<ExtendedFixture> all,
+	// public static Settings findInterval(ArrayList<Fixture> all,
 	// HSSFSheet sheet, int year)
 	// throws ParseException, IOException {
 	// Settings initial = SQLiteJDBC.getSettings(sheet.getSheetName(), year);
@@ -1778,24 +1702,24 @@ public class XlSUtils {
 	// return initial;
 	// }
 
-	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			Settings settings, Table table) throws ParseException {
+	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<Fixture> all, Settings settings,
+			Table table) throws ParseException {
 		ArrayList<FinalEntry> finals = calculateScores(sheet, all, settings, table);
 
 		return restrict(finals, settings);
 	}
 
-	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			Settings settings) throws ParseException {
-		ArrayList<FinalEntry> finals = calculateScores(sheet, all, settings);
+	public static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet,
+			ArrayList<? extends Fixture> currentEntries, Settings settings) throws ParseException {
+		ArrayList<FinalEntry> finals = calculateScores(sheet, currentEntries, settings);
 
 		return restrict(finals, settings);
 	}
 
-	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			Settings settings, Table table) throws ParseException {
+	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<Fixture> all, Settings settings,
+			Table table) throws ParseException {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (ExtendedFixture f : all) {
+		for (Fixture f : all) {
 
 			float finalScore = 0f;
 
@@ -1825,10 +1749,10 @@ public class XlSUtils {
 		return finals;
 	}
 
-	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+	public static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<? extends Fixture> currentEntries,
 			Settings settings) throws ParseException {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (ExtendedFixture f : all) {
+		for (Fixture f : currentEntries) {
 
 			float finalScore = 0f;
 
@@ -1860,7 +1784,8 @@ public class XlSUtils {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry fe : finals) {
 
-			float gain = fe.prediction > settings.threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float gain = fe.prediction > settings.threshold ? fe.fixture.getMaxClosingOverOdds()
+					: fe.fixture.getMaxClosingUnderOdds();
 			float certainty = fe.prediction > settings.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > settings.value && Utils.oddsInRange(gain, fe.prediction, settings)
@@ -1876,10 +1801,10 @@ public class XlSUtils {
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> runWithoutMinOddsSettings(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
+	public static ArrayList<FinalEntry> runWithoutMinOddsSettings(HSSFSheet sheet, ArrayList<Fixture> all,
 			Settings settings) throws ParseException, IOException {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (ExtendedFixture f : all) {
+		for (Fixture f : all) {
 			float finalScore = settings.basic * basic2(f, sheet, 0.6f, 0.3f, 0.1f)
 					+ settings.poisson * poisson(f, sheet);
 			finals.add(new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam), 0.55f,
@@ -1889,10 +1814,10 @@ public class XlSUtils {
 		return finals;
 	}
 
-	public static void makePrediction(HSSFSheet odds, HSSFSheet league, ExtendedFixture f, Settings sett)
+	public static void makePrediction(HSSFSheet odds, HSSFSheet league, Fixture f, Settings sett)
 			throws IOException, InterruptedException, ParseException {
 
-		ArrayList<ExtendedFixture> one = new ArrayList<>();
+		ArrayList<Fixture> one = new ArrayList<>();
 
 		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
 		if (sett == null)
@@ -1903,7 +1828,7 @@ public class XlSUtils {
 						+ (1f - sett.halfTimeOverOne) * halfTimeOnly(f, league, 2));
 
 		float certainty = score > sett.threshold ? score : (1f - score);
-		float coeff = score > sett.threshold ? f.maxOver : f.maxUnder;
+		float coeff = score > sett.threshold ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 		float value = certainty * coeff;
 
 		float cot = score > sett.threshold ? (score - sett.threshold) : (sett.threshold - score);
@@ -1924,7 +1849,7 @@ public class XlSUtils {
 	}
 
 	public static Settings predictionSettings(HSSFSheet sheet, int year) throws IOException, ParseException {
-		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
+		ArrayList<Fixture> data = selectAllAll(sheet);
 
 		Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f);
 		ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
@@ -1950,7 +1875,7 @@ public class XlSUtils {
 	}
 
 	public static SettingsAsian asianPredictionSettings(HSSFSheet sheet, int year) throws IOException, ParseException {
-		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
+		ArrayList<Fixture> data = selectAllAll(sheet);
 
 		SettingsAsian temp = AsianUtils.runForLeagueWithOdds(sheet, data, year);
 		ArrayList<AsianEntry> finals = AsianUtils.runWithSettingsList(sheet, data, temp);
@@ -1962,7 +1887,7 @@ public class XlSUtils {
 	}
 
 	public static Settings optimalSettings(HSSFSheet sheet, int year) throws IOException, ParseException {
-		ArrayList<ExtendedFixture> data = selectAllAll(sheet);
+		ArrayList<Fixture> data = selectAllAll(sheet);
 
 		Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f);
 
@@ -2029,7 +1954,7 @@ public class XlSUtils {
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		Settings set = new Settings(league, 0.6f, 0.2f, 0.2f, 0.55f, 0.55f, 0.55f, 0.5f, bestProfit);
 
-		ArrayList<ArrayList<ExtendedFixture>> byYear = new ArrayList<>();
+		ArrayList<ArrayList<Fixture>> byYear = new ArrayList<>();
 		ArrayList<HSSFSheet> sheets = new ArrayList<>();
 		for (int year = start; year <= end; year++) {
 			String base = new File("").getAbsolutePath();
@@ -2049,7 +1974,7 @@ public class XlSUtils {
 
 	}
 
-	public static Settings predictivePower(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int maxMatchDay, int year)
+	public static Settings predictivePower(HSSFSheet sheet, ArrayList<Fixture> all, int maxMatchDay, int year)
 			throws ParseException {
 
 		float bestWinPercent = 0;
@@ -2064,7 +1989,7 @@ public class XlSUtils {
 		float[] weightedPoissons = new float[all.size()];
 		float[] htCombos = new float[all.size()];
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 
 			basics[i] = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 			poissons[i] = poisson(f, sheet);
@@ -2080,7 +2005,7 @@ public class XlSUtils {
 					bestWinPercent, bestProfit).withValue(0.9f);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+				ArrayList<? extends Fixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit += Utils.getProfit(finals);
 
@@ -2102,7 +2027,7 @@ public class XlSUtils {
 					bestWinPercent, bestProfit).withValue(0.9f);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+				ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit += Utils.getProfit(finals);
 
@@ -2124,7 +2049,7 @@ public class XlSUtils {
 					bestWinPercent, bestProfit).withValue(0.9f).withHT(0.5f, y * 0.05f);
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+				ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit += Utils.getProfit(finals);
 
@@ -2159,7 +2084,8 @@ public class XlSUtils {
 			trset.upperBound = current;
 
 			for (int day = 11; day < maxDay; day++) {
-				ArrayList<ExtendedFixture> currentEntries = FixtureUtils.getByMatchday(Utils.onlyFixtures(finals), day);
+				ArrayList<? extends Fixture> currentEntries = FixtureUtils.getByMatchday(Utils.onlyFixtures(finals),
+						day);
 				ArrayList<FinalEntry> finalEntries = runWithSettingsList(sheet, currentEntries, trset);
 				profit += Utils.getProfit(finalEntries);
 
@@ -2187,13 +2113,13 @@ public class XlSUtils {
 
 	public static float realisticPredictive(HSSFSheet sheet, int year) throws IOException, ParseException {
 		float profit = 0.0f;
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		ArrayList<Fixture> all = selectAllAll(sheet);
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 
 			Settings temp = predictivePower(sheet, data, i - 1, year);
 
@@ -2222,11 +2148,11 @@ public class XlSUtils {
 
 	public static float realisticRun(HSSFSheet sheet, int year) throws IOException, ParseException {
 		float profit = 0.0f;
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		ArrayList<Fixture> all = selectAllAll(sheet);
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
 			// cal.set(year + 1, 1, 1);
 			// if (!current.isEmpty() &&
@@ -2234,7 +2160,7 @@ public class XlSUtils {
 			// return profit;
 			// }
 
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
 			Settings temp = runForLeagueWithOdds(sheet, data, year,
 					0.55f) /* runWithTH(sheet, data, year) */;
@@ -2284,11 +2210,11 @@ public class XlSUtils {
 		Map<String, Integer> played = new HashMap<>();
 		Map<String, Integer> success = new HashMap<>();
 		float profit = 0.0f;
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		ArrayList<Fixture> all = selectAllAll(sheet);
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 			// Calendar cal = Calendar.getInstance();
 			// cal.set(year + 1, 1, 1);
 			// if (!current.isEmpty() &&
@@ -2296,7 +2222,7 @@ public class XlSUtils {
 			// return profit;
 			// }
 
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
 			Settings temp = runForLeagueWithOdds(sheet, data, year,
 					0.55f) /* runWithTH(sheet, data, year) */;
@@ -2383,13 +2309,13 @@ public class XlSUtils {
 	public static float realisticAllLines(HSSFSheet sheet, int year) throws ParseException, InterruptedException {
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<FullFixture> full = selectAllFull(sheet, 0);
-		ArrayList<ExtendedFixture> all = new ArrayList<>();
+		ArrayList<Fixture> full = selectAllFull(sheet, 0);
+		ArrayList<Fixture> all = new ArrayList<>();
 
-		for (FullFixture j : full) {
+		for (Fixture j : full) {
 			all.add(j);
 		}
-		HashMap<ExtendedFixture, FullFixture> map = new HashMap<>();
+		HashMap<Fixture, Fixture> map = new HashMap<>();
 		for (int j = 0; j < all.size(); j++) {
 
 			map.put(all.get(j), full.get(j));
@@ -2406,14 +2332,14 @@ public class XlSUtils {
 		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
 		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :
 		// sheet.getSheetName(), year);
-		// ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
+		// ArrayList<Fixture> allPfs = Utils.getFixtures(pfs);
 		// HashMap<String, String> dictionary = null;
 		// if (!allPfs.isEmpty())
 		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
 		// allPfs);
 
 		for (int i = 14; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 
@@ -2445,7 +2371,7 @@ public class XlSUtils {
 			// finals = Utils.estimateOposite(current, map, sheet);
 			// finals = Utils.mainGoalLine(finals, map);
 			// Utils.theOposite(finals);
-			finals = Utils.customGoalLine(finals, map, -0.5f);
+			// finals = Utils.customGoalLine(finals, map, -0.5f);
 			// finals = Utils.specificLine(finals, map, 2.5f);
 			// finals = Utils.setTrueOddsProportional(finals);
 			// finals = Utils.bestValueByDistibution(finals, map, all, sheet);
@@ -2471,21 +2397,21 @@ public class XlSUtils {
 			throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
+		ArrayList<Fixture> all = selectAll(sheet, 0);
 		// System.out.println("VIG: " + Utils.avgReturn(all));
 		// System.out.println(all.size());
 
-		// HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all,
+		// HashMap<Fixture, Float> basics = SQLiteJDBC.selectScores(all,
 		// "BASICS", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> poissons =
+		// HashMap<Fixture, Float> poissons =
 		// SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> weighted =
+		// HashMap<Fixture, Float> weighted =
 		// SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all,
+		// HashMap<Fixture, Float> ht1 = SQLiteJDBC.selectScores(all,
 		// "HALFTIME1", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all,
+		// HashMap<Fixture, Float> ht2 = SQLiteJDBC.selectScores(all,
 		// "HALFTIME2", year, sheet.getSheetName());
-		// HashMap<ExtendedFixture, Float> shots = SQLiteJDBC.selectScores(all,
+		// HashMap<Fixture, Float> shots = SQLiteJDBC.selectScores(all,
 		// "SHOTS", year, sheet.getSheetName());
 		float th = 0.55f;
 		Settings temp = Settings.shots(sheet.getSheetName());
@@ -2508,7 +2434,7 @@ public class XlSUtils {
 		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
 		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :
 		// sheet.getSheetName(), year);
-		// ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
+		// ArrayList<Fixture> allPfs = Utils.getFixtures(pfs);
 		// HashMap<String, String> dictionary = null;
 		// if (!allPfs.isEmpty())
 		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
@@ -2516,9 +2442,9 @@ public class XlSUtils {
 
 		for (int i = /* dictionary == null ? 100 : */5; i < maxMatchDay; i++) {
 
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 			// Utils.fairValue(current);
-			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
+			// ArrayList<Fixture> data = Utils.getBeforeMatchday(all,
 			// i);
 
 			// Table table = Utils.createTable(data, sheet.getSheetName(),
@@ -2529,10 +2455,10 @@ public class XlSUtils {
 			finals = FixtureUtils.runWithSettingsList(all, current, temp);
 			// ArrayList<AllEntry> halftimeData = new ArrayList<>();
 			// for (FinalEntry j : finals) {
-			// ArrayList<ExtendedFixture> lastHomeTeam =
+			// ArrayList<Fixture> lastHomeTeam =
 			// FixtureUtils.selectLastAll(all, j.fixture.homeTeam, 50,
 			// j.fixture.date);
-			// ArrayList<ExtendedFixture> lastAwayTeam =
+			// ArrayList<Fixture> lastAwayTeam =
 			// FixtureUtils.selectLastAll(all, j.fixture.awayTeam, 50,
 			// j.fixture.date);
 			// float zero = (Utils.countHalfTimeGoalAvgExact(lastHomeTeam, 0)
@@ -2685,17 +2611,17 @@ public class XlSUtils {
 		return profit;
 	}
 
-	private static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
+	private static ArrayList<FinalEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<Fixture> current,
 			Settings settings, ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) throws ParseException {
 		ArrayList<FinalEntry> finals = calculateScores(sheet, current, settings, pfs, dictionary);
 
 		return restrict(finals, settings);
 	}
 
-	private static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<ExtendedFixture> all,
-			Settings settings, ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) throws ParseException {
+	private static ArrayList<FinalEntry> calculateScores(HSSFSheet sheet, ArrayList<Fixture> all, Settings settings,
+			ArrayList<PlayerFixture> pfs, HashMap<String, String> dictionary) throws ParseException {
 		ArrayList<FinalEntry> finals = new ArrayList<>();
-		for (ExtendedFixture f : all) {
+		for (Fixture f : all) {
 
 			float finalScore = 0f;
 
@@ -2723,9 +2649,8 @@ public class XlSUtils {
 		return finals;
 	}
 
-	public static ArrayList<FinalEntry> runBestCot(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
-			String competition, int year, int period, String description, Settings temp)
-					throws InterruptedException, ParseException {
+	public static ArrayList<FinalEntry> runBestCot(HSSFSheet sheet, ArrayList<Fixture> current, String competition,
+			int year, int period, String description, Settings temp) throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = runWithSettingsList(sheet, current, temp);
 
 		result = Utils.cotRestrict(result, findCot(competition, year, period, description));
@@ -2733,9 +2658,8 @@ public class XlSUtils {
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> runBestTH(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
-			String competition, int year, int period, String description, Settings temp)
-					throws InterruptedException, ParseException {
+	public static ArrayList<FinalEntry> runBestTH(HSSFSheet sheet, ArrayList<Fixture> current, String competition,
+			int year, int period, String description, Settings temp) throws InterruptedException, ParseException {
 		float th = findTH(competition, year, period, description, temp);
 		// System.out.println(th);
 		temp.lowerBound = th;
@@ -2747,9 +2671,8 @@ public class XlSUtils {
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> runBestCotandTH(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
-			String competition, int year, int period, String description, Settings temp)
-					throws InterruptedException, ParseException {
+	public static ArrayList<FinalEntry> runBestCotandTH(HSSFSheet sheet, ArrayList<Fixture> current, String competition,
+			int year, int period, String description, Settings temp) throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = runWithSettingsList(sheet, current, temp);
 
 		Pair pair = findCOTandTH(sheet.getSheetName(), year, period, description, temp);
@@ -2766,7 +2689,7 @@ public class XlSUtils {
 		return result;
 	}
 
-	public static ArrayList<FinalEntry> runBestCotOUandTH(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
+	public static ArrayList<FinalEntry> runBestCotOUandTH(HSSFSheet sheet, ArrayList<Fixture> current,
 			String competition, int year, int period, String description, Settings temp)
 					throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = runWithSettingsList(sheet, current, temp);
@@ -2877,9 +2800,8 @@ public class XlSUtils {
 
 	}
 
-	public static ArrayList<FinalEntry> runBestTHandCOT(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
-			String competition, int year, int period, String description, Settings temp)
-					throws InterruptedException, ParseException {
+	public static ArrayList<FinalEntry> runBestTHandCOT(HSSFSheet sheet, ArrayList<Fixture> current, String competition,
+			int year, int period, String description, Settings temp) throws InterruptedException, ParseException {
 
 		Pair pair = findTHandCOT(sheet.getSheetName(), year, period, description, temp);
 		float bestTH = pair.home;
@@ -2895,11 +2817,11 @@ public class XlSUtils {
 		return result;
 	}
 
-	private static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, Table table,
-			HashMap<ExtendedFixture, Float> basicMap, HashMap<ExtendedFixture, Float> poissonsMap,
-			HashMap<ExtendedFixture, Float> weightedMap, HashMap<ExtendedFixture, Float> ht1Map,
-			HashMap<ExtendedFixture, Float> ht2Map, HashMap<ExtendedFixture, Float> shotsMap, float initTH,
-			String type) {
+	@Deprecated
+	private static Settings runForLeagueWithOdds(HSSFSheet sheet, ArrayList<Fixture> all, int year, Table table,
+			HashMap<Fixture, Float> basicMap, HashMap<Fixture, Float> poissonsMap, HashMap<Fixture, Float> weightedMap,
+			HashMap<Fixture, Float> ht1Map, HashMap<Fixture, Float> ht2Map, HashMap<Fixture, Float> shotsMap,
+			float initTH, String type) {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
 		boolean flagShots = Arrays.asList(Constants.SHOTS).contains(sheet.getSheetName());
@@ -2917,11 +2839,11 @@ public class XlSUtils {
 		float[] similarPoissons = new float[all.size()];
 
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 			String homeTeam = escapeFlag && f.homeTeam.contains("\'") ? f.homeTeam.replace("\'", "\\") : f.homeTeam;
 			String awayTeam = escapeFlag && f.awayTeam.contains("\'") ? f.awayTeam.replace("\'", "\\") : f.awayTeam;
 
-			ExtendedFixture key = new ExtendedFixture(f.date, homeTeam, awayTeam, new Result(-1, -1), f.competition);
+			Fixture key = new Fixture(f.date, f.competition, homeTeam, awayTeam, new Result(-1, -1));
 
 			basics[i] = basicMap.get(key) == null ? Float.NaN : basicMap.get(key);
 			poissons[i] = poissonsMap.get(key) == null ? Float.NaN : poissonsMap.get(key);
@@ -2956,10 +2878,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * basics[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -2982,10 +2904,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3008,10 +2930,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3034,10 +2956,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3061,10 +2983,10 @@ public class XlSUtils {
 
 	}
 
-	private static ArrayList<Settings> runForBest(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year,
-			Table table, HashMap<ExtendedFixture, Float> basicMap, HashMap<ExtendedFixture, Float> poissonsMap,
-			HashMap<ExtendedFixture, Float> weightedMap, HashMap<ExtendedFixture, Float> ht1Map,
-			HashMap<ExtendedFixture, Float> ht2Map, float initTH, String type) {
+	@Deprecated
+	private static ArrayList<Settings> runForBest(HSSFSheet sheet, ArrayList<Fixture> all, int year, Table table,
+			HashMap<Fixture, Float> basicMap, HashMap<Fixture, Float> poissonsMap, HashMap<Fixture, Float> weightedMap,
+			HashMap<Fixture, Float> ht1Map, HashMap<Fixture, Float> ht2Map, float initTH, String type) {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
 		boolean flagShots = /*
@@ -3087,11 +3009,11 @@ public class XlSUtils {
 		float[] similarPoissons = new float[all.size()];
 
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 			String homeTeam = escapeFlag && f.homeTeam.contains("\'") ? f.homeTeam.replace("\'", "\\") : f.homeTeam;
 			String awayTeam = escapeFlag && f.awayTeam.contains("\'") ? f.awayTeam.replace("\'", "\\") : f.awayTeam;
 
-			ExtendedFixture key = new ExtendedFixture(f.date, homeTeam, awayTeam, new Result(-1, -1), f.competition);
+			Fixture key = new Fixture(f.date, f.competition, homeTeam, awayTeam, new Result(-1, -1));
 
 			basics[i] = basicMap.get(key) == null ? Float.NaN : basicMap.get(key);
 			poissons[i] = poissonsMap.get(key) == null ? Float.NaN : poissonsMap.get(key);
@@ -3123,10 +3045,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3153,10 +3075,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3183,10 +3105,10 @@ public class XlSUtils {
 			int y = 20 - x;
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
-				ExtendedFixture f = all.get(i);
+				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3212,10 +3134,11 @@ public class XlSUtils {
 		// int y = 20 - x;
 		// ArrayList<FinalEntry> finals = new ArrayList<>();
 		// for (int i = 0; i < all.size(); i++) {
-		// ExtendedFixture f = all.get(i);
+		// Fixture f = all.get(i);
 		// float finalScore = x * 0.05f * poissons[i] + y * 0.05f * similars[i];
 		//
-		// float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+		// float gain = finalScore > initTH ? f.getMaxClosingOverOdds() :
+		// f.getMaxClosingUnderOdds;
 		// float certainty = finalScore > initTH ? finalScore : (1f -
 		// finalScore);
 		// float value = certainty * gain;
@@ -3243,10 +3166,10 @@ public class XlSUtils {
 				int y = 20 - x;
 				ArrayList<FinalEntry> finals = new ArrayList<>();
 				for (int i = 0; i < all.size(); i++) {
-					ExtendedFixture f = all.get(i);
+					Fixture f = all.get(i);
 					float finalScore = x * 0.05f * basics[i] + y * 0.05f * shots[i];
 
-					float gain = finalScore > initTH ? f.maxOver : f.maxUnder;
+					float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
 					float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 					float value = certainty * gain;
 
@@ -3279,10 +3202,10 @@ public class XlSUtils {
 
 	}
 
-	private static Settings predictiveFromDB(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, Table table,
-			HashMap<ExtendedFixture, Float> basicMap, HashMap<ExtendedFixture, Float> poissonsMap,
-			HashMap<ExtendedFixture, Float> weightedMap, HashMap<ExtendedFixture, Float> ht1Map,
-			HashMap<ExtendedFixture, Float> ht2Map, float initTH, String type, int maxMatchDay) throws ParseException {
+	private static Settings predictiveFromDB(HSSFSheet sheet, ArrayList<Fixture> all, int year, Table table,
+			HashMap<Fixture, Float> basicMap, HashMap<Fixture, Float> poissonsMap, HashMap<Fixture, Float> weightedMap,
+			HashMap<Fixture, Float> ht1Map, HashMap<Fixture, Float> ht2Map, float initTH, String type, int maxMatchDay)
+					throws ParseException {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
 		boolean flagShots = /*
@@ -3303,11 +3226,11 @@ public class XlSUtils {
 		float[] similarPoissons = new float[all.size()];
 
 		for (int i = 0; i < all.size(); i++) {
-			ExtendedFixture f = all.get(i);
+			Fixture f = all.get(i);
 			String homeTeam = escapeFlag && f.homeTeam.contains("\'") ? f.homeTeam.replace("\'", "\\") : f.homeTeam;
 			String awayTeam = escapeFlag && f.awayTeam.contains("\'") ? f.awayTeam.replace("\'", "\\") : f.awayTeam;
 
-			ExtendedFixture key = new ExtendedFixture(f.date, homeTeam, awayTeam, new Result(-1, -1), f.competition);
+			Fixture key = new Fixture(f.date, f.competition, homeTeam, awayTeam, new Result(-1, -1));
 
 			basics[i] = basicMap.get(key) == null ? Float.NaN : basicMap.get(key);
 			poissons[i] = poissonsMap.get(key) == null ? Float.NaN : poissonsMap.get(key);
@@ -3341,7 +3264,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+				ArrayList<? extends Fixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit_curr += Utils.getProfit(finals);
 
@@ -3365,7 +3288,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+				ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit_curr += Utils.getProfit(finals);
 
@@ -3389,7 +3312,7 @@ public class XlSUtils {
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (int i = 11; i < maxMatchDay; i++) {
-				ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+				ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 				finals = runWithSettingsList(sheet, current, set);
 				profit_curr += Utils.getProfit(finals);
 
@@ -3412,19 +3335,19 @@ public class XlSUtils {
 			throws IOException, InterruptedException, ParseException {
 		ArrayList<FinalEntry> toBet = new ArrayList<>();
 
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		ArrayList<Fixture> all = selectAllAll(sheet);
 
-		HashMap<ExtendedFixture, Float> basics = SQLiteJDBC.selectScores(all, "BASICS", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> poissons = SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> weighted = SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> ht1 = SQLiteJDBC.selectScores(all, "HALFTIME1", year, sheet.getSheetName());
-		HashMap<ExtendedFixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
+		HashMap<Fixture, Float> basics = SQLiteJDBC.selectScores(all, "BASICS", year, sheet.getSheetName());
+		HashMap<Fixture, Float> poissons = SQLiteJDBC.selectScores(all, "POISSON", year, sheet.getSheetName());
+		HashMap<Fixture, Float> weighted = SQLiteJDBC.selectScores(all, "WEIGHTED", year, sheet.getSheetName());
+		HashMap<Fixture, Float> ht1 = SQLiteJDBC.selectScores(all, "HALFTIME1", year, sheet.getSheetName());
+		HashMap<Fixture, Float> ht2 = SQLiteJDBC.selectScores(all, "HALFTIME2", year, sheet.getSheetName());
 
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 15; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			Settings temp = /*
 							 * runForLeagueWithOdds(sheet, data, year, basics,
 							 * poissons, weighted, ht1, ht2, 0.55f)
@@ -3467,12 +3390,12 @@ public class XlSUtils {
 
 	public static float realisticIntersect(HSSFSheet sheet, int year) throws IOException, ParseException {
 		float profit = 0.0f;
-		ArrayList<ExtendedFixture> all = selectAllAll(sheet);
+		ArrayList<Fixture> all = selectAllAll(sheet);
 		int maxMatchDay = addMatchDay(sheet, all);
 		for (int i = 11; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 
-			ArrayList<ExtendedFixture> data = FixtureUtils.getBeforeMatchday(all, i);
+			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// ------------------------------------------------------------
 			// ArrayList<FinalEntry> finals = intersectAllClassifier(sheet,
 			// data, year);
@@ -3483,7 +3406,7 @@ public class XlSUtils {
 			ArrayList<FinalEntry> finalsDraw = new ArrayList<>();
 
 			for (int j = 0; j < data.size(); j++) {
-				ExtendedFixture f = data.get(j);
+				Fixture f = data.get(j);
 				float basic = basic2(f, sheet, 0.6f, 0.3f, 0.1f);
 				float poisson = poisson(f, sheet);
 				float weighted = poissonWeighted(f, sheet);
@@ -3668,9 +3591,9 @@ public class XlSUtils {
 
 	}
 
-	static int addMatchDay(HSSFSheet sheet, ArrayList<ExtendedFixture> all) throws ParseException {
+	static int addMatchDay(HSSFSheet sheet, ArrayList<Fixture> all) throws ParseException {
 		int max = -1;
-		for (ExtendedFixture f : all) {
+		for (Fixture f : all) {
 			if (f.matchday == -1 || f.matchday == 0) {
 				f.matchday = selectLastAll(sheet, f.homeTeam, 50, f.date).size() + 1;
 				if (f.matchday > max)
@@ -3878,7 +3801,7 @@ public class XlSUtils {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
 			if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
 				continue;
-			ArrayList<ExtendedFixture> all = selectAllAll(sh);
+			ArrayList<Fixture> all = selectAllAll(sh);
 
 			SQLiteJDBC.insertBasic(sh, all, year, "SHOTS");
 			// SQLiteJDBC.insertBasic(sh, all, year, "BASICS");
@@ -4190,7 +4113,8 @@ public class XlSUtils {
 
 		ArrayList<FinalEntry> values = new ArrayList<>();
 		for (FinalEntry fe : result) {
-			float gain = fe.prediction > fe.threshold ? fe.fixture.maxOver : fe.fixture.maxUnder;
+			float gain = fe.prediction > fe.threshold ? fe.fixture.getMaxClosingOverOdds()
+					: fe.fixture.getMaxClosingUnderOdds();
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (certainty > 0.5f)
@@ -4326,9 +4250,9 @@ public class XlSUtils {
 			throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 
-		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
-
-		Settings temp = Settings.weightedPoisson(sheet.getSheetName());
+		ArrayList<Fixture> all = selectAll(sheet, 0);
+		
+		Settings temp = Settings.shots(sheet.getSheetName());
 		// Settings shotSets = Settings.shots(sheet.getSheetName());
 		// Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
 
@@ -4339,15 +4263,15 @@ public class XlSUtils {
 		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
 		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :
 		// sheet.getSheetName(), year);
-		// ArrayList<ExtendedFixture> allPfs = Utils.getFixtures(pfs);
+		// ArrayList<Fixture> allPfs = Utils.getFixtures(pfs);
 		// HashMap<String, String> dictionary = null;
 		// if (!allPfs.isEmpty())
 		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
 		// allPfs);
 
 		for (int i = /* dictionary == null ? 100 : */ 14; i < maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
-			// ArrayList<ExtendedFixture> data =
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
+			// ArrayList<Fixture> data =
 			// FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
@@ -4462,7 +4386,7 @@ public class XlSUtils {
 
 	}
 
-	public static ArrayList<FinalEntry> runBestTHandCotOU(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
+	public static ArrayList<FinalEntry> runBestTHandCotOU(HSSFSheet sheet, ArrayList<Fixture> current,
 			String competition, int year, int period, String description, Settings temp)
 					throws InterruptedException, ParseException {
 
@@ -4574,9 +4498,8 @@ public class XlSUtils {
 
 	}
 
-	private static ArrayList<FinalEntry> runBestCotOU(HSSFSheet sheet, ArrayList<ExtendedFixture> current,
-			String competition, int year, int period, String description, Settings temp)
-					throws ParseException, InterruptedException {
+	private static ArrayList<FinalEntry> runBestCotOU(HSSFSheet sheet, ArrayList<Fixture> current, String competition,
+			int year, int period, String description, Settings temp) throws ParseException, InterruptedException {
 		ArrayList<FinalEntry> result = runWithSettingsList(sheet, current, temp);
 
 		result = Utils.cotRestrictOU(result, findCotOU(competition, year, period, description));
@@ -4584,15 +4507,15 @@ public class XlSUtils {
 		return result;
 	}
 
-	public static synchronized void storeInExcel(ArrayList<ExtendedFixture> all, String competition, int year,
-			String table) throws IOException, InterruptedException {
+	public static synchronized void storeInExcel(ArrayList<Fixture> all, String competition, int year, String table)
+			throws IOException, InterruptedException {
 		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy HH:mm");
 		String base = new File("").getAbsolutePath();
 
-		all.sort(new Comparator<ExtendedFixture>() {
+		all.sort(new Comparator<Fixture>() {
 
 			@Override
-			public int compare(ExtendedFixture o1, ExtendedFixture o2) {
+			public int compare(Fixture o1, Fixture o2) {
 				return o1.date.compareTo(o2.date);
 			}
 		});
@@ -4632,7 +4555,7 @@ public class XlSUtils {
 		for (int r = 1; r < all.size() + 1; r++) {
 			HSSFRow row = sheet.createRow(r);
 
-			ExtendedFixture ef = all.get(r - 1);
+			Fixture ef = all.get(r - 1);
 
 			HSSFCell cellDate = row.createCell(0);
 			cellDate.setCellValue(XLSformat.format(ef.date));
@@ -4644,18 +4567,18 @@ public class XlSUtils {
 			row.createCell(4).setCellValue(ef.result.goalsAwayTeam);
 			row.createCell(5).setCellValue(ef.HTresult.goalsHomeTeam);
 			row.createCell(6).setCellValue(ef.HTresult.goalsAwayTeam);
-			row.createCell(7).setCellValue(ef.shotsHome);
-			row.createCell(8).setCellValue(ef.shotsAway);
-			row.createCell(9).setCellValue(ef.homeOdds);
-			row.createCell(10).setCellValue(ef.drawOdds);
-			row.createCell(11).setCellValue(ef.awayOdds);
-			row.createCell(12).setCellValue(ef.maxOver);
-			row.createCell(13).setCellValue(ef.overOdds);
-			row.createCell(14).setCellValue(ef.underOdds);
-			row.createCell(15).setCellValue(ef.maxUnder);
-			row.createCell(16).setCellValue(ef.line);
-			row.createCell(17).setCellValue(ef.asianHome);
-			row.createCell(18).setCellValue(ef.asianAway);
+			row.createCell(7).setCellValue(ef.gameStats.getShotsHome());
+			row.createCell(8).setCellValue(ef.gameStats.getShotsAway());
+			row.createCell(9).setCellValue(ef.getMaxClosingHomeOdds());
+			row.createCell(10).setCellValue(ef.getMaxClosingDrawOdds());
+			row.createCell(11).setCellValue(ef.getMaxClosingAwayOdds());
+			row.createCell(12).setCellValue(ef.getMaxClosingOverOdds());
+			row.createCell(13).setCellValue(ef.getMaxClosingOverOdds());
+			row.createCell(14).setCellValue(ef.getMaxClosingUnderOdds());
+			row.createCell(15).setCellValue(ef.getMaxClosingUnderOdds());
+			row.createCell(16).setCellValue(ef.getOptimalAsianLine());
+			row.createCell(17).setCellValue(ef.getMaxClosingAsian().home);
+			row.createCell(18).setCellValue(ef.getMaxClosingAsian().away);
 
 		}
 
@@ -4686,10 +4609,10 @@ public class XlSUtils {
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		ArrayList<ExtendedFixture> odds = selectAll(workbook.getSheet(competition), 0);
-		ArrayList<ExtendedFixture> pending = new ArrayList<>();
-		ArrayList<ExtendedFixture> finished = new ArrayList<>();
-		for (ExtendedFixture i : odds) {
+		ArrayList<Fixture> odds = selectAll(workbook.getSheet(competition), 0);
+		ArrayList<Fixture> pending = new ArrayList<>();
+		ArrayList<Fixture> finished = new ArrayList<>();
+		for (Fixture i : odds) {
 			if (i.result.goalsHomeTeam == -1)
 				pending.add(i);
 			else
@@ -4713,14 +4636,14 @@ public class XlSUtils {
 			sheet = workbookWay.getSheet(competition);
 		}
 
-		ArrayList<ExtendedFixture> ways = selectAll(sheet, 0);
+		ArrayList<Fixture> ways = selectAll(sheet, 0);
 
 		System.out.println("ways size " + ways.size());
 
 		FixtureListCombiner combiner = new FixtureListCombiner(odds, ways, competition);
-		ArrayList<? extends Combinable> combinedGeneric = combiner.combineWithDictionary();
+		ArrayList<? extends Fixture> combinedGeneric = combiner.combineWithDictionary();
 
-		ArrayList<ExtendedFixture> combined = combinedGeneric.stream().map(ExtendedFixture.class::cast)
+		ArrayList<Fixture> combined = combinedGeneric.stream().map(Fixture.class::cast)
 				.collect(Collectors.toCollection(ArrayList::new));
 
 		System.out.println(combined.size());
@@ -4734,13 +4657,12 @@ public class XlSUtils {
 
 	}
 
-	public static ArrayList<ExtendedFixture> combine(ArrayList<ExtendedFixture> odds, ArrayList<ExtendedFixture> ways,
-			String competition) {
+	public static ArrayList<Fixture> combine(ArrayList<Fixture> odds, ArrayList<Fixture> ways, String competition) {
 
-		ArrayList<ExtendedFixture> result = new ArrayList<>();
+		ArrayList<Fixture> result = new ArrayList<>();
 
-		for (ExtendedFixture i : odds) {
-			ExtendedFixture match = findCorresponding(i, ways, competition);
+		for (Fixture i : odds) {
+			Fixture match = findCorresponding(i, ways, competition);
 			if (match == null) {
 				System.out.println(i);
 				break;
@@ -4752,15 +4674,14 @@ public class XlSUtils {
 		return result;
 	}
 
-	private static ExtendedFixture findCorresponding(ExtendedFixture oddsFixture, ArrayList<ExtendedFixture> ways,
-			String competition) {
+	private static Fixture findCorresponding(Fixture oddsFixture, ArrayList<Fixture> ways, String competition) {
 
-		for (ExtendedFixture i : ways) {
+		for (Fixture i : ways) {
 			if (oddsFixture.homeTeam.equals(Names.getOddsName(competition, i.homeTeam))
 					&& oddsFixture.awayTeam.equals(Names.getOddsName(competition, i.awayTeam))
 					&& (oddsFixture.date.equals(i.date) || oddsFixture.date.equals(Utils.getYesterday(i.date))
 							|| oddsFixture.date.equals(Utils.getTommorow(i.date)))) {
-				ExtendedFixture ef = oddsFixture.withShots(i.shotsHome, i.shotsAway);
+				Fixture ef = oddsFixture.withShots((int) i.gameStats.getShotsHome(), (int) i.gameStats.getShotsAway());
 				return ef;
 			}
 		}
@@ -4778,25 +4699,20 @@ public class XlSUtils {
 	 * @throws ParseException
 	 * @throws InterruptedException
 	 */
-	public static void fillMissingShotsData(String competition, int year, boolean full)
+	public static void fillMissingShotsData(String competition, int year)
 			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
-		String tableName = full ? "fullOdds" : "odds";
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\" + tableName + year + ".xls"));
+		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		ArrayList<ExtendedFixture> odds = new ArrayList<>();
-		if (full)
-			for (FullFixture i : selectAllFull(workbook.getSheet(competition), 0))
-				odds.add(i);
-		else
-			odds = selectAll(workbook.getSheet(competition), 0);
+		ArrayList<Fixture> odds = new ArrayList<>();
+		odds = selectAll(workbook.getSheet(competition), 0);
 		System.out.println("odds size " + odds.size());
 
-		ArrayList<ExtendedFixture> filled = new ArrayList<>();
+		ArrayList<Fixture> filled = new ArrayList<>();
 		int filledCount = 0;
 
-		for (ExtendedFixture i : odds) {
-			if (i.shotsHome == -1) {
+		for (Fixture i : odds) {
+			if (i.gameStats.getShotsHome() == -1) {
 				float avgHome = selectAvgShotsHome(workbook.getSheet(competition), i.date);
 				float avgAway = selectAvgShotsAway(workbook.getSheet(competition), i.date);
 				float homeShotsFor = selectAvgHomeShotsFor(workbook.getSheet(competition), i.homeTeam, i.date);
@@ -4813,7 +4729,7 @@ public class XlSUtils {
 				lambda = lambda < 0 ? 0 : lambda;
 				mu = mu < 0 ? 0 : mu;
 
-				ExtendedFixture ef = i.withShots(
+				Fixture ef = i.withShots(
 						/* Math.round(lambda), Math.round(mu) */i.result.goalsHomeTeam, i.result.goalsAwayTeam);
 				System.out.println(lambda + " s " + mu);
 				System.out.println(ef);
@@ -4830,223 +4746,11 @@ public class XlSUtils {
 		if (filledCount != 0) {
 			System.out.println(filled.size() + "stored");
 			if (filled.size() == odds.size()) {
-				if (full) {
-					ArrayList<FullFixture> fulls = new ArrayList<>();
-					for (ExtendedFixture i : filled)
-						fulls.add((FullFixture) i);
-					storeInExcelFull(fulls, competition, year, "fullOdds");
-				} else
-					storeInExcel(filled, competition, year, "odds");
+				storeInExcel(filled, competition, year, "odds");
 			}
 		}
 
 		workbook.close();
-
-	}
-
-	public static synchronized void storeInExcelFull(ArrayList<FullFixture> all, String competition, int year,
-			String table) throws IOException, InterruptedException {
-		DateFormat XLSformat = new SimpleDateFormat("d.M.yyyy");
-		String base = new File("").getAbsolutePath();
-
-		all.sort(new Comparator<FullFixture>() {
-
-			@Override
-			public int compare(FullFixture o1, FullFixture o2) {
-				return o1.date.compareTo(o2.date);
-			}
-		});
-
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\" + table + "" + year + ".xls"));
-		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		if (workbook.getSheet(competition) != null)
-			workbook.removeSheetAt(workbook.getSheetIndex(competition));
-
-		HSSFSheet sheet = workbook.createSheet(competition);
-
-		CreationHelper createHelper = workbook.getCreationHelper();
-		CellStyle cellStyle = workbook.createCellStyle();
-		cellStyle.setDataFormat(createHelper.createDataFormat().getFormat("MMMM dd, yyyy"));
-
-		HSSFRow row0 = sheet.createRow(0);
-		row0.createCell(0).setCellValue("Date");
-		row0.createCell(1).setCellValue("HomeTeam");
-		row0.createCell(2).setCellValue("AwayTeam");
-		row0.createCell(3).setCellValue("FTHG");
-		row0.createCell(4).setCellValue("FTAG");
-		row0.createCell(5).setCellValue("HTHG");
-		row0.createCell(6).setCellValue("HTAG");
-		row0.createCell(7).setCellValue("HST");
-		row0.createCell(8).setCellValue("AST");
-		row0.createCell(9).setCellValue("PSH");
-		row0.createCell(10).setCellValue("PSD");
-		row0.createCell(11).setCellValue("PSA");
-		row0.createCell(12).setCellValue("BbMx>2.5");
-		row0.createCell(13).setCellValue("BbAv>2.5");
-		row0.createCell(14).setCellValue("BbAv<2.5");
-		row0.createCell(15).setCellValue("BbMx<2.5");
-
-		row0.createCell(16).setCellValue("GL1");
-		row0.createCell(17).setCellValue("GL1>2.5");
-		row0.createCell(18).setCellValue("GL1<2.5");
-		row0.createCell(19).setCellValue("GL2");
-		row0.createCell(20).setCellValue("GL2>2.5");
-		row0.createCell(21).setCellValue("GL2<2.5");
-		row0.createCell(22).setCellValue("GLM");
-		row0.createCell(23).setCellValue("GLM>2.5");
-		row0.createCell(24).setCellValue("GLM<2.5");
-		row0.createCell(25).setCellValue("GL3");
-		row0.createCell(26).setCellValue("GL3>2.5");
-		row0.createCell(27).setCellValue("GL3<2.5");
-		row0.createCell(28).setCellValue("GL4");
-		row0.createCell(29).setCellValue("GL4>2.5");
-		row0.createCell(30).setCellValue("GL4<2.5");
-
-		row0.createCell(31).setCellValue("BbAHh");
-		row0.createCell(32).setCellValue("BbMxAHH");
-		row0.createCell(33).setCellValue("BbMxAHA");
-
-		row0.createCell(34).setCellValue("AS1");
-		row0.createCell(35).setCellValue("AS1H");
-		row0.createCell(36).setCellValue("AS1A");
-		row0.createCell(37).setCellValue("AS2");
-		row0.createCell(38).setCellValue("AS2H");
-		row0.createCell(39).setCellValue("AS2A");
-		row0.createCell(40).setCellValue("ASM");
-		row0.createCell(41).setCellValue("ASMH");
-		row0.createCell(42).setCellValue("ASMA");
-		row0.createCell(43).setCellValue("AS3");
-		row0.createCell(44).setCellValue("AS3H");
-		row0.createCell(45).setCellValue("AS3A");
-		row0.createCell(46).setCellValue("AS4");
-		row0.createCell(47).setCellValue("AS4H");
-		row0.createCell(48).setCellValue("AS4A");
-
-		for (int r = 1; r < all.size() + 1; r++) {
-			HSSFRow row = sheet.createRow(r);
-
-			FullFixture ef = all.get(r - 1);
-
-			HSSFCell cellDate = row.createCell(0);
-			cellDate.setCellValue(XLSformat.format(ef.date));
-			cellDate.setCellStyle(cellStyle);
-
-			row.createCell(1).setCellValue(ef.homeTeam);
-			row.createCell(2).setCellValue(ef.awayTeam);
-			row.createCell(3).setCellValue(ef.result.goalsHomeTeam);
-			row.createCell(4).setCellValue(ef.result.goalsAwayTeam);
-			row.createCell(5).setCellValue(ef.HTresult.goalsHomeTeam);
-			row.createCell(6).setCellValue(ef.HTresult.goalsAwayTeam);
-			row.createCell(7).setCellValue(ef.shotsHome);
-			row.createCell(8).setCellValue(ef.shotsAway);
-			row.createCell(9).setCellValue(ef.homeOdds);
-			row.createCell(10).setCellValue(ef.drawOdds);
-			row.createCell(11).setCellValue(ef.awayOdds);
-			row.createCell(12).setCellValue(ef.maxOver);
-			row.createCell(13).setCellValue(ef.overOdds);
-			row.createCell(14).setCellValue(ef.underOdds);
-			row.createCell(15).setCellValue(ef.maxUnder);
-
-			row.createCell(16).setCellValue(ef.goalLines.line1.line);
-			row.createCell(17).setCellValue(ef.goalLines.line1.home);
-			row.createCell(18).setCellValue(ef.goalLines.line1.away);
-			row.createCell(19).setCellValue(ef.goalLines.line2.line);
-			row.createCell(20).setCellValue(ef.goalLines.line2.home);
-			row.createCell(21).setCellValue(ef.goalLines.line2.away);
-			row.createCell(22).setCellValue(ef.goalLines.main.line);
-			row.createCell(23).setCellValue(ef.goalLines.main.home);
-			row.createCell(24).setCellValue(ef.goalLines.main.away);
-			row.createCell(25).setCellValue(ef.goalLines.line3.line);
-			row.createCell(26).setCellValue(ef.goalLines.line3.home);
-			row.createCell(27).setCellValue(ef.goalLines.line3.away);
-			row.createCell(28).setCellValue(ef.goalLines.line4.line);
-			row.createCell(29).setCellValue(ef.goalLines.line4.home);
-			row.createCell(30).setCellValue(ef.goalLines.line4.away);
-
-			row.createCell(31).setCellValue(ef.line);
-			row.createCell(32).setCellValue(ef.asianHome);
-			row.createCell(33).setCellValue(ef.asianAway);
-
-			row.createCell(34).setCellValue(ef.asianLines.line1.line);
-			row.createCell(35).setCellValue(ef.asianLines.line1.home);
-			row.createCell(36).setCellValue(ef.asianLines.line1.away);
-			row.createCell(37).setCellValue(ef.asianLines.line2.line);
-			row.createCell(38).setCellValue(ef.asianLines.line2.home);
-			row.createCell(39).setCellValue(ef.asianLines.line2.away);
-			row.createCell(40).setCellValue(ef.asianLines.main.line);
-			row.createCell(41).setCellValue(ef.asianLines.main.home);
-			row.createCell(42).setCellValue(ef.asianLines.main.away);
-			row.createCell(43).setCellValue(ef.asianLines.line3.line);
-			row.createCell(44).setCellValue(ef.asianLines.line3.home);
-			row.createCell(45).setCellValue(ef.asianLines.line3.away);
-			row.createCell(46).setCellValue(ef.asianLines.line4.line);
-			row.createCell(47).setCellValue(ef.asianLines.line4.home);
-			row.createCell(48).setCellValue(ef.asianLines.line4.away);
-
-		}
-
-		int count = 0;
-		int maxTries = 10;
-		FileOutputStream fileOut = null;
-		while (true) {
-			try {
-				fileOut = new FileOutputStream(base + "\\data\\" + table + "" + year + ".xls");
-				break;
-			} catch (Exception e) {
-				e.printStackTrace();
-				Thread.sleep(40000);
-				if (++count == maxTries)
-					throw e;
-			}
-		}
-
-		// write this workbook to an Outputstream.
-		workbook.write(fileOut);
-		workbook.close();
-		fileOut.flush();
-		fileOut.close();
-
-	}
-
-	public static void combineFull(String competition, int year, String table)
-			throws IOException, ParseException, InterruptedException {
-		String base = new File("").getAbsolutePath();
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\fullodds" + year + ".xls"));
-		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		ArrayList<ExtendedFixture> odds = new ArrayList<>();
-		ArrayList<FullFixture> fulls = selectAllFull(workbook.getSheet(competition), 0);
-		for (FullFixture i : fulls)
-			odds.add(i);
-		System.out.println("odds size  " + odds.size());
-
-		FileInputStream fileWay;
-		if (table.equals("all-data")) {
-			fileWay = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
-		} else {
-			fileWay = new FileInputStream(new File(base + "\\data\\manual" + year + ".xls"));
-		}
-		HSSFWorkbook workbookWay = new HSSFWorkbook(fileWay);
-
-		ArrayList<ExtendedFixture> ways = selectAll(
-				workbookWay.getSheet(table.equals("all-data") ? competition : Constants.equivalents.get(competition)),
-				0);
-		System.out.println("ways size " + ways.size());
-
-		
-		FixtureListCombiner combiner = new FixtureListCombiner(odds, ways, competition);
-		ArrayList<? extends Combinable> combinedGeneric = combiner.combineWithDictionary();
-
-		ArrayList<FullFixture> combined = combinedGeneric.stream().map(FullFixture.class::cast)
-				.collect(Collectors.toCollection(ArrayList::new));
-		
-
-		System.out.println(combined.size());
-		// System.out.println(combined);
-		if (combined.size() == odds.size())
-			storeInExcelFull(combined, competition, year, "fullodds");
-
-		workbook.close();
-		workbookWay.close();
 
 	}
 
@@ -5054,7 +4758,7 @@ public class XlSUtils {
 			throws IOException, InterruptedException, ParseException {
 		float profit = 0.0f;
 		int played = 0;
-		ArrayList<ExtendedFixture> all = selectAll(sheet, 0);
+		ArrayList<Fixture> all = selectAll(sheet, 0);
 		float th = 0.55f;
 		Settings temp = Settings.shots(sheet.getSheetName());
 
@@ -5062,8 +4766,8 @@ public class XlSUtils {
 
 		int maxMatchDay = FixtureUtils.addMatchDay(all);
 		for (int i = maxMatchDay >= 12 ? 12 : 5; i <= maxMatchDay; i++) {
-			ArrayList<ExtendedFixture> current = FixtureUtils.getByMatchday(all, i);
-			// ArrayList<ExtendedFixture> data = Utils.getBeforeMatchday(all,
+			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
+			// ArrayList<Fixture> data = Utils.getBeforeMatchday(all,
 			// i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();

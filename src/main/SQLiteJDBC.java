@@ -1,18 +1,17 @@
 package main;
 
-import java.io.IOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import entries.AllEntry;
 import entries.FinalEntry;
@@ -22,18 +21,16 @@ import odds.MatchOdds;
 import odds.OverUnderOdds;
 import settings.Settings;
 import utils.FixtureListCombiner;
-import utils.Lines;
 import utils.Pair;
-import utils.Utils;
 import xls.XlSUtils;
 
 public class SQLiteJDBC {
 
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-	public static ArrayList<ExtendedFixture> selectLastAll(String team, int count, int season, int matchday,
+	public static ArrayList<Fixture> selectLastAll(String team, int count, int season, int matchday,
 			String competition) {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+		ArrayList<Fixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -55,8 +52,8 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competit = rs.getString("competition");
 				int matchd = rs.getInt("matchday");
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competit).withMatchday(matchd);
+				Fixture ef = new Fixture(format.parse(date), competit, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withMatchday(matchd);
 				results.add(ef);
 			}
 			rs.close();
@@ -71,9 +68,9 @@ public class SQLiteJDBC {
 		return results;
 	}
 
-	public static ArrayList<ExtendedFixture> selectLastHome(String team, int count, int season, int matchday,
+	public static ArrayList<Fixture> selectLastHome(String team, int count, int season, int matchday,
 			String competition) {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+		ArrayList<Fixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -95,8 +92,8 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competit = rs.getString("competition");
 				int matchd = rs.getInt("matchday");
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competit).withMatchday(matchd);
+				Fixture ef = new Fixture(format.parse(date), competit, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withMatchday(matchd);
 				results.add(ef);
 			}
 			rs.close();
@@ -164,9 +161,9 @@ public class SQLiteJDBC {
 		return leagues;
 	}
 
-	public static ArrayList<ExtendedFixture> selectLastAway(String team, int count, int season, int matchday,
+	public static ArrayList<Fixture> selectLastAway(String team, int count, int season, int matchday,
 			String competition) {
-		ArrayList<ExtendedFixture> results = new ArrayList<>();
+		ArrayList<Fixture> results = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -188,8 +185,8 @@ public class SQLiteJDBC {
 				int awayGoals = rs.getInt("awaygoals");
 				String competit = rs.getString("competition");
 				int matchd = rs.getInt("matchday");
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competit).withMatchday(matchd).withStatus("FINISHED");
+				Fixture ef = new Fixture(format.parse(date), competit, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withMatchday(matchd).withStatus("FINISHED");
 				results.add(ef);
 			}
 			rs.close();
@@ -387,7 +384,7 @@ public class SQLiteJDBC {
 	}
 
 	// insert score
-	public static void insertBasic(ExtendedFixture f, float score, int year, String tableName) {
+	public static void insertBasic(Fixture f, float score, int year, String tableName) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
@@ -477,10 +474,10 @@ public class SQLiteJDBC {
 		return "'" + escaped + "'";
 	}
 
-	public static synchronized HashMap<ExtendedFixture, Float> selectScores(ArrayList<ExtendedFixture> all,
-			String table, int year, String competition) throws InterruptedException {
+	public static synchronized HashMap<Fixture, Float> selectScores(ArrayList<Fixture> all, String table, int year,
+			String competition) throws InterruptedException {
 
-		HashMap<ExtendedFixture, Float> result = new HashMap<>();
+		HashMap<Fixture, Float> result = new HashMap<>();
 
 		Connection c = null;
 		Statement stmt = null;
@@ -497,8 +494,8 @@ public class SQLiteJDBC {
 				String homeTeamName = rs.getString("hometeamname");
 				String awayTeamName = rs.getString("awayteamname");
 				Float score = rs.getFloat("score");
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(-1, -1), competition);
+				Fixture ef = new Fixture(format.parse(date), competition, homeTeamName, awayTeamName,
+						new Result(-1, -1));
 				result.put(ef, score);
 			}
 			rs.close();
@@ -512,7 +509,7 @@ public class SQLiteJDBC {
 		return result;
 	}
 
-	public static void insertBasic(HSSFSheet sheet, ArrayList<ExtendedFixture> all, int year, String tableName) {
+	public static void insertBasic(HSSFSheet sheet, ArrayList<Fixture> all, int year, String tableName) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
@@ -521,7 +518,7 @@ public class SQLiteJDBC {
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
-			for (ExtendedFixture f : all) {
+			for (Fixture f : all) {
 				float score = Float.NaN;
 				if (tableName.equals("BASICS")) {
 					score = XlSUtils.basic2(f, sheet, 0.6f, 0.3f, 0.1f);
@@ -581,7 +578,7 @@ public class SQLiteJDBC {
 						+ addQuotes(format.format(f.fixture.date)) + "," + addQuotes(competition) + ","
 						+ f.fixture.matchday + "," + addQuotes(f.fixture.homeTeam) + "," + addQuotes(f.fixture.awayTeam)
 						+ "," + f.fixture.result.goalsHomeTeam + "," + f.fixture.result.goalsAwayTeam + ","
-						+ f.fixture.maxOver + "," + f.fixture.maxUnder + ","
+						+ f.fixture.getMaxClosingOverOdds() + "," + f.fixture.getMaxClosingUnderOdds() + ","
 						+ (float) Math.round(f.prediction * 100000f) / 100000f + "," + f.threshold + "," + f.lower + ","
 						+ f.upper + "," + f.value + " );";
 				try {
@@ -615,8 +612,6 @@ public class SQLiteJDBC {
 			c = DriverManager.getConnection("jdbc:sqlite:test.db");
 			c.setAutoCommit(false);
 
-			int success = 0;
-			int fails = 0;
 			stmt = c.createStatement();
 			for (PlayerFixture f : finals) {
 				String sql = "INSERT INTO PLAYERFIXTURES "
@@ -628,14 +623,8 @@ public class SQLiteJDBC {
 						+ "," + (f.substitute ? 1 : 0) + "," + f.goals + "," + f.assists + " );";
 				try {
 					stmt.executeUpdate(sql);
-					// success++;
 				} catch (SQLException e) {
-					fails++;
 					e.printStackTrace();
-					// System.out.println(success + " succ " + fails + "
-					// failed");
-					// System.out.println(sql);
-					// break;
 
 				}
 			}
@@ -684,8 +673,8 @@ public class SQLiteJDBC {
 				int assists = rs.getInt("assists");
 
 				PlayerFixture pf = new PlayerFixture(
-						new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-								new Result(homeGoals, awayGoals), competition),
+						new Fixture(format.parse(date), competition, homeTeamName, awayTeamName,
+								new Result(homeGoals, awayGoals)),
 						team, name, minutesPlayed, lineup == 1, substitute == 1, goals, assists);
 
 				result.add(pf);
@@ -731,9 +720,10 @@ public class SQLiteJDBC {
 				float upper = rs.getFloat("upper");
 				float value = rs.getFloat("value");
 
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competition).withMatchday(matchday)
-								.withOdds(0f, 0f, over, under).withYear(year);
+				Fixture ef = new Fixture(format.parse(date), competition, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withMatchday(matchday).withYear(year);
+				OverUnderOdds ou = new OverUnderOdds("Max", format.parse(date), 2.5f, over, under);
+				ef.overUnderOdds.add(ou);
 				FinalEntry f = new FinalEntry(ef, score, new Result(homeGoals, awayGoals), thold, lower, upper);
 				f.value = value;
 
@@ -785,9 +775,10 @@ public class SQLiteJDBC {
 				float two = rs.getFloat("two");
 				float more = rs.getFloat("more");
 
-				ExtendedFixture ef = new ExtendedFixture(format.parse(date), homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals), competition).withMatchday(matchday)
-								.withOdds(0f, 0f, over, under).withYear(year);
+				Fixture ef = new Fixture(format.parse(date), competition, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withMatchday(matchday).withYear(year);
+				OverUnderOdds ou = new OverUnderOdds("Max", format.parse(date), 2.5f, over, under);
+				ef.overUnderOdds.add(ou);
 				FinalEntry f = new FinalEntry(ef, score, new Result(homeGoals, awayGoals), thold, lower, upper);
 				f.value = value;
 				HTEntry hte = new HTEntry(f, zero, one, two, more);
@@ -803,49 +794,6 @@ public class SQLiteJDBC {
 		}
 
 		return result;
-	}
-
-	public static Lines closestLine(ExtendedFixture f) {
-		ArrayList<Lines> result = new ArrayList<>();
-		Connection c = null;
-		Statement stmt = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
-			c.setAutoCommit(false);
-
-			stmt = c.createStatement();
-			ResultSet rs = stmt.executeQuery("select * from line" + " where home=" + f.asianHome + ";");
-
-			while (rs.next()) {
-				String type = rs.getString("type");
-				float line = rs.getFloat("line");
-				float home = rs.getFloat("home");
-				float away = rs.getFloat("away");
-				float line1home = rs.getFloat("line1home");
-				float line1away = rs.getFloat("line1away");
-				float line2home = rs.getFloat("line2home");
-				float line2away = rs.getFloat("line2away");
-				float line3home = rs.getFloat("line3home");
-				float line3away = rs.getFloat("line3away");
-				float line4home = rs.getFloat("line4home");
-				float line4away = rs.getFloat("line4away");
-
-				Lines l = new Lines(type, line, home, away, line1home, line1away, line2home, line2away, line3home,
-						line3away, line4home, line4away);
-				result.add(l);
-			}
-			rs.close();
-			stmt.close();
-			c.close();
-		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			System.exit(0);
-		}
-
-		if (result.isEmpty())
-			System.out.println("NO LINE FOUND for " + f.asianHome);
-		return result.get(0);
 	}
 
 	public static synchronized void storeHTData(ArrayList<HTEntry> halftimeData, int year, String competition,
@@ -866,8 +814,9 @@ public class SQLiteJDBC {
 						+ addQuotes(format.format(f.fe.fixture.date)) + "," + addQuotes(competition) + ","
 						+ f.fe.fixture.matchday + "," + addQuotes(f.fe.fixture.homeTeam) + ","
 						+ addQuotes(f.fe.fixture.awayTeam) + "," + f.fe.fixture.result.goalsHomeTeam + ","
-						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.maxOver + "," + f.fe.fixture.maxUnder
-						+ "," + (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
+						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.getMaxClosingOverOdds() + ","
+						+ f.fe.fixture.getMaxClosingUnderOdds() + ","
+						+ (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
 						+ f.fe.lower + "," + f.fe.upper + "," + f.fe.value + "," + f.zero + "," + f.one + "," + f.two
 						+ "," + f.more + " );";
 				try {
@@ -911,8 +860,9 @@ public class SQLiteJDBC {
 						+ addQuotes(format.format(f.fe.fixture.date)) + "," + addQuotes(competition) + ","
 						+ f.fe.fixture.matchday + "," + addQuotes(f.fe.fixture.homeTeam) + ","
 						+ addQuotes(f.fe.fixture.awayTeam) + "," + f.fe.fixture.result.goalsHomeTeam + ","
-						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.maxOver + "," + f.fe.fixture.maxUnder
-						+ "," + (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
+						+ f.fe.fixture.result.goalsAwayTeam + "," + f.fe.fixture.getMaxClosingOverOdds() + ","
+						+ f.fe.fixture.getMaxClosingUnderOdds() + ","
+						+ (float) Math.round(f.fe.prediction * 100000f) / 100000f + "," + f.fe.threshold + ","
 						+ f.fe.lower + "," + f.fe.upper + "," + f.fe.value + "," + f.zero + "," + f.one + "," + f.two
 						+ "," + f.more + "," + f.basic + "," + f.poisson + "," + f.weighted + "," + f.shots + " );";
 				try {
@@ -1059,8 +1009,8 @@ public class SQLiteJDBC {
 				int htHome = rs.getInt("HTHome");
 				int htAway = rs.getInt("HTAway");
 
-				Fixture f = new Fixture(format.parse(date), year, competition, homeTeamName, awayTeamName,
-						new Result(homeGoals, awayGoals)).withHTResult(new Result(htHome, htAway));
+				Fixture f = new Fixture(format.parse(date), competition, homeTeamName, awayTeamName,
+						new Result(homeGoals, awayGoals)).withHTResult(new Result(htHome, htAway)).withYear(year);
 
 				result.add(f);
 			}
@@ -1083,7 +1033,7 @@ public class SQLiteJDBC {
 		ArrayList<Fixture> gameStats = selectGameStats(competition, year);
 
 		FixtureListCombiner combiner = new FixtureListCombiner(result, gameStats, competition);
-		ArrayList<? extends Combinable> combined = combiner.combineWithDictionary();
+		ArrayList<? extends Fixture> combined = combiner.combineWithDictionary();
 
 		return combined.stream().map(Fixture.class::cast).collect(Collectors.toCollection(ArrayList::new));
 	}
@@ -1130,8 +1080,9 @@ public class SQLiteJDBC {
 								.withAllEuroShots(Pair.of(allEuroShotsHome, allEuroShotsAway))
 								.withPossession(possessionHome);
 
-				Fixture f = new Fixture(format.parse(date), year, competition, homeTeam, awayTeam,
-						new Result(homeGoals, awayGoals)).withHTResult(new Result(hthome, htaway)).withGameStats(gs);
+				Fixture f = new Fixture(format.parse(date), competition, homeTeam, awayTeam,
+						new Result(homeGoals, awayGoals)).withHTResult(new Result(hthome, htaway)).withYear(year)
+								.withGameStats(gs);
 
 				result.add(f);
 			}

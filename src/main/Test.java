@@ -178,7 +178,6 @@ public class Test {
 
 			all.addAll(finals);
 		}
-
 	}
 
 	private static void populateForAnalysis(int start, int end, ArrayList<FinalEntry> all,
@@ -434,7 +433,7 @@ public class Test {
 					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbook = new HSSFWorkbook(file);
 			HSSFSheet sheet = workbook.getSheet("E0");
-			ArrayList<ExtendedFixture> all = XlSUtils.selectAllAll(sheet);
+			ArrayList<Fixture> all = XlSUtils.selectAllAll(sheet);
 			System.out.println(year + " over: " + Utils.countOverGamesPercent(all) + "% AVG: " + Utils.findAvg(all));
 			System.out.println("Overs when draw: " + Utils.countOversWhenDraw(all));
 			System.out.println("Overs when win/loss: " + Utils.countOversWhenNotDraw(all));
@@ -510,11 +509,8 @@ public class Test {
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!Arrays.asList(MinMaxOdds.SHOTS).contains(sh.getSheetName()))
-			// continue;
-			// if
-			// (!Arrays.asList(MinMaxOdds.MANUAL).contains(sh.getSheetName()))
-			// continue;
+			if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
+				continue;
 
 			// if (!sh.getSheetName().equals("FR2"))
 			// continue;
@@ -690,7 +686,7 @@ public class Test {
 		FileInputStream file = new FileInputStream(new File("C:\\Users\\Tereza\\Desktop\\fixtures.xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sheet = workbook.getSheetAt(0);
-		ArrayList<ExtendedFixture> fixtures = XlSUtils.selectForPrediction(sheet);
+		ArrayList<Fixture> fixtures = XlSUtils.selectForPrediction(sheet);
 
 		FileInputStream filedata = new FileInputStream(
 				new File("C:\\Users\\Tereza\\Desktop\\all-euro-data-2015-2016.xls"));
@@ -704,7 +700,7 @@ public class Test {
 				optimal.put(i.getSheetName(), XlSUtils.predictionSettings(i, 2015));
 		}
 
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			HSSFSheet league = workbookdata.getSheet(f.competition);
 			XlSUtils.makePrediction(sheet, league, f, optimal.get(league.getSheetName()));
 		}
@@ -717,7 +713,7 @@ public class Test {
 		FileInputStream file = new FileInputStream(new File("C:\\Users\\Tereza\\Desktop\\fixtures.xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sheet = workbook.getSheetAt(0);
-		ArrayList<ExtendedFixture> fixtures = XlSUtils.selectForPrediction(sheet);
+		ArrayList<Fixture> fixtures = XlSUtils.selectForPrediction(sheet);
 
 		FileInputStream filedata = new FileInputStream(
 				new File("C:\\Users\\Tereza\\Desktop\\all-euro-data-2015-2016.xls"));
@@ -731,7 +727,7 @@ public class Test {
 			optimal.put(i.getSheetName(), XlSUtils.asianPredictionSettings(i, 2015));
 		}
 
-		for (ExtendedFixture f : fixtures) {
+		for (Fixture f : fixtures) {
 			HSSFSheet league = workbookdata.getSheet(f.competition);
 			all.addAll(AsianUtils.makePrediction(sheet, league, f, optimal.get(league.getSheetName())));
 		}
