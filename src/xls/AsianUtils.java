@@ -24,6 +24,7 @@ import utils.Utils;
 
 public class AsianUtils {
 
+	// TODO test methods in this class
 	public static Pair poissonAsianHome(Fixture f, HSSFSheet sheet) throws ParseException {
 
 		float leagueAvgHome = XlSUtils.selectAvgLeagueHome(sheet, f.date);
@@ -36,7 +37,8 @@ public class AsianUtils {
 		float lambda = leagueAvgAway == 0 ? 0 : homeAvgFor * awayAvgAgainst / leagueAvgAway;
 		float mu = leagueAvgHome == 0 ? 0 : awayAvgFor * homeAvgAgainst / leagueAvgHome;
 
-		return Utils.poissonAsianHome(lambda, mu, f.line, f.asianHome, f.asianAway);
+		Pair asianOdds = f.getMaxClosingAsian();
+		return Utils.poissonAsianHome(lambda, mu, f.getOptimalAsianLine(), asianOdds.home, asianOdds.away);
 	}
 
 	public static Pair poissonAsianLine(Fixture f, HSSFSheet sheet, float line, float home, float away)
@@ -59,8 +61,9 @@ public class AsianUtils {
 		ArrayList<Fixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 50, f.date);
 		ArrayList<Fixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 50, f.date);
 
-		float home = AsianUtils.beatTheLine(f, f.homeTeam, lastHomeHomeTeam, f.line);
-		float away = AsianUtils.beatTheLine(f, f.awayTeam, lastAwayAwayTeam, f.line);
+		float line = f.getOptimalAsianLine();
+		float home = AsianUtils.beatTheLine(f, f.homeTeam, lastHomeHomeTeam, line);
+		float away = AsianUtils.beatTheLine(f, f.awayTeam, lastAwayAwayTeam, line);
 
 		return Pair.of(home, away);
 	}
@@ -69,8 +72,9 @@ public class AsianUtils {
 		ArrayList<Fixture> lastHomeHomeTeam = XlSUtils.selectLastHome(sheet, f.homeTeam, 50, f.date);
 		ArrayList<Fixture> lastAwayAwayTeam = XlSUtils.selectLastAway(sheet, f.awayTeam, 50, f.date);
 
-		float home = AsianUtils.estimateTheLine(f, f.homeTeam, lastHomeHomeTeam, f.line, true);
-		float away = AsianUtils.estimateTheLine(f, f.awayTeam, lastAwayAwayTeam, f.line, false);
+		float line = f.getOptimalAsianLine();
+		float home = AsianUtils.estimateTheLine(f, f.homeTeam, lastHomeHomeTeam, line, true);
+		float away = AsianUtils.estimateTheLine(f, f.awayTeam, lastAwayAwayTeam, line, false);
 
 		return Pair.of(home, away);
 	}
@@ -79,39 +83,44 @@ public class AsianUtils {
 		ArrayList<Fixture> lastHomeHomeTeam = XlSUtils.selectLastAll(sheet, f.homeTeam, 50, f.date);
 		ArrayList<Fixture> lastAwayAwayTeam = XlSUtils.selectLastAll(sheet, f.awayTeam, 50, f.date);
 
-		float home = AsianUtils.estimateTheLineBoth(f, f.homeTeam, lastHomeHomeTeam, f.line, true);
-		float away = AsianUtils.estimateTheLineBoth(f, f.awayTeam, lastAwayAwayTeam, f.line, false);
+		float line = f.getOptimalAsianLine();
+		float home = AsianUtils.estimateTheLineBoth(f, f.homeTeam, lastHomeHomeTeam, line, true);
+		float away = AsianUtils.estimateTheLineBoth(f, f.awayTeam, lastAwayAwayTeam, line, false);
 
 		return Pair.of(home, away);
 	}
 
-	private static float estimateTheLineBoth(Fixture f, String team, ArrayList<Fixture> lastHomeTeam,
-			float line, boolean home) {
+	private static float estimateTheLineBoth(Fixture f, String team, ArrayList<Fixture> lastHomeTeam, float line,
+			boolean home) {
 		if (lastHomeTeam.size() == 0)
 			return 0;
 		ArrayList<String> results = new ArrayList<>();
 		for (Fixture i : lastHomeTeam) {
 			boolean prediction = i.homeTeam.equals(team);
-			AsianEntry ae = new AsianEntry(i, prediction, i.line, i.asianHome, i.asianAway, 0f);
+			Pair ao = i.getMaxClosingAsian();
+			AsianEntry ae = new AsianEntry(i, prediction, i.getOptimalAsianLine(), ao.home, ao.away, 0f);
 			results.add(ae.success());
 		}
 
-		float coeff = f.homeTeam.equals(team) ? f.asianHome : f.asianAway;
+		Pair ao = f.getMaxClosingAsian();
+		float coeff = f.homeTeam.equals(team) ? ao.home : ao.away;
 		return outcomes(results, coeff);
 	}
 
-	private static float estimateTheLine(Fixture f, String team, ArrayList<Fixture> lastHomeTeam,
-			float line, boolean home) {
+	private static float estimateTheLine(Fixture f, String team, ArrayList<Fixture> lastHomeTeam, float line,
+			boolean home) {
 		if (lastHomeTeam.size() == 0)
 			return 0;
 		ArrayList<String> results = new ArrayList<>();
 		for (Fixture i : lastHomeTeam) {
 			boolean prediction = home;
-			AsianEntry ae = new AsianEntry(i, prediction, i.line, i.asianHome, i.asianAway, 0f);
+			Pair ao = i.getMaxClosingAsian();
+			AsianEntry ae = new AsianEntry(i, prediction, i.getOptimalAsianLine(), ao.home, ao.away, 0f);
 			results.add(ae.success());
 		}
 
-		float coeff = f.homeTeam.equals(team) ? f.asianHome : f.asianAway;
+		Pair ao = f.getMaxClosingAsian();
+		float coeff = f.homeTeam.equals(team) ? ao.home : ao.away;
 		return outcomes(results, coeff);
 	}
 
@@ -142,12 +151,13 @@ public class AsianUtils {
 
 		float ratio = diff / avgDiff;
 
+		Pair ao = f.getMaxClosingAsian();
 		if (ratio < 0f) {
-			return Pair.of(f.asianHome, 0f);
+			return Pair.of(ao.home, 0f);
 		} else if (ratio >= 2f) {
-			return Pair.of(0f, f.asianAway);
+			return Pair.of(0f, ao.away);
 		} else {
-			return Pair.of(f.asianHome * (1 - ratio / 2), f.asianAway * ratio / 2);
+			return Pair.of(ao.home * (1 - ratio / 2), ao.away * ratio / 2);
 		}
 
 		// if (diff >= avgDiff)
@@ -202,7 +212,7 @@ public class AsianUtils {
 			float line = (float) row.getCell(XlSUtils.getColumnIndex(sheet, "BbAHh")).getNumericCellValue();
 			if (row.getCell(XlSUtils.getColumnIndex(sheet, "HST")) != null
 					&& row.getCell(XlSUtils.getColumnIndex(sheet, "AST")) != null && dateCell != null
-					&& dateCell.getDateCellValue().before(date) && line == ae.line) {
+					&& dateCell.getDateCellValue().before(date) && line == ae.getOptimalAsianLine()) {
 
 				totalHome += (int) row.getCell(XlSUtils.getColumnIndex(sheet, "HST")).getNumericCellValue();
 				totalAway += (int) row.getCell(XlSUtils.getColumnIndex(sheet, "AST")).getNumericCellValue();
@@ -213,18 +223,19 @@ public class AsianUtils {
 		return count == 0 ? 0 : (totalHome - totalAway) / count;
 	}
 
-	private static float beatTheLine(Fixture f, String team, ArrayList<Fixture> lastHomeTeam,
-			float line) {
+	private static float beatTheLine(Fixture f, String team, ArrayList<Fixture> lastHomeTeam, float line) {
 		if (lastHomeTeam.size() == 0)
 			return 0;
 		ArrayList<String> results = new ArrayList<>();
 		for (Fixture i : lastHomeTeam) {
 			boolean prediction = i.homeTeam.equals(team);
-			AsianEntry ae = new AsianEntry(i, prediction, line, f.asianHome, f.asianAway, 0f);
+			Pair ao = f.getMaxClosingAsian();
+			AsianEntry ae = new AsianEntry(i, prediction, line, ao.home, ao.away, 0f);
 			results.add(ae.success());
 		}
 
-		float coeff = f.homeTeam.equals(team) ? f.asianHome : f.asianAway;
+		Pair ao = f.getMaxClosingAsian();
+		float coeff = f.homeTeam.equals(team) ? ao.home : ao.away;
 		return outcomes(results, coeff);
 	}
 
@@ -286,10 +297,11 @@ public class AsianUtils {
 			//
 			// bets = new ArrayList<>();
 			for (Fixture f : current) {
-				if (f.asianAway <= 1f && f.asianHome <= 1f)
+				Pair ao = f.getMaxClosingAsian();
+				if (ao.away <= 1f && ao.home <= 1f)
 					continue;
 
-				AsianEntry ae = worse(f, estimateBoth(f, sheet), f.line, f.asianHome, f.asianAway);
+				AsianEntry ae = worse(f, estimateBoth(f, sheet), f.getOptimalAsianLine(), ao.home, ao.away);
 				// AsianEntry bas = better(f, basic(f, sheet), f.line,
 				// f.asianHome, f.asianAway);
 				// AsianEntry shotEntry = better(f, shotsHomeWin(f, sheet),
@@ -324,16 +336,6 @@ public class AsianUtils {
 		return profit;
 	}
 
-	private static ArrayList<Fixture> onlyHome(ArrayList<Fixture> all) {
-		ArrayList<Fixture> result = new ArrayList<>();
-		for (Fixture i : all) {
-			if (i.line == 0.5f) {
-				result.add(i);
-			}
-		}
-		return result;
-	}
-
 	private static ArrayList<AsianEntry> homePredictions(ArrayList<AsianEntry> all) {
 		ArrayList<AsianEntry> result = new ArrayList<>();
 		for (AsianEntry i : all) {
@@ -344,82 +346,18 @@ public class AsianUtils {
 		return result;
 	}
 
-	public static float realisticAllLines(HSSFSheet sheet, int year)
-			throws IOException, InterruptedException, ParseException {
-		float profit = 0.0f;
-		int played = 0;
-		ArrayList<AsianEntry> analysis = new ArrayList<>();
-		ArrayList<Fixture> all = XlSUtils.selectAllAll(sheet);
-
-		int maxMatchDay = XlSUtils.addMatchDay(sheet, all);
-		for (int i = 30; i < maxMatchDay; i++) {
-			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
-			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
-
-			ArrayList<AsianEntry> finals = runAllLines(sheet, data);
-
-			float bestExp = bestExpectancy(finals);
-
-			ArrayList<AsianEntry> bets = runAllLines(sheet, current);
-
-			bets = restrict(bets, bestExp);
-
-			// System.out.println(bets);
-
-			profit += getProfit(bets);
-			// System.out.println("Curr: "+ profit);
-			played += bets.size();
-			analysis.addAll(bets);
-
-		}
-
-		float yield = (profit / played) * 100f;
-		System.out.println("Profit for  " + sheet.getSheetName() + " " + year + " is: " + String.format("%.2f", profit)
-				+ " yield is: " + String.format("%.2f%%", yield));
-		// analysis(analysis);
-		return profit;
-	}
-
-	private static ArrayList<AsianEntry> runAllLines(HSSFSheet sheet, ArrayList<Fixture> data)
+	static ArrayList<AsianEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<Fixture> data, SettingsAsian temp)
 			throws ParseException {
 		ArrayList<AsianEntry> result = new ArrayList<>();
 		for (Fixture f : data) {
-			// TO DO REMOVE this constraint
-			if (f.asianHome < 1.76 || f.asianHome > 2.17)
-				continue;
-			AsianEntry best = null;
-			float bestExp = Float.NEGATIVE_INFINITY;
-
-			Lines l = SQLiteJDBC.closestLine(f);
-			for (int i = 0; i < 5; i++) {
-				float line = l.getLine(i, f.line);
-				float home = l.getHome(i);
-				float away = l.getAway(i);
-				AsianEntry entry = better(f, poissonAsianLine(f, sheet, line, home, away), line, home, away);
-				if (entry.expectancy > bestExp) {
-					bestExp = entry.expectancy;
-					best = entry;
-				}
-			}
-
-			result.add(best);
-
-		}
-
-		return result;
-	}
-
-	static ArrayList<AsianEntry> runWithSettingsList(HSSFSheet sheet, ArrayList<Fixture> data,
-			SettingsAsian temp) throws ParseException {
-		ArrayList<AsianEntry> result = new ArrayList<>();
-		for (Fixture f : data) {
-			AsianEntry basic = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway);
-			AsianEntry poisson = better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway);
+			float line = f.getOptimalAsianLine();
+			Pair ao = f.getMaxClosingAsian();
+			AsianEntry basic = better(f, basic(f, sheet), line, ao.home, ao.away);
+			AsianEntry poisson = better(f, poissonAsianHome(f, sheet), line, ao.home, ao.away);
 			if (basic.prediction == poisson.prediction) {
-				float finalScore = temp.basic * better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway).expectancy
-						+ temp.poisson
-								* better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway).expectancy;
-				result.add(new AsianEntry(f, basic.prediction, f.line, f.asianHome, f.asianAway, finalScore));
+				float finalScore = temp.basic * better(f, basic(f, sheet), line, ao.home, ao.away).expectancy
+						+ temp.poisson * better(f, poissonAsianHome(f, sheet), line, ao.home, ao.away).expectancy;
+				result.add(new AsianEntry(f, basic.prediction, line, ao.home, ao.away, finalScore));
 			}
 		}
 		return result;
@@ -443,8 +381,7 @@ public class AsianUtils {
 			return away;
 	}
 
-	static SettingsAsian runForLeagueWithOdds(HSSFSheet sheet, ArrayList<Fixture> all, int year)
-			throws ParseException {
+	static SettingsAsian runForLeagueWithOdds(HSSFSheet sheet, ArrayList<Fixture> all, int year) throws ParseException {
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
 		SettingsAsian best = null;
@@ -455,11 +392,13 @@ public class AsianUtils {
 
 		for (int i = 0; i < all.size(); i++) {
 			Fixture f = all.get(i);
-			AsianEntry basic = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway);
-			AsianEntry poisson = better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway);
+			float line = f.getOptimalAsianLine();
+			Pair ao = f.getMaxClosingAsian();
+			AsianEntry basic = better(f, basic(f, sheet), line, ao.home, ao.away);
+			AsianEntry poisson = better(f, poissonAsianHome(f, sheet), line, ao.home, ao.away);
 			if (basic.prediction == poisson.prediction) {
-				basics[i] = better(f, basic(f, sheet), f.line, f.asianHome, f.asianAway).expectancy;
-				poissons[i] = better(f, poissonAsianHome(f, sheet), f.line, f.asianHome, f.asianAway).expectancy;
+				basics[i] = better(f, basic(f, sheet), line, ao.home, ao.away).expectancy;
+				poissons[i] = better(f, poissonAsianHome(f, sheet), line, ao.home, ao.away).expectancy;
 				predictions[i] = basic.prediction;
 			} else {
 				basics[i] = -1f;
@@ -472,9 +411,11 @@ public class AsianUtils {
 			ArrayList<AsianEntry> finals = new ArrayList<>();
 			for (int i = 0; i < all.size(); i++) {
 				Fixture f = all.get(i);
+				float line = f.getOptimalAsianLine();
+				Pair ao = f.getMaxClosingAsian();
 				if (basics[i] != -1f) {
 					float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
-					AsianEntry ae = new AsianEntry(f, predictions[i], f.line, f.asianHome, f.asianAway, finalScore);
+					AsianEntry ae = new AsianEntry(f, predictions[i], line, ao.home, ao.away, finalScore);
 					finals.add(ae);
 				}
 
@@ -516,8 +457,8 @@ public class AsianUtils {
 				homeWins++;
 				if (i.success().equals("W"))
 					homeSuccess++;
-				AsianEntry notLoss = new AsianEntry(i.fixture, i.prediction, 0f, i.fixture.asianHome,
-						i.fixture.asianAway, 0f);
+				AsianEntry notLoss = new AsianEntry(i.fixture, i.prediction, 0f, i.fixture.getMaxClosingAsian().home,
+						i.fixture.getMaxClosingAsian().away, 0f);
 				if (notLoss.success().equals("W") || notLoss.success().equals("D"))
 					notLosses++;
 			}
@@ -595,8 +536,10 @@ public class AsianUtils {
 			ArrayList<AsianEntry> aways = new ArrayList<>();
 			for (Fixture f : data) {
 				Pair pair = poissonAsianHome(f, sheet);
-				AsianEntry home = new AsianEntry(f, true, f.line, f.asianHome, f.asianAway, pair.home);
-				AsianEntry away = new AsianEntry(f, false, f.line, f.asianHome, f.asianAway, pair.away);
+				float line = f.getOptimalAsianLine();
+				Pair ao = f.getMaxClosingAsian();
+				AsianEntry home = new AsianEntry(f, true, line, ao.home, ao.away, pair.home);
+				AsianEntry away = new AsianEntry(f, false, line, ao.home, ao.away, pair.away);
 				if (home.expectancy >= away.expectancy) {
 					finals.add(home);
 					homes.add(home);
@@ -610,17 +553,18 @@ public class AsianUtils {
 
 			ArrayList<AsianEntry> bets = new ArrayList<>();
 			for (Fixture f : current) {
-
+				float line = f.getOptimalAsianLine();
+				Pair ao = f.getMaxClosingAsian();
 				Pair pair = poissonAsianHome(f, sheet);
-				AsianEntry home = new AsianEntry(f, true, f.line, f.asianHome, f.asianAway, pair.home);
-				AsianEntry away = new AsianEntry(f, false, f.line, f.asianHome, f.asianAway, pair.away);
+				AsianEntry home = new AsianEntry(f, true, line, ao.home, ao.away, pair.home);
+				AsianEntry away = new AsianEntry(f, false, line, ao.home, ao.away, pair.away);
 				if (home.expectancy >= away.expectancy)
 					bets.add(home);
 				else
 					bets.add(away);
 
 				// System.out.println(f + " " + home.expectancy + " to " +
-				// away.expectancy + " " + f.line);
+				// away.expectancy + " " + line);
 				//// System.out.println(home.expectancy+away.expectancy);
 				// System.out.println(home.success() + " " + home.getProfit());
 				// System.out.println(away.success() + " " + away.getProfit());
@@ -642,8 +586,8 @@ public class AsianUtils {
 		return analysis;
 	}
 
-	public static ArrayList<AsianEntry> makePrediction(HSSFSheet sheet, HSSFSheet league, Fixture f,
-			SettingsAsian temp) throws ParseException {
+	public static ArrayList<AsianEntry> makePrediction(HSSFSheet sheet, HSSFSheet league, Fixture f, SettingsAsian temp)
+			throws ParseException {
 		ArrayList<Fixture> current = new ArrayList<>();
 		current.add(f);
 		ArrayList<AsianEntry> bets = runWithSettingsList(sheet, current, temp);
@@ -669,10 +613,12 @@ public class AsianUtils {
 
 			ArrayList<AsianEntry> bets = new ArrayList<>();
 			for (Fixture f : current) {
-				if (f.asianAway <= 1f && f.asianHome <= 1f)
+				float line = f.getOptimalAsianLine();
+				Pair ao = f.getMaxClosingAsian();
+				if (ao.away <= 1f && ao.home <= 1f)
 					continue;
 
-				AsianEntry ae = worse(f, estimateBoth(f, sheet), f.line, f.asianHome, f.asianAway);
+				AsianEntry ae = worse(f, estimateBoth(f, sheet), line, ao.home, ao.away);
 				// if (!ae.prediction)
 				bets.add(ae);
 
@@ -706,8 +652,8 @@ public class AsianUtils {
 
 		ArrayList<AsianEntry> todayGames = new ArrayList<>();
 		for (AsianEntry p : pending) {
-			 if (Utils.isToday(p.fixture.date))
-			todayGames.add(p);
+			if (Utils.isToday(p.fixture.date))
+				todayGames.add(p);
 		}
 		System.out.println(todayGames);
 

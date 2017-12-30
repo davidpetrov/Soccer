@@ -40,7 +40,7 @@ public class Predictions {
 		// CHECKLIST.add("ENG3");
 		// CHECKLIST.add("ENG4");
 		// CHECKLIST.add("ENG5");
-		 CHECKLIST.add("IT");
+		 CHECKLIST.add("ENG");
 		// CHECKLIST.add("IT2");
 		// CHECKLIST.add("FR");
 		// CHECKLIST.add("FR2");
@@ -77,7 +77,7 @@ public class Predictions {
 		 OnlyTodayMatches.TRUE, 30, 12);
 
 //		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
-//		 OnlyTodayMatches.TRUE, 29, 12);
+//		 OnlyTodayMatches.TRUE, 30, 12);
 		
 //		Scraper.checkAndUpdate("ENG3", OnlyTodayMatches.FALSE);
 
