@@ -888,7 +888,7 @@ public class SQLiteJDBC {
 		}
 	}
 
-	public static void storePlayerFixtures(ArrayList<Fixture> list) {
+	public static void storeFixtures(ArrayList<Fixture> list) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
@@ -913,56 +913,10 @@ public class SQLiteJDBC {
 					System.out.println(f);
 				}
 
-				// store all 1x2 odds for the fixture
-				for (MatchOdds i : f.matchOdds) {
-					String sqlOU = "INSERT OR IGNORE INTO MatchOdds "
-							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,HomeOdds,DrawOdds,AwayOdds,isOpening,isClosing)"
-							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
-							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
-							+ addQuotes(format.format(i.time)) + "," + i.homeOdds + "," + i.drawOdds + "," + i.awayOdds
-							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
-					try {
-						stmt.executeUpdate(sqlOU);
-					} catch (SQLException e) {
-						e.printStackTrace();
-						System.out.println("Store 1x2 in db problem ");
-						System.out.println(i);
-					}
-				}
+				storeMatchOdds(f, stmt);
+				storeOverUnderOdds(f, stmt);
+				storeAsianOdds(f, stmt);
 
-				// store all O/U odds for the fixture
-				for (OverUnderOdds i : f.overUnderOdds) {
-					String sqlOU = "INSERT OR IGNORE INTO OverUnderOdds "
-							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing)"
-							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
-							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
-							+ addQuotes(format.format(i.time)) + "," + i.line + "," + i.overOdds + "," + i.underOdds
-							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
-					try {
-						stmt.executeUpdate(sqlOU);
-					} catch (SQLException e) {
-						e.printStackTrace();
-						System.out.println("Store OU in db problem ");
-						System.out.println(i);
-					}
-				}
-
-				// store all Asian odds for the fixture
-				for (AsianOdds i : f.asianOdds) {
-					String sqlOU = "INSERT OR IGNORE INTO AsianOdds "
-							+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,HomeOdds,AwayOdds,isOpening,isClosing)"
-							+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
-							+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + ","
-							+ addQuotes(format.format(i.time)) + "," + i.line + "," + i.homeOdds + "," + i.awayOdds
-							+ "," + (i.isOpening ? 1 : 0) + "," + (i.isClosing ? 1 : 0) + " );";
-					try {
-						stmt.executeUpdate(sqlOU);
-					} catch (SQLException e) {
-						e.printStackTrace();
-						System.out.println("Store asian in db problem ");
-						System.out.println(i);
-					}
-				}
 			}
 
 			stmt.close();
@@ -976,6 +930,64 @@ public class SQLiteJDBC {
 				e1.printStackTrace();
 			}
 			System.exit(0);
+		}
+	}
+
+	private static void storeAsianOdds(Fixture f, Statement stmt) {
+		// store all Asian odds for the fixture
+		for (AsianOdds i : f.asianOdds) {
+			String sqlOU = "INSERT OR IGNORE INTO AsianOdds "
+					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,HomeOdds,AwayOdds,isOpening,isClosing)"
+					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+					+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + "," + addQuotes(format.format(i.time))
+					+ "," + i.line + "," + i.homeOdds + "," + i.awayOdds + "," + (i.isOpening ? 1 : 0) + ","
+					+ (i.isClosing ? 1 : 0) + " );";
+			try {
+				stmt.executeUpdate(sqlOU);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				System.out.println("Store asian in db problem ");
+				System.out.println(i);
+			}
+		}
+	}
+
+	private static void storeOverUnderOdds(Fixture f, Statement stmt) {
+		// store all O/U odds for the fixture
+		for (OverUnderOdds i : f.overUnderOdds) {
+			String sqlOU = "INSERT OR IGNORE INTO OverUnderOdds "
+					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing)"
+					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+					+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + "," + addQuotes(format.format(i.time))
+					+ "," + i.line + "," + i.overOdds + "," + i.underOdds + "," + (i.isOpening ? 1 : 0) + ","
+					+ (i.isClosing ? 1 : 0) + " );";
+			try {
+				stmt.executeUpdate(sqlOU);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				System.out.println("Store OU in db problem ");
+				System.out.println(i);
+			}
+		}
+
+	}
+
+	private static void storeMatchOdds(Fixture f, Statement stmt) {
+		// store all 1x2 odds for the fixture
+		for (MatchOdds i : f.matchOdds) {
+			String sqlOU = "INSERT OR IGNORE INTO MatchOdds "
+					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,HomeOdds,DrawOdds,AwayOdds,isOpening,isClosing)"
+					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
+					+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + "," + addQuotes(format.format(i.time))
+					+ "," + i.homeOdds + "," + i.drawOdds + "," + i.awayOdds + "," + (i.isOpening ? 1 : 0) + ","
+					+ (i.isClosing ? 1 : 0) + " );";
+			try {
+				stmt.executeUpdate(sqlOU);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				System.out.println("Store 1x2 in db problem ");
+				System.out.println(i);
+			}
 		}
 	}
 
@@ -1141,7 +1153,7 @@ public class SQLiteJDBC {
 				String homeTeam = matchRs.getString("hometeamname");
 				String awayTeam = matchRs.getString("awayteamname");
 				String bookmaker = matchRs.getString("Bookmaker");
-				String time = matchRs.getString("date");
+				String time = matchRs.getString("time");
 				// int matchday = matchRs.getInt("matchday");
 				float line = matchRs.getFloat("line");
 				float overOdds = matchRs.getFloat("overOdds");
@@ -1261,6 +1273,7 @@ public class SQLiteJDBC {
 	public static void storeGameStats(ArrayList<Fixture> stats, String competition, int year) {
 		Connection c = null;
 		Statement stmt = null;
+		System.out.println("dsadas");
 		try {
 			Class.forName("org.sqlite.JDBC");
 			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
@@ -1283,9 +1296,9 @@ public class SQLiteJDBC {
 				try {
 					stmt.executeUpdate(sql);
 				} catch (SQLException e) {
-					e.printStackTrace();
 					System.out.println("Error storing game stats for");
 					System.out.println(f);
+					e.printStackTrace();
 				}
 			}
 

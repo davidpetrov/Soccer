@@ -1,6 +1,7 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
@@ -9,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import constants.Constants;
 import odds.AsianOdds;
 import odds.MatchOdds;
 import odds.OverUnderOdds;
@@ -43,6 +45,21 @@ public class Fixture {
 		this.asianOdds = new ArrayList<>();
 		this.overUnderOdds = new ArrayList<>();
 		this.gameStats = GameStats.initial();
+	}
+
+	/**
+	 * Copy constructor Does not copy oddsdata
+	 */
+	public Fixture(Fixture f) {
+		this.date = f.date;
+		this.competition = f.competition;
+		this.homeTeam = f.homeTeam;
+		this.awayTeam = f.awayTeam;
+		this.result = f.result;
+		this.matchOdds = new ArrayList<>();
+		this.asianOdds = new ArrayList<>();
+		this.overUnderOdds = new ArrayList<>();
+		this.gameStats = f.gameStats;
 	}
 
 	@Override
@@ -236,8 +253,16 @@ public class Fixture {
 	public float getMaxClosingOverOdds() {
 		HashMap<String, ArrayList<OverUnderOdds>> baseLineOdds = getOUByLineandBookie().get(2.5f);
 
+		// baseLineOdds.keySet().stream().forEach(bookie ->
+		// System.out.println("\"" + bookie + "\","));
+
+		ArrayList<ArrayList<OverUnderOdds>> filteredBookies = baseLineOdds == null ? new ArrayList<>()
+				: baseLineOdds.entrySet().stream()
+						.filter(map -> !Arrays.asList(Constants.FAKEBOOKS).contains(map.getKey()))
+						.map(map -> map.getValue()).collect(Collectors.toCollection(ArrayList::new));
+
 		float maxClosing = -1f;
-		for (ArrayList<OverUnderOdds> list : baseLineOdds.values()) {
+		for (ArrayList<OverUnderOdds> list : filteredBookies) {
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 			if (closing.isPresent())
 				if (closing.get().getOverOdds() > maxClosing)
@@ -250,8 +275,13 @@ public class Fixture {
 	public float getMaxClosingUnderOdds() {
 		HashMap<String, ArrayList<OverUnderOdds>> baseLineOdds = getOUByLineandBookie().get(2.5f);
 
+		ArrayList<ArrayList<OverUnderOdds>> filteredBookies = baseLineOdds == null ? new ArrayList<>()
+				: baseLineOdds.entrySet().stream()
+						.filter(map -> !Arrays.asList(Constants.FAKEBOOKS).contains(map.getKey()))
+						.map(map -> map.getValue()).collect(Collectors.toCollection(ArrayList::new));
+
 		float maxClosing = -1f;
-		for (ArrayList<OverUnderOdds> list : baseLineOdds.values()) {
+		for (ArrayList<OverUnderOdds> list : filteredBookies) {
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 			if (closing.isPresent())
 				if (closing.get().getUnderOdds() > maxClosing)
@@ -369,6 +399,56 @@ public class Fixture {
 					maxHome = closing.get().homeOdds;
 				if (closing.get().awayOdds > maxAway)
 					maxAway = closing.get().awayOdds;
+			}
+		}
+
+		return Pair.of(maxHome, maxAway);
+	}
+
+	// TODO test this
+	public float getOptimalOULine() {
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> byLineAndBookie = getOUByLineandBookie();
+		float minDiff = Float.MAX_VALUE;
+		float optimalLine = -0.50f;
+
+		for (Entry<Float, HashMap<String, ArrayList<OverUnderOdds>>> entry : byLineAndBookie.entrySet()) {
+			float line = entry.getKey();
+			ArrayList<Optional<OverUnderOdds>> closing = entry.getValue().values().stream()
+					.map(list -> list.stream().max(Comparator.comparing(OverUnderOdds::getTime)))
+					.collect(Collectors.toCollection(ArrayList::new));
+
+			float avgDiff = (float) closing.stream().filter(Optional::isPresent).map(Optional::get)
+					.mapToDouble(OverUnderOdds::getOddsDiff).average().getAsDouble();
+
+			if (avgDiff < minDiff) {
+				minDiff = avgDiff;
+				optimalLine = line;
+			}
+		}
+
+		return optimalLine;
+	}
+
+	public float[] getBaseOULines() {
+		float optimalLine = getOptimalOULine();
+		return new float[] { optimalLine - 0.5f, optimalLine - 0.25f, optimalLine, optimalLine + 0.25f,
+				optimalLine + 0.5f };
+	}
+
+	public Pair getMaxClosingOUOddsByLine(float line) {
+		float maxHome = 1f;
+		float maxAway = 1f;
+
+		if (getOUByLineandBookie().get(line) == null)
+			return Pair.defaultValue();
+
+		for (ArrayList<OverUnderOdds> list : getOUByLineandBookie().get(line).values()) {
+			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
+			if (closing.isPresent()) {
+				if (closing.get().overOdds > maxHome)
+					maxHome = closing.get().overOdds;
+				if (closing.get().underOdds > maxAway)
+					maxAway = closing.get().underOdds;
 			}
 		}
 

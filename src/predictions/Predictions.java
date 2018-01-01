@@ -72,9 +72,9 @@ public class Predictions {
 		// CHECKLIST.add("BRB");
 
 //		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-//		 UpdateType.AUTOMATIC, 29, 12);
+//		 UpdateType.AUTOMATIC, 1, 1);
 		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-		 OnlyTodayMatches.TRUE, 30, 12);
+		 OnlyTodayMatches.TRUE, 1, 1);
 
 //		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
 //		 OnlyTodayMatches.TRUE, 30, 12);
@@ -215,7 +215,7 @@ public class Predictions {
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 		ArrayList<FinalEntry> all = new ArrayList<>();
 
-		ExecutorService pool = Executors.newFixedThreadPool(1);
+		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? Scraper.getTodaysLeagueList(day, month)
 				: CHECKLIST;
@@ -261,7 +261,7 @@ public class Predictions {
 
 			ArrayList<FinalEntry> pending = Utils.pendingFinals(i.getValue());
 			if (onlyToday.equals(OnlyTodayMatches.TRUE)) {
-				pending = Utils.gamesForDay(pending, LocalDate.of(2017, month, day));
+				pending = Utils.gamesForDay(pending, LocalDate.of(2018, month, day));
 			}
 
 			if (pending.isEmpty())

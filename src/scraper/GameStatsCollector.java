@@ -55,7 +55,7 @@ public class GameStatsCollector {
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
-		options.addArguments("headless");
+		// options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -72,10 +72,13 @@ public class GameStatsCollector {
 					Fixture ef = getGameStatsFixture(fixture, competition);
 					result.add(ef);
 					set.add(ef);
+
 				}
 			}
 
 			Actions actions = new Actions(driver);
+
+			// System.out.println(driver.findElement(By.className("previous")).getCssValue("cursor"));
 			actions.moveToElement(driver.findElement(By.className("previous"))).click().perform();
 			Thread.sleep(1000);
 			String htmlAfter = driver.getPageSource();
@@ -91,7 +94,21 @@ public class GameStatsCollector {
 		ArrayList<Fixture> setlist = new ArrayList<>();
 		set.addAll(result);
 		setlist.addAll(set);
+
+		fillMissingShotsData(setlist);
+
 		return setlist;
+	}
+
+	private void fillMissingShotsData(ArrayList<Fixture> setlist) {
+		int missingDataCount = 0;
+		for (Fixture i : setlist) {
+			if (i.gameStats.equals(GameStats.initial()) || i.gameStats.getShotsHome() == -1) {
+				missingDataCount++;
+				i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
+			}
+		}
+		System.out.println("Missing data for: " + missingDataCount);
 	}
 
 	private Fixture getGameStatsFixture(Document fixture, String competition) throws IOException, ParseException {
@@ -115,7 +132,7 @@ public class GameStatsCollector {
 	}
 
 	private GameStats getGameStats(Document fixture) throws IOException {
-		GameStats gameStats = null;
+		GameStats gameStats = GameStats.initial();
 		// Possession can't be parsed using jsoup only
 		// possible if using selenium but performance would be worse
 

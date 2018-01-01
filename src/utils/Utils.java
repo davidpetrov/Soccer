@@ -721,7 +721,7 @@ public class Utils {
 	public static void analysys(ArrayList<FinalEntry> all, String description, boolean verbose) {
 		ArrayList<Stats> stats = new ArrayList<>();
 
-		Utils.removeMarginProportional(all);
+		// Utils.removeMarginProportional(all);
 		ArrayList<FinalEntry> noEquilibriums = Utils.noequilibriums(all);
 		ArrayList<FinalEntry> equilibriums = Utils.equilibriums(all);
 
@@ -872,7 +872,7 @@ public class Utils {
 
 	private static void removeMarginProportional(ArrayList<FinalEntry> all) {
 		all.stream().forEach(fe -> fe.fixture.overUnderOdds.stream().forEach(OverUnderOdds::removeMarginProportional));
-		
+
 	}
 
 	private static HashMap<String, Float> thresholdsByLeague(ArrayList<FinalEntry> all) {
@@ -1764,10 +1764,18 @@ public class Utils {
 	 */
 	public static float avgReturn(ArrayList<Fixture> all) {
 		float total = 0f;
+		int count = 0;
 		for (Fixture i : all) {
-			total += 1f / i.getMaxClosingOverOdds() + 1f / i.getMaxClosingUnderOdds();
+			float overOdds = i.getMaxClosingOverOdds();
+			float underOdds = i.getMaxClosingUnderOdds();
+
+			if (overOdds >= 1f && underOdds >= 1f) {
+				total += 1f / overOdds + 1f / underOdds;
+				count++;
+			}
+			// System.out.println(overOdds + " " + underOdds);
 		}
-		return all.size() == 0 ? 0 : total / all.size();
+		return all.size() == 0 ? 0 : total / count;
 	}
 
 	public static ArrayList<FinalEntry> runRandom(ArrayList<Fixture> current) {

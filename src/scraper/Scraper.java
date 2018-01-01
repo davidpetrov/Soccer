@@ -38,6 +38,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -84,32 +85,18 @@ public class Scraper {
 
 		// =================================================================
 
-		ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
-		System.out.println(eng.size());
-		eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
+		// ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
+		// System.out.println(eng.size());
+		// eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
 
-		// for (int i = 2012; i <= 2012; i++) {
-		// ArrayList<PlayerFixture> list = collectFull("BRA", i, null);
-		// // //
-		// //
-		// "http://int.soccerway.com/national/scotland/premier-league/2007-2008/regular-season/");
-		// // //
-		// //
-		// "http://int.soccerway.com/national/germany/bundesliga/2010-2011/regular-season/");
-		// SQLiteJDBC.storePlayerFixtures(list, i, "BRA");
-		// }
-
-		// collectAndStoreSinglePFS("BRA", 2016,
-		// "http://int.soccerway.com/matches/2016/06/23/brazil/serie-a/clube-atletico-mineiro/sport-club-corinthians-paulista/2217995/");
-
-		// ArrayList<PlayerFixture> list =
-		// SQLiteJDBC.selectPlayerFixtures("ENG", 2015);
-		// System.out.println(list.size());
 		// ====================================================================
 
 		// ArrayList<Fixture> stats = GameStatsCollector.of("ENG",
-		// 2016).collect();
-		// SQLiteJDBC.storeGameStats(stats,"ENG",2016);
+		// 2008).collect();
+		// SQLiteJDBC.storeGameStats(stats, "ENG", 2008);
+
+		ArrayList<Fixture> list = fullOdds("ENG", 2009, null);
+		SQLiteJDBC.storeFixtures(list);
 
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -124,13 +111,9 @@ public class Scraper {
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
 		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
 		// fastOdds("ENG", 2017, null);
-		// ArrayList<Fixture> list = fullOdds("ENG", 2010, null);
-		// SQLiteJDBC.storePlayerFixtures(list);
-		// ArrayList<Fixture> list2 = fullOdds("ENG", 2009, null);
-		// SQLiteJDBC.storePlayerFixtures(list2);
+
 		// ArrayList<Fixture> list3 = fullOdds("ENG", 2010, null);
 		// SQLiteJDBC.storePlayerFixtures(list3);
-		// XlSUtils.storeInExcelFull(list, "GER", 2016, "fullodds");
 
 		// ArrayList<Fixture> list2 = fullOdds("SPA", 2013,
 		// "http://www.oddsportal.com/soccer/spain/primera-division-2013-2014");
@@ -236,9 +219,8 @@ public class Scraper {
 	public static ArrayList<String> getTodaysLeagueList(int day, int month) throws IOException {
 		ArrayList<String> result = new ArrayList<>();
 
-		Document page = Jsoup
-				.connect("http://www.soccerway.com/matches/2017/" + month + "/" + (day >= 10 ? day : ("0" + day)) + "/")
-				.timeout(0).get();
+		Document page = Jsoup.connect("http://www.soccerway.com/matches/2018/" + (month >= 10 ? month : ("0" + month))
+				+ "/" + (day >= 10 ? day : ("0" + day)) + "/").timeout(0).get();
 
 		HashMap<String, String> leagueDescriptions = EntryPoints.getTrackingLeagueDescriptions();
 		Elements linksM = page.select("th.competition-link");
@@ -254,7 +236,7 @@ public class Scraper {
 		return result;
 	}
 
-	//TODO refactor
+	// TODO refactor
 	public static void checkAndUpdate(String competition, OnlyTodayMatches onlyTodaysMatches)
 			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
@@ -450,7 +432,6 @@ public class Scraper {
 
 	}
 
-	
 	private static ArrayList<Fixture> collectUpToDate(String competition, int currentYear, Date yesterday, String add)
 			throws IOException, ParseException, InterruptedException {
 		ArrayList<Fixture> result = new ArrayList<>();
@@ -773,7 +754,7 @@ public class Scraper {
 
 	}
 
-	//TODO clean
+	// TODO clean
 	public static Fixture getFixture(Document fixture, String competition) throws IOException, ParseException {
 
 		// System.out.println(fixture.select("dt:contains(Half-time) +
@@ -857,7 +838,7 @@ public class Scraper {
 		return Pair.of(homeStats, awayStats);
 	}
 
-	//TODO refactor
+	// TODO refactor
 	public static ArrayList<PlayerFixture> getFixtureFull(Document fixture, String competition)
 			throws IOException, ParseException {
 		boolean verbose = false;
@@ -1566,7 +1547,7 @@ public class Scraper {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	//TODO refactor
+	// TODO refactor
 	public static Fixture getOddsFixture(WebDriver driver, String i, String competition, boolean liveMatchesFlag,
 			OnlyTodayMatches onlyToday) throws ParseException, InterruptedException, IOException {
 		// System.out.println(i);
@@ -2091,9 +2072,17 @@ public class Scraper {
 			ArrayList<MatchOdds> drawHistory = drawHistoriesMap.get(bookmaker);
 			ArrayList<MatchOdds> awayHistory = awayHistoriesMap.get(bookmaker);
 
-			homeHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
-			drawHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
-			awayHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
+			if (homeHistory == null || drawHistory == null || awayHistory == null)
+				continue;
+
+			try {
+				homeHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
+				drawHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
+				awayHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 			if (!(homeHistory.get(homeHistory.size() - 1).time.equals(drawHistory.get(drawHistory.size() - 1).time)
 					&& drawHistory.get(drawHistory.size() - 1).time
@@ -2192,13 +2181,17 @@ public class Scraper {
 				float homeOdds = -1f, drawOdds = -1f, awayOdds = -1f;
 
 				if (closingObjectJSON instanceof JSONArray) {
+
 					homeOdds = (float) closingOddsObject.getJSONArray(b).getDouble(0);
 					drawOdds = (float) closingOddsObject.getJSONArray(b).getDouble(1);
 					awayOdds = (float) closingOddsObject.getJSONArray(b).getDouble(2);
 				} else {
-					homeOdds = (float) closingOddsObject.getJSONObject(b).getDouble("0");
-					drawOdds = (float) closingOddsObject.getJSONObject(b).getDouble("1");
-					awayOdds = (float) closingOddsObject.getJSONObject(b).getDouble("2");
+					if (closingOddsObject.getJSONObject(b).has("0"))
+						homeOdds = (float) closingOddsObject.getJSONObject(b).getDouble("0");
+					if (closingOddsObject.getJSONObject(b).has("1"))
+						drawOdds = (float) closingOddsObject.getJSONObject(b).getDouble("1");
+					if (closingOddsObject.getJSONObject(b).has("2"))
+						awayOdds = (float) closingOddsObject.getJSONObject(b).getDouble("2");
 				}
 
 				Date timeHome = null, timeDraw = null, timeAway = null;
@@ -2213,12 +2206,18 @@ public class Scraper {
 					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(2) * 1000);
 					timeAway = cal.getTime();
 				} else {
-					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("0") * 1000);
-					timeHome = cal.getTime();
-					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("1") * 1000);
-					timeDraw = cal.getTime();
-					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("2") * 1000);
-					timeAway = cal.getTime();
+					if (changeTime.getJSONObject(b).has("0")) {
+						cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("0") * 1000);
+						timeHome = cal.getTime();
+					}
+					if (changeTime.getJSONObject(b).has("1")) {
+						cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("1") * 1000);
+						timeDraw = cal.getTime();
+					}
+					if (changeTime.getJSONObject(b).has("2")) {
+						cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("2") * 1000);
+						timeAway = cal.getTime();
+					}
 				}
 
 				MatchOdds closingHome = new MatchOdds(bookmaker, timeHome, homeOdds, -1f, -1f).withIsClosing();
@@ -2421,36 +2420,55 @@ public class Scraper {
 			for (String b : bookies) {
 				String bookmaker = booksMap.get(Integer.parseInt(b));
 				Object closingObjectJSON = closingOddsObject.get(b);
-				float overOdds = -1f, underOdds = -1f;
+				float overOdds = 1f, underOdds = 1f;
 
-				if (closingObjectJSON instanceof JSONArray) {
-					overOdds = (float) closingOddsObject.getJSONArray(b).getDouble(0);
-					underOdds = (float) closingOddsObject.getJSONArray(b).getDouble(1);
-				} else {
-					overOdds = (float) closingOddsObject.getJSONObject(b).getDouble("0");
-					underOdds = (float) closingOddsObject.getJSONObject(b).getDouble("1");
+				try {
+					if (closingObjectJSON instanceof JSONArray) {
+						overOdds = (float) closingOddsObject.getJSONArray(b).getDouble(0);
+						if (closingOddsObject.getJSONArray(b).length() > 1)
+							underOdds = (float) closingOddsObject.getJSONArray(b).getDouble(1);
+					} else {
+						if (closingOddsObject.getJSONObject(b).has("0"))
+							overOdds = (float) closingOddsObject.getJSONObject(b).getDouble("0");
+						if (closingOddsObject.getJSONObject(b).has("1"))
+							underOdds = (float) closingOddsObject.getJSONObject(b).getDouble("1");
+					}
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
 				Date timeOver = null, timeUnder = null;
 
 				Object changeTimeJSON = changeTime.get(b);
 
-				if (changeTimeJSON instanceof JSONArray) {
-					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(0) * 1000);
-					timeOver = cal.getTime();
-					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(1) * 1000);
-					timeUnder = cal.getTime();
-				} else {
-					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("0") * 1000);
-					timeOver = cal.getTime();
-					cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("1") * 1000);
-					timeUnder = cal.getTime();
+				try {
+					if (changeTimeJSON instanceof JSONArray) {
+						cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(0) * 1000);
+						timeOver = cal.getTime();
+						if (changeTime.getJSONArray(b).length() > 1) {
+							cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(1) * 1000);
+							timeUnder = cal.getTime();
+						}
+					} else {
+						if (changeTime.getJSONObject(b).has("0")) {
+							cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("0") * 1000);
+							timeOver = cal.getTime();
+						}
+						if (changeTime.getJSONObject(b).has("1")) {
+							cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("1") * 1000);
+							timeUnder = cal.getTime();
+						}
+					}
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
-				OverUnderOdds closingOver = new OverUnderOdds(bookmaker, timeOver, handicapValue, overOdds, -1f)
-						.withIsClosing();
-				OverUnderOdds closingUnder = new OverUnderOdds(bookmaker, timeUnder, handicapValue, -1f, underOdds)
-						.withIsClosing();
+				OverUnderOdds closingOver = new OverUnderOdds(bookmaker, timeOver == null ? timeUnder : timeOver,
+						handicapValue, overOdds, -1f).withIsClosing();
+				OverUnderOdds closingUnder = new OverUnderOdds(bookmaker, timeUnder == null ? timeOver : timeUnder,
+						handicapValue, -1f, underOdds).withIsClosing();
 				closingOdds.add(closingOver);
 				closingOdds.add(closingUnder);
 			}
@@ -2472,6 +2490,11 @@ public class Scraper {
 			float line = i.getKey();
 			HashMap<String, ArrayList<OverUnderOdds>> overBookMap = i.getValue();
 			HashMap<String, ArrayList<OverUnderOdds>> underBookMap = underHistoriesMap.get(line);
+
+			if (overBookMap == null || underBookMap == null) {
+				System.out.println();
+				continue;
+			}
 
 			if (overBookMap.size() != underBookMap.size())
 				System.out.println("Histories map size differ for line: " + line);

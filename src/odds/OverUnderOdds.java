@@ -66,6 +66,10 @@ public class OverUnderOdds extends Odds {
 		return this;
 	}
 
+	public float getOddsDiff() {
+		return Math.abs(overOdds - underOdds);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

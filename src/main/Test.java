@@ -45,19 +45,7 @@ public class Test {
 	public static void main(String[] args) throws JSONException, IOException, InterruptedException, ExecutionException {
 		long start = System.currentTimeMillis();
 
-		// Results.eval("estimateBoth");
-		// Results.eval("smooth");
 		// Results.eval("test");
-
-		// asianPredictions();
-
-		// float total = 0f;
-		// for (int year = 2005; year <= 2015; year++)
-		// total += asian(year);
-		// System.out.println("Avg profit is " + (total / 11));
-
-		// System.out.println(Utils.pValueCalculator(11880, 0.04f, 1.8f));
-		// makePredictions();
 
 		// float total = 0f;
 		// int startY = 2011;
@@ -66,16 +54,11 @@ public class Test {
 		// total += simulationAllLines(year, true /*DataType.ALLEURODATA*/);
 		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
-		// for (int i = 2005; i <= 2015; i++)
-		// XlSUtils.populateScores(i);
+		// analysis(2016, 2016, DataType.ALLEURODATA);
 
-		// accumulators(2015, 2015);
-
-		analysis(2005, 2016, DataType.ALLEURODATA);
-
-		// aggregateInterval();
-
-		// stats();
+		Analysis analysis = new Analysis(2009, 2016, "ENG");
+		analysis.makePredictions();
+		analysis.printAnalysis();
 
 		// Utils.optimalHTSettings(2005, 2016, DataType.ALLEURODATA,
 		// MaximizingBy.BOTH);
@@ -509,11 +492,11 @@ public class Test {
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
 		while (sheet.hasNext()) {
 			HSSFSheet sh = (HSSFSheet) sheet.next();
-			if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
-				continue;
-
-			// if (!sh.getSheetName().equals("FR2"))
+			// if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
 			// continue;
+
+			if (!sh.getSheetName().equals("E0"))
+				continue;
 			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
 		}
 
@@ -745,19 +728,19 @@ public class Test {
 		workbookdata.close();
 	}
 
-	public static void printSuccessRate(ArrayList<FinalEntry> list, String listName) {
-		int successOver50 = 0, failureOver50 = 0;
-		for (FinalEntry fe : list) {
-			if (fe.success())
-				successOver50++;
-			else
-				failureOver50++;
-		}
-		System.out.println("success" + listName + ": " + successOver50 + "failure" + listName + ": " + failureOver50);
-		System.out
-				.println("Rate" + listName + ": " + String.format("%.2f", ((float) successOver50 / list.size()) * 100));
-		System.out.println("Profit" + listName + ": " + String.format("%.2f", successOver50 * 0.9 - failureOver50));
-	}
+//	public static void printSuccessRate(ArrayList<FinalEntry> list, String listName) {
+//		int successOver50 = 0, failureOver50 = 0;
+//		for (FinalEntry fe : list) {
+//			if (fe.success())
+//				successOver50++;
+//			else
+//				failureOver50++;
+//		}
+//		System.out.println("success" + listName + ": " + successOver50 + "failure" + listName + ": " + failureOver50);
+//		System.out
+//				.println("Rate" + listName + ": " + String.format("%.2f", ((float) successOver50 / list.size()) * 100));
+//		System.out.println("Profit" + listName + ": " + String.format("%.2f", successOver50 * 0.9 - failureOver50));
+//	}
 
 	public enum DataType {
 		ALLEURODATA, ODDSPORTAL
