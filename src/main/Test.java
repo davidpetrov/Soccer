@@ -56,7 +56,7 @@ public class Test {
 
 //		 analysis(2017, 2017, DataType.ALLEURODATA);
 
-		 Analysis analysis = new Analysis(2009, 2016, "ENG");
+		 Analysis analysis = new Analysis(2016, 2016, "SPA");
 		 analysis.makePredictions();
 		 analysis.printAnalysis();
 

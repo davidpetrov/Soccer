@@ -55,13 +55,14 @@ public class GameStatsCollector {
 
 		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
-		// options.addArguments("headless");
+		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
 		driver.navigate().to(address);
 
 		while (true) {
+			int count = 0;
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
 			Element list = matches.select("table[class=matches   ]").first();
@@ -72,7 +73,9 @@ public class GameStatsCollector {
 					Fixture ef = getGameStatsFixture(fixture, competition);
 					result.add(ef);
 					set.add(ef);
-
+					count++;
+					if (count % 50 == 0)
+						System.out.println(count + "\n" + ef);
 				}
 			}
 

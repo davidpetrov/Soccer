@@ -1,6 +1,8 @@
 package scraper;
 
 import java.io.File;
+
+import java.util.Optional;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -68,6 +70,8 @@ import runner.RunnerOdds;
 import runner.UpdateRunner;
 import utils.FixtureListCombiner;
 import utils.Pair;
+import utils.RetryCommand;
+import utils.ThrowingSupplier;
 import utils.Utils;
 import xls.XlSUtils;
 
@@ -91,14 +95,15 @@ public class Scraper {
 
 		// ====================================================================
 
-		// ArrayList<Fixture> stats = GameStatsCollector.of("ENG",
-		// 2008).collect();
-		// SQLiteJDBC.storeGameStats(stats, "ENG", 2008);
+		ArrayList<Fixture> stats = GameStatsCollector.of("SPA", 2013).collect();
+		SQLiteJDBC.storeGameStats(stats, "SPA", 2013);
+		ArrayList<Fixture> stats2 = GameStatsCollector.of("SPA", 2012).collect();
+		SQLiteJDBC.storeGameStats(stats2, "SPA", 2012);
 
-		ArrayList<Fixture> list = fullOdds("SPA", 2016, null);
-		SQLiteJDBC.storeFixtures(list);
-//		ArrayList<Fixture> list2 = fullOdds("SPA", 2015, null);
-//		SQLiteJDBC.storeFixtures(list2);
+		// ArrayList<Fixture> list = fullOdds("SPA", 2016, null);
+		// SQLiteJDBC.storeFixtures(list);
+		// ArrayList<Fixture> list2 = fullOdds("SPA", 2015, null);
+		// SQLiteJDBC.storeFixtures(list2);
 
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -1331,18 +1336,14 @@ public class Scraper {
 				// table.findElements(By.xpath("//tbody/tr"));
 				List<WebElement> tagrows = table.findElements(By.tagName("tr"));
 
-				for (WebElement i : tagrows) {
-					
-					String text ="";
-					try {
-						text = i.getText();
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if (text.contains("-")) {
+				for (int i = 0; i < tagrows.size(); i++) {
+					WebElement elem = tagrows.get(i);
+					Optional<String> text = ThrowingSupplier.tryTimes(10, () -> {
+						return elem.getText();
+					});
+					if (text.isPresent() && text.get().contains("-")) {
 
-						WebElement aElem = i.findElement(By.cssSelector("a"));
+						WebElement aElem = elem.findElement(By.cssSelector("a"));
 						if (aElem != null) {
 							String href = aElem.getAttribute("href");
 							// System.out.println(href);
@@ -1560,18 +1561,8 @@ public class Scraper {
 	// TODO refactor
 	public static Fixture getOddsFixture(WebDriver driver, String i, String competition, boolean liveMatchesFlag,
 			OnlyTodayMatches onlyToday) throws ParseException, InterruptedException, IOException {
-		// System.out.println(i);
-		// int count = 0;
-		// int maxTries = 10;
-		// while (true) {
-		// try {
+
 		driver.navigate().to(i);
-		// break;
-		// } catch (Exception e) {
-		// if (++count == maxTries)
-		// throw e;
-		// }
-		// }
 
 		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
 		String home = title.split(" - ")[0].trim();
@@ -1587,24 +1578,6 @@ public class Scraper {
 		// performance in nextMatches())
 		if (onlyToday.equals(OnlyTodayMatches.TRUE) && !Utils.isToday(date))
 			return null;
-
-		// --------------------------
-		// Document fixture = Jsoup.connect(i).get();
-		//
-		//
-		// Element dt = fixture.select("p[class^=date]").first();
-		//
-		// String millisString = dt.outerHtml().split("
-		// ")[3].split("-")[0].substring(1);
-		//
-		// long timeInMillis = Long.parseLong(millisString) * 1000;
-		//
-		// Calendar cal = Calendar.getInstance();
-		// cal.setTimeInMillis(timeInMillis);
-		// Date date2 = cal.getTime();
-		// System.out.println(date2);
-		// date=date2;
-		// -----------------------------------------------------------
 
 		// Resultss
 		Result fullResult = new Result(-1, -1);
