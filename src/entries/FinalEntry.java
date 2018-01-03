@@ -197,4 +197,57 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		return fe;
 	}
 
+	public FinalEntry getValueBetOverPinnacle(boolean withPrediction) {
+		float maxValue = -1f;
+		OverUnderOdds maxVlaueOdds = null;
+
+		float[] lines = fixture.getBaseOULines();
+		for (int i = 0; i < 5; i++) {
+			Pair odds = fixture.getMaxClosingOUOddsByLine(lines[i]);
+			OverUnderOdds pinnOdds = fixture.getMaxCloingByLineAndBookie(lines[i], "Pinnacle");
+
+			if (pinnOdds == null)
+				continue;
+
+			OverUnderOdds trueOdds = pinnOdds.getTrueOddsMarginal();
+			if ((withPrediction && prediction >= 0.55f) || !withPrediction) {
+				if (odds.home > trueOdds.overOdds) {
+					float value = odds.home / trueOdds.overOdds;
+					if (value > maxValue) {
+						maxVlaueOdds = new OverUnderOdds("Max", trueOdds.time, lines[i], odds.home, -1f);
+					}
+				}
+			}
+
+			if ((withPrediction && prediction < 0.55f) || !withPrediction) {
+				if (odds.away > trueOdds.underOdds) {
+					float value = odds.away / trueOdds.underOdds;
+					if (value > maxValue) {
+						maxVlaueOdds = new OverUnderOdds("Max", trueOdds.time, lines[i], -1f, odds.away);
+					}
+				}
+			}
+
+		}
+
+		return createCopyWithSingleOdds(maxVlaueOdds);
+	}
+
+	private FinalEntry createCopyWithSingleOdds(OverUnderOdds maxVlaueOdds) {
+		if (maxVlaueOdds == null)
+			return null;
+		ArrayList<OverUnderOdds> overUnderOdds = new ArrayList<>();
+		overUnderOdds.add(maxVlaueOdds);
+
+		Fixture ff = new Fixture(fixture);
+		ff.overUnderOdds = overUnderOdds;
+		ff.asianOdds = fixture.asianOdds;
+		ff.matchOdds = fixture.matchOdds;
+
+		float prediction = maxVlaueOdds.overOdds == -1f ? 0f : 1f;
+
+		FinalEntry fe = new FinalEntry(ff, prediction, result, threshold, lower, upper).withLine(maxVlaueOdds.line);
+		return fe;
+	}
+
 }

@@ -95,8 +95,10 @@ public class Scraper {
 		// 2008).collect();
 		// SQLiteJDBC.storeGameStats(stats, "ENG", 2008);
 
-		ArrayList<Fixture> list = fullOdds("ENG", 2009, null);
+		ArrayList<Fixture> list = fullOdds("SPA", 2016, null);
 		SQLiteJDBC.storeFixtures(list);
+//		ArrayList<Fixture> list2 = fullOdds("SPA", 2015, null);
+//		SQLiteJDBC.storeFixtures(list2);
 
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -1330,7 +1332,15 @@ public class Scraper {
 				List<WebElement> tagrows = table.findElements(By.tagName("tr"));
 
 				for (WebElement i : tagrows) {
-					if (i.getText().contains("-")) {
+					
+					String text ="";
+					try {
+						text = i.getText();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if (text.contains("-")) {
 
 						WebElement aElem = i.findElement(By.cssSelector("a"));
 						if (aElem != null) {

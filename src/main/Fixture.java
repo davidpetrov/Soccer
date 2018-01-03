@@ -443,6 +443,8 @@ public class Fixture {
 			return Pair.defaultValue();
 
 		for (ArrayList<OverUnderOdds> list : getOUByLineandBookie().get(line).values()) {
+			if (!list.isEmpty() && Arrays.asList(Constants.FAKEBOOKS).contains(list.get(0).bookmaker))
+				continue;
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 			if (closing.isPresent()) {
 				if (closing.get().overOdds > maxHome)
@@ -453,6 +455,25 @@ public class Fixture {
 		}
 
 		return Pair.of(maxHome, maxAway);
+	}
+
+	/**
+	 * Closing odds for specific line and bookmaker if present
+	 * 
+	 * @param line
+	 * @param bookmaker
+	 * @return
+	 */
+	public OverUnderOdds getMaxCloingByLineAndBookie(float line, String bookmaker) {
+		HashMap<String, ArrayList<OverUnderOdds>> bookMap = getOUByLineandBookie().get(line);
+		if (bookMap == null)
+			return null;
+		ArrayList<OverUnderOdds> list = bookMap.get(bookmaker);
+		if (list == null || list.isEmpty())
+			return null;
+
+		Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
+		return closing.get();
 	}
 
 }

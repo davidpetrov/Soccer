@@ -77,14 +77,31 @@ public class Analysis {
 	}
 
 	public void printAnalysis() {
-		 Utils.analysys(predictions, "ENG", true);
+		Utils.analysys(predictions, "ENG", true);
 
-		// byBookmaker();
+		byBookmaker(predictions);
 		byLine();
+
+		valueOverPinnacle();
 
 	}
 
-	private void byBookmaker() {
+	private void valueOverPinnacle() {
+		ArrayList<FinalEntry> finals = predictions.stream().map(fe -> fe.getValueBetOverPinnacle(false))
+				.filter(fe -> fe != null).collect(Collectors.toCollection(ArrayList::new));
+		System.out.println(new Stats(finals, "Values over pinnacle"));
+
+		ArrayList<FinalEntry> valuesWithPrediction = predictions.stream().filter(fe -> fe.prediction != 0.5f)
+				.map(fe -> fe.getValueBetOverPinnacle(true)).filter(fe -> fe != null)
+				.collect(Collectors.toCollection(ArrayList::new));
+		System.out.println(new Stats(valuesWithPrediction, "Values over pinnacle with predictions"));
+		Utils.analysys(valuesWithPrediction, "Values over pinnacle with predictions", true);
+		
+		byBookmaker(valuesWithPrediction);
+
+	}
+
+	private void byBookmaker(ArrayList<FinalEntry> predictions) {
 		ArrayList<Stats> stats = new ArrayList<>();
 		HashSet<String> bookies = getOUbookmakerList(Utils.onlyFixtures(predictions));
 		for (String b : bookies) {

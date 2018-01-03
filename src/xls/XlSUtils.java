@@ -2440,7 +2440,7 @@ public class XlSUtils {
 		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
 		// allPfs);
 
-		for (int i = /* dictionary == null ? 100 : */5; i < maxMatchDay; i++) {
+		for (int i = /* dictionary == null ? 100 : */14; i < maxMatchDay; i++) {
 
 			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 			// Utils.fairValue(current);
@@ -2519,7 +2519,7 @@ public class XlSUtils {
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-			finals = Utils.onlyUnders(finals);
+//			finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);
@@ -4765,7 +4765,7 @@ public class XlSUtils {
 		ArrayList<FinalEntry> pending = new ArrayList<>();
 
 		int maxMatchDay = FixtureUtils.addMatchDay(all);
-		for (int i = maxMatchDay >= 12 ? 12 : 5; i <= maxMatchDay; i++) {
+		for (int i = maxMatchDay >= 14 ? 14 : 5; i <= maxMatchDay; i++) {
 			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
 			// ArrayList<Fixture> data = Utils.getBeforeMatchday(all,
 			// i);

@@ -47,25 +47,20 @@ public class Test {
 
 		// Results.eval("test");
 
-		// float total = 0f;
-		// int startY = 2011;
-		// int end = 2016;
-		// for (int year = startY; year <= end; year++)
-		// total += simulationAllLines(year, true /*DataType.ALLEURODATA*/);
-		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
+//		float total = 0f;
+//		int startY = 2016;
+//		int end = 2016;
+//		for (int year = startY; year <= end; year++)
+//			total += simulation(year, DataType.ODDSPORTAL);
+//		System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
-		// analysis(2016, 2016, DataType.ALLEURODATA);
+//		 analysis(2017, 2017, DataType.ALLEURODATA);
 
-		Analysis analysis = new Analysis(2009, 2016, "ENG");
-		analysis.makePredictions();
-		analysis.printAnalysis();
+		 Analysis analysis = new Analysis(2009, 2016, "ENG");
+		 analysis.makePredictions();
+		 analysis.printAnalysis();
 
-		// Utils.optimalHTSettings(2005, 2016, DataType.ALLEURODATA,
-		// MaximizingBy.BOTH);
-
-		// Utils.fastSearch(2005, 2016, DataType.ALLEURODATA,
-		// MaximizingBy.BOTH);
-
+	
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
 	}
@@ -728,19 +723,23 @@ public class Test {
 		workbookdata.close();
 	}
 
-//	public static void printSuccessRate(ArrayList<FinalEntry> list, String listName) {
-//		int successOver50 = 0, failureOver50 = 0;
-//		for (FinalEntry fe : list) {
-//			if (fe.success())
-//				successOver50++;
-//			else
-//				failureOver50++;
-//		}
-//		System.out.println("success" + listName + ": " + successOver50 + "failure" + listName + ": " + failureOver50);
-//		System.out
-//				.println("Rate" + listName + ": " + String.format("%.2f", ((float) successOver50 / list.size()) * 100));
-//		System.out.println("Profit" + listName + ": " + String.format("%.2f", successOver50 * 0.9 - failureOver50));
-//	}
+	// public static void printSuccessRate(ArrayList<FinalEntry> list, String
+	// listName) {
+	// int successOver50 = 0, failureOver50 = 0;
+	// for (FinalEntry fe : list) {
+	// if (fe.success())
+	// successOver50++;
+	// else
+	// failureOver50++;
+	// }
+	// System.out.println("success" + listName + ": " + successOver50 +
+	// "failure" + listName + ": " + failureOver50);
+	// System.out
+	// .println("Rate" + listName + ": " + String.format("%.2f", ((float)
+	// successOver50 / list.size()) * 100));
+	// System.out.println("Profit" + listName + ": " + String.format("%.2f",
+	// successOver50 * 0.9 - failureOver50));
+	// }
 
 	public enum DataType {
 		ALLEURODATA, ODDSPORTAL
