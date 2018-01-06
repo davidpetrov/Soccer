@@ -53,7 +53,6 @@ public class GameStatsCollector {
 		String address = getAddress();
 		System.out.println(address);
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);

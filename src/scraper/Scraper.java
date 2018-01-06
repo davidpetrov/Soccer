@@ -70,7 +70,6 @@ import runner.RunnerOdds;
 import runner.UpdateRunner;
 import utils.FixtureListCombiner;
 import utils.Pair;
-import utils.RetryCommand;
 import utils.ThrowingSupplier;
 import utils.Utils;
 import xls.XlSUtils;
@@ -95,15 +94,15 @@ public class Scraper {
 
 		// ====================================================================
 
-		ArrayList<Fixture> stats = GameStatsCollector.of("SPA", 2013).collect();
-		SQLiteJDBC.storeGameStats(stats, "SPA", 2013);
-		ArrayList<Fixture> stats2 = GameStatsCollector.of("SPA", 2012).collect();
-		SQLiteJDBC.storeGameStats(stats2, "SPA", 2012);
+		// ArrayList<Fixture> stats = GameStatsCollector.of("SPA", 2013).collect();
+		// SQLiteJDBC.storeGameStats(stats, "SPA", 2013);
+		// ArrayList<Fixture> stats2 = GameStatsCollector.of("SPA", 2012).collect();
+		// SQLiteJDBC.storeGameStats(stats2, "SPA", 2012);
 
-		// ArrayList<Fixture> list = fullOdds("SPA", 2016, null);
-		// SQLiteJDBC.storeFixtures(list);
-		// ArrayList<Fixture> list2 = fullOdds("SPA", 2015, null);
-		// SQLiteJDBC.storeFixtures(list2);
+		ArrayList<Fixture> list = fullOdds("GER", 2016, null);
+		SQLiteJDBC.storeFixtures(list);
+//		ArrayList<Fixture> list2 = fullOdds("GER", 2015, null);
+//		SQLiteJDBC.storeFixtures(list2);
 
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -156,9 +155,9 @@ public class Scraper {
 	}
 
 	/**
-	 * Helper method for collecting and storing PFS from a a single fixture due
-	 * to some sort of bug in the collection process of collectfull method which
-	 * misses only 1 fixture for some reason
+	 * Helper method for collecting and storing PFS from a a single fixture due to
+	 * some sort of bug in the collection process of collectfull method which misses
+	 * only 1 fixture for some reason
 	 * 
 	 * @param string
 	 * @param i
@@ -171,7 +170,6 @@ public class Scraper {
 		ArrayList<PlayerFixture> result = new ArrayList<>();
 		Set<PlayerFixture> set = new HashSet<>();
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		WebDriver driver = new ChromeDriver();
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -250,7 +248,7 @@ public class Scraper {
 		int collectYear = Arrays.asList(EntryPoints.SUMMER).contains(competition) ? EntryPoints.SUMMERCURRENT
 				: EntryPoints.CURRENT;
 
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + collectYear + ".xls"));
+		FileInputStream file = new FileInputStream(new File(base + "/data/odds" + collectYear + ".xls"));
 
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		HSSFSheet sh = workbook.getSheet(competition);
@@ -259,6 +257,7 @@ public class Scraper {
 		// problem when no pendingma fixtures?
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
+		workbook.close();
 
 		ArrayList<Fixture> toAdd = new ArrayList<>();
 		ArrayList<Fixture> combined = new ArrayList<>();
@@ -283,10 +282,7 @@ public class Scraper {
 			System.out.println(list.size() + "shots");
 
 			FixtureListCombiner combiner = new FixtureListCombiner(odds, list, competition);
-			ArrayList<? extends Fixture> combinedGeneric = combiner.combineWithDictionary();
-
-			combined = combinedGeneric.stream().map(Fixture.class::cast)
-					.collect(Collectors.toCollection(ArrayList::new));
+			combined = combiner.combineWithDictionary();
 
 			System.out.println(combined.size() + " combined");
 			System.out.println(competition + " "
@@ -352,7 +348,6 @@ public class Scraper {
 
 		Set<Fixture> result = new HashSet<>();
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
@@ -449,7 +444,6 @@ public class Scraper {
 			System.out.println(address);
 		} else
 			address = add;
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
@@ -527,7 +521,6 @@ public class Scraper {
 		ArrayList<Fixture> result = new ArrayList<>();
 		Set<String> teams = new HashSet<>();
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
@@ -578,14 +571,13 @@ public class Scraper {
 
 	public static ArrayList<Fixture> nextMatchesValues(String competition, Object object,
 			OnlyTodayMatches onlyTodaysMatches, ArrayList<FinalEntry> predictions, int day, int month)
-					throws ParseException, InterruptedException, IOException {
+			throws ParseException, InterruptedException, IOException {
 		String address = EntryPoints.getOddsLink(competition, EntryPoints.CURRENT);
 		System.out.println(address);
 
 		ArrayList<Fixture> result = new ArrayList<>();
 		Set<String> teams = new HashSet<>();
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
@@ -645,7 +637,6 @@ public class Scraper {
 		} else
 			address = add;
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		WebDriver driver = new ChromeDriver();
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -703,7 +694,6 @@ public class Scraper {
 		} else
 			address = add;
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		WebDriver driver = new ChromeDriver();
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -1210,8 +1200,6 @@ public class Scraper {
 
 		Set<Fixture> result = new HashSet<>();
 
-		// System.setProperty("webdriver.chrome.drive",
-		// "C:/Windows/system32/chromedriver.exe");
 		WebDriver driver = new /* HtmlUnitDriver(); */ ChromeDriver();
 		// ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
@@ -1299,7 +1287,6 @@ public class Scraper {
 
 		Set<Fixture> result = new HashSet<>();
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
@@ -1312,58 +1299,57 @@ public class Scraper {
 		driver.navigate().to(address + "/results/");
 
 		// Get page count
-		int maxPage = 1;
-		try {
-			WebElement pagin = driver.findElement(By.xpath("//*[@id='pagination']"));
-			List<WebElement> spans = pagin.findElements(By.tagName("span"));
-			for (WebElement i : spans) {
-				if (isNumeric(i.getText())) {
-					if (Integer.parseInt(i.getText().trim()) > maxPage)
-						maxPage = Integer.parseInt(i.getText().trim());
-				}
-			}
-		} catch (Exception e) {
+		int maxPage = getMaxPageCount(driver);
 
-		}
-
+		HashMap<Integer, String> booksMap = new HashMap<>();
 		for (int page = 1; page <= maxPage; page++) {
 			try {
 				driver.navigate().to(address + "/results/#/page/" + page + "/");
 
 				ArrayList<String> links = new ArrayList<>();
 				WebElement table = driver.findElement(By.id("tournamentTable"));
-				// List<WebElement> rows =
-				// table.findElements(By.xpath("//tbody/tr"));
 				List<WebElement> tagrows = table.findElements(By.tagName("tr"));
 
 				for (int i = 0; i < tagrows.size(); i++) {
-					WebElement elem = tagrows.get(i);
-					Optional<String> text = ThrowingSupplier.tryTimes(10, () -> {
-						return elem.getText();
-					});
-					if (text.isPresent() && text.get().contains("-")) {
 
-						WebElement aElem = elem.findElement(By.cssSelector("a"));
-						if (aElem != null) {
-							String href = aElem.getAttribute("href");
-							// System.out.println(href);
-							if (isFixtureLink(href))
-								links.add(href);
-						}
+					WebElement elem = tagrows.get(i);
+					Optional<String> classValue = ThrowingSupplier.tryTimes(10, () -> {
+						return elem.getAttribute("class");
+					});
+					
+					if (classValue.isPresent() && !classValue.get().contains("deactivate"))
+						continue;
+
+					WebElement aElem = elem.findElement(By.tagName("a"));
+					if (aElem != null) {
+						String href = aElem.getAttribute("href");
+						if (isFixtureLink(href))
+							links.add(href);
 					}
 
 				}
 
 				for (String i : links) {
-					Fixture f = getFixtureTest(driver, i, competition, year);
+					Fixture f = null;
+					int count = 0;
+					while (true) {
+						try {
+							 f = getFixtureTest(driver, i, competition, year, booksMap);
+							break;
+						} catch (Exception e) {
+							System.out.println(" retry " + count);
+							if (++count == 10) {
+								System.out.println("Error when parsing \n" + i);
+								throw e;
+							}
+						}
+					}
+
 					if (f != null)
 						result.add(f);
 
-					// break;
-
 				}
 
-				// break;
 			} catch (Exception e) {
 				e.printStackTrace();
 				page--;
@@ -1386,6 +1372,23 @@ public class Scraper {
 		fin.addAll(result);
 		System.out.println(fin.size());
 		return fin;
+	}
+
+	private static int getMaxPageCount(WebDriver driver) {
+		int maxPage = -1;
+		try {
+			WebElement pagin = driver.findElement(By.xpath("//*[@id='pagination']"));
+			List<WebElement> spans = pagin.findElements(By.tagName("span"));
+			for (WebElement i : spans) {
+				if (isNumeric(i.getText())) {
+					if (Integer.parseInt(i.getText().trim()) > maxPage)
+						maxPage = Integer.parseInt(i.getText().trim());
+				}
+			}
+		} catch (Exception e) {
+
+		}
+		return maxPage;
 	}
 
 	private static void login(WebDriver driver) {
@@ -1422,7 +1425,6 @@ public class Scraper {
 
 		Set<Fixture> result = new HashSet<>();
 
-		System.setProperty("webdriver.chrome.drive", "C:/Windows/system32/chromedriver.exe");
 		WebDriver driver = new ChromeDriver();
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -1818,25 +1820,23 @@ public class Scraper {
 		return ef;
 	}
 
-	public static Fixture getFixtureTest(WebDriver driver, String i, String competition, int year) throws Exception {
+	public static Fixture getFixtureTest(WebDriver driver, String i, String competition, int year,
+			HashMap<Integer, String> booksMap) throws Exception {
 		long start = System.currentTimeMillis();
-		driver.navigate()
-				.to(/* "http://www.oddsportal.com/soccer/england/premier-league/burnley-watford-j95WUhWk/" */i);
+		driver.navigate().to(i);
 
 		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
 		String home = title.split(" - ")[0].trim();
 		String away = title.split(" - ")[1].trim();
-		System.out.println(home + " : " + away);
 
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
 		dateString = dateString.split(",")[1] + dateString.split(",")[2];
 		Date date = FORMATFULL.parse(dateString);
 
-		System.out.println(date);
-
 		// Result
 		Result fullResult = new Result(-1, -1);
 		Result htResult = new Result(-1, -1);
+
 		try {
 			WebElement resElement = driver.findElement(By.xpath("//*[@id='event-status']/p"));
 			if (resElement != null) {
@@ -1865,17 +1865,9 @@ public class Scraper {
 		} catch (Exception e) {
 			System.out.println("next match");
 		}
-		// System.out.println(fullResult + " " + htResult);
 
-		Thread.sleep(1500);
-		JavascriptExecutor jse = (JavascriptExecutor) driver;
-		// for bookmaker name hash --
-		jse.executeScript(
-				"document.body.innerHTML += '<div style=\"display:none;\" id=\"hackerman2\">' + JSON.stringify(globals.bookmakerData) + '</div>'");
-		String bookmakerHash = (String) jse.executeScript("return document.getElementById('hackerman2').innerHTML");
-
-		HashMap<Integer, String> booksMap = getBookmakersMap(bookmakerHash);
-		// System.out.println(booksMap);
+		if (booksMap.isEmpty())
+			booksMap.putAll(getBooksMapIfEmpty(driver));
 
 		HashMap<String, ArrayList<MatchOdds>> matchOdds = getMatchDataFromJS(driver, booksMap);
 		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overUnderOdds = getOverUnderDataFromJS(driver,
@@ -1885,13 +1877,21 @@ public class Scraper {
 		Fixture f = new Fixture(date, competition, home, away, fullResult).withHTResult(htResult).withYear(year)
 				.withOUodds(overUnderOdds).withAsianOdds(asianOdds).withMatchOdds(matchOdds);
 
-		// match odds analysis over pinnacle
-		// ArrayList<MatchOdds> matchOdds = fullMatchOddsOverPinnacle(driver,
-		// date);
-		// System.out.println("-----------------------------------------------------");
-
+		System.out.println(f);
 		System.out.println("full odds data time " + (System.currentTimeMillis() - start) / 1000d + "sec");
 		return f;
+	}
+
+	private static HashMap<Integer, String> getBooksMapIfEmpty(WebDriver driver) throws InterruptedException {
+		Thread.sleep(2500);
+		JavascriptExecutor jse = (JavascriptExecutor) driver;
+		// for bookmaker name hash --
+		jse.executeScript(
+				"document.body.innerHTML += '<div style=\"display:none;\" id=\"hackerman2\">' + JSON.stringify(globals.bookmakerData) + '</div>'");
+		String bookmakerHashString = (String) jse
+				.executeScript("return document.getElementById('hackerman2').innerHTML");
+
+		return getBookmakersMap(bookmakerHashString);
 	}
 
 	private static HashMap<String, ArrayList<MatchOdds>> getMatchDataFromJS(WebDriver driver,

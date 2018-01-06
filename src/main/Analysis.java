@@ -21,20 +21,19 @@ public class Analysis {
 
 	public int startYear;
 	public int endYear;
-	public ArrayList<String> leagues;
+	public String[] leagues;
 	public ArrayList<FinalEntry> predictions;
 
-	public Analysis(int startYear, int endYear, ArrayList<String> leagues) {
+	public Analysis(int startYear, int endYear, String[] strings) {
 		super();
 		this.startYear = startYear;
 		this.endYear = endYear;
-		this.leagues = leagues;
+		this.leagues = strings;
 		this.predictions = new ArrayList<>();
 	}
 
 	public Analysis(int startYear, int endYear, String league) {
-		this(startYear, endYear, new ArrayList<>());
-		this.leagues.add(league);
+		this(startYear, endYear, new String[] { league });
 	}
 
 	public void makePredictions() throws InterruptedException, ExecutionException {
@@ -90,13 +89,16 @@ public class Analysis {
 				.filter(fe -> fe != null).collect(Collectors.toCollection(ArrayList::new));
 		System.out.println(new Stats(finals, "Values over pinnacle"));
 
+		// Utils.analysys(finals, "Values over pinnacle", false);
+
 		ArrayList<FinalEntry> valuesWithPrediction = predictions.stream().filter(fe -> fe.prediction != 0.5f)
 				.map(fe -> fe.getValueBetOverPinnacle(true)).filter(fe -> fe != null)
 				.collect(Collectors.toCollection(ArrayList::new));
 		System.out.println(new Stats(valuesWithPrediction, "Values over pinnacle with predictions"));
-		Utils.analysys(valuesWithPrediction, "Values over pinnacle with predictions", true);
-		
-		byBookmaker(valuesWithPrediction);
+
+		Utils.analysys(valuesWithPrediction, "Values over pinnacle with predictions", false);
+
+		// byBookmaker(valuesWithPrediction);
 
 	}
 

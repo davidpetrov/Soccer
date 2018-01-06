@@ -47,23 +47,23 @@ public class Test {
 
 		// Results.eval("test");
 
-//		float total = 0f;
-//		int startY = 2016;
-//		int end = 2016;
-//		for (int year = startY; year <= end; year++)
-//			total += simulation(year, DataType.ODDSPORTAL);
-//		System.out.println("Avg profit is " + (total / (end - startY + 1)));
+		// float total = 0f;
+		// int startY = 2016;
+		// int end = 2016;
+		// for (int year = startY; year <= end; year++)
+		// total += simulation(year, DataType.ODDSPORTAL);
+		// System.out.println("Avg profit is " + (total / (end - startY + 1)));
 
-//		 analysis(2017, 2017, DataType.ALLEURODATA);
+		// analysis(2017, 2017, DataType.ALLEURODATA);
 
-		 Analysis analysis = new Analysis(2016, 2016, "SPA");
-		 analysis.makePredictions();
-		 analysis.printAnalysis();
+		Analysis analysis = new Analysis(2010, 2016, new String[] { "SPA", "ENG" });
+		analysis.makePredictions();
+		analysis.printAnalysis();
 
-	
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 
 	}
+
 
 	private static void analysis(int start, int end, DataType type)
 			throws InterruptedException, ExecutionException, IOException {
@@ -138,7 +138,7 @@ public class Test {
 
 	private static void populateForAnalysisFromDB(int start, int end, ArrayList<FinalEntry> all,
 			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, DataType type, String description)
-					throws InterruptedException {
+			throws InterruptedException {
 		for (int i = start; i <= end; i++) {
 			ArrayList<FinalEntry> finals = new ArrayList<>();
 			for (String comp : Arrays.asList(Constants.SHOTS)) {
@@ -160,7 +160,7 @@ public class Test {
 
 	private static void populateForAnalysis(int start, int end, ArrayList<FinalEntry> all,
 			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, DataType type)
-					throws InterruptedException, ExecutionException, IOException {
+			throws InterruptedException, ExecutionException, IOException {
 		for (int i = start; i <= end; i++) {
 			ArrayList<FinalEntry> finals = finals(i, type);
 			HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(finals);

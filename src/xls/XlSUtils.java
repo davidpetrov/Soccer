@@ -1959,7 +1959,7 @@ public class XlSUtils {
 		for (int year = start; year <= end; year++) {
 			String base = new File("").getAbsolutePath();
 			FileInputStream file = new FileInputStream(
-					new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+					new File(base + "/data/all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 			HSSFWorkbook workbook = new HSSFWorkbook(file);
 			HSSFSheet sheet = workbook.getSheet(league);
 
@@ -3793,7 +3793,7 @@ public class XlSUtils {
 	public static void populateScores(int year) throws IOException, ParseException {
 		String base = new File("").getAbsolutePath();
 		FileInputStream file = new FileInputStream(
-				new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+				new File(base + "/data/all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		Iterator<Sheet> sheet = workbook.sheetIterator();
 
@@ -4520,7 +4520,7 @@ public class XlSUtils {
 			}
 		});
 
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\" + table + "" + year + ".xls"));
+		FileInputStream file = new FileInputStream(new File(base + "/data/" + table + "" + year + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		if (workbook.getSheet(competition) != null)
 			workbook.removeSheetAt(workbook.getSheetIndex(competition));
@@ -4587,7 +4587,7 @@ public class XlSUtils {
 		FileOutputStream fileOut = null;
 		while (true) {
 			try {
-				fileOut = new FileOutputStream(base + "\\data\\" + table + "" + year + ".xls");
+				fileOut = new FileOutputStream(base + "/data/" + table + "" + year + ".xls");
 				break;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -4607,7 +4607,7 @@ public class XlSUtils {
 	public static void combine(String competition, int year, String table)
 			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
+		FileInputStream file = new FileInputStream(new File(base + "/data/odds" + year + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		ArrayList<Fixture> odds = selectAll(workbook.getSheet(competition), 0);
 		ArrayList<Fixture> pending = new ArrayList<>();
@@ -4625,9 +4625,9 @@ public class XlSUtils {
 		FileInputStream fileWay;
 		HSSFSheet sheet;
 		if (table.equals("all-data")) {
-			fileWay = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			fileWay = new FileInputStream(new File(base + "/data/all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 		} else {
-			fileWay = new FileInputStream(new File(base + "\\data\\manual" + year + ".xls"));
+			fileWay = new FileInputStream(new File(base + "/data/manual" + year + ".xls"));
 		}
 		HSSFWorkbook workbookWay = new HSSFWorkbook(fileWay);
 		if (table.equals("all-data")) {
@@ -4702,7 +4702,7 @@ public class XlSUtils {
 	public static void fillMissingShotsData(String competition, int year)
 			throws IOException, ParseException, InterruptedException {
 		String base = new File("").getAbsolutePath();
-		FileInputStream file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
+		FileInputStream file = new FileInputStream(new File(base + "/data/odds" + year + ".xls"));
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		ArrayList<Fixture> odds = new ArrayList<>();
 		odds = selectAll(workbook.getSheet(competition), 0);

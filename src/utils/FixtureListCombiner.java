@@ -12,7 +12,8 @@ public class FixtureListCombiner {
 	ArrayList<? extends Fixture> gameStats;
 	String competition;
 
-	public FixtureListCombiner(ArrayList<? extends Fixture> odds, ArrayList<? extends Fixture> gameStats, String competition) {
+	public FixtureListCombiner(ArrayList<? extends Fixture> odds, ArrayList<? extends Fixture> gameStats,
+			String competition) {
 		super();
 		this.odds = odds;
 		this.gameStats = gameStats;
@@ -94,7 +95,7 @@ public class FixtureListCombiner {
 		return possibleCandidates;
 	}
 
-	public ArrayList<? extends Fixture> combineWithDictionary() {
+	public ArrayList<Fixture> combineWithDictionary() {
 		HashMap<String, String> dictionary = deduceDictionary();
 
 		return odds.stream().map(i -> findCorresponding(i, gameStats, dictionary))
@@ -102,7 +103,8 @@ public class FixtureListCombiner {
 
 	}
 
-	private Fixture findCorresponding(Fixture i2, ArrayList<? extends Fixture> gameStats, HashMap<String, String> dictionary) {
+	private Fixture findCorresponding(Fixture i2, ArrayList<? extends Fixture> gameStats,
+			HashMap<String, String> dictionary) {
 
 		HashMap<String, String> reverseDictionary = (HashMap<String, String>) dictionary.entrySet().stream()
 				.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
@@ -128,12 +130,13 @@ public class FixtureListCombiner {
 	 * @param fwa
 	 * @return
 	 */
-	private boolean matchesFixtureLists(String team, ArrayList<? extends Fixture> fixtures, ArrayList<? extends Fixture> fwa) {
+	private boolean matchesFixtureLists(String team, ArrayList<? extends Fixture> fixtures,
+			ArrayList<? extends Fixture> fwa) {
 		for (Fixture i : fixtures) {
 			boolean foundMatch = false;
 			for (Fixture j : fwa) {
 				if (Math.abs(i.getDate().getTime() - j.getDate().getTime()) <= 24 * 60 * 60 * 1000
-						&& i.getResult().equals(j.getResult())) {
+						&& i.getResult().equals(j.getResult()) && i.HTresult.equals(j.HTresult)) {
 					foundMatch = true;
 					break;
 				}

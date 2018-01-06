@@ -247,6 +247,11 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		float prediction = maxVlaueOdds.overOdds == -1f ? 0f : 1f;
 
 		FinalEntry fe = new FinalEntry(ff, prediction, result, threshold, lower, upper).withLine(maxVlaueOdds.line);
+//		FinalEntry fe = new FinalEntry(fixture, prediction, result, threshold, lower, upper);
+//		if (maxVlaueOdds.getOverOdds() > 1f)
+//			fe.overOdds = maxVlaueOdds;
+//		if (maxVlaueOdds.getUnderOdds() > 1f)
+//			fe.underOdds = maxVlaueOdds;
 		return fe;
 	}
 

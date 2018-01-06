@@ -724,6 +724,9 @@ public class Utils {
 		// Utils.removeMarginProportional(all);
 		ArrayList<FinalEntry> noEquilibriums = Utils.noequilibriums(all);
 		ArrayList<FinalEntry> equilibriums = Utils.equilibriums(all);
+		
+		LineChart.draw(Utils.createProfitMovementData(noEquilibriums), description);
+
 
 		Stats equilibriumsAsUnders = new Stats(allUnders(onlyFixtures(equilibriums)), "Equilibriums as unders");
 		Stats equilibriumsAsOvers = new Stats(allOvers(onlyFixtures(equilibriums)), "Equilibriums as overs");
@@ -743,8 +746,6 @@ public class Utils {
 
 		if (verbose)
 			System.out.println(thresholdsByLeague(all));
-		if (verbose)
-			LineChart.draw(Utils.createProfitMovementData(Utils.noequilibriums(all)), description);
 
 		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
 		// 0.5f, 0f).withShots(1f);
@@ -1936,8 +1937,8 @@ public class Utils {
 	}
 
 	/**
-	 * Method for verifying two list of fixtures are the same (only difference
-	 * in naming the clubs)
+	 * Method for verifying two list of fixtures are the same (only difference in
+	 * naming the clubs)
 	 * 
 	 * @param teamFor
 	 * 
@@ -2002,10 +2003,9 @@ public class Utils {
 			return 1.0;
 			/* both strings are zero length */ }
 		/*
-		 * // If you have StringUtils, you can use it to calculate the edit
-		 * distance: return (longerLength -
-		 * StringUtils.getLevenshteinDistance(longer, shorter)) / (double)
-		 * longerLength;
+		 * // If you have StringUtils, you can use it to calculate the edit distance:
+		 * return (longerLength - StringUtils.getLevenshteinDistance(longer, shorter)) /
+		 * (double) longerLength;
 		 */
 		return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
 
@@ -2440,8 +2440,8 @@ public class Utils {
 	 * @param byLeagueYear
 	 *            - hash map of finals by competition and year
 	 * @param offset
-	 *            - number of previous seasons based on which data the best th
-	 *            will be computed
+	 *            - number of previous seasons based on which data the best th will
+	 *            be computed
 	 * @return
 	 */
 	public static ArrayList<FinalEntry> withBestThreshold(
@@ -2662,8 +2662,8 @@ public class Utils {
 
 	/**
 	 * Mutably changes the predictions of a list of finals to (prediction +
-	 * x*impliedProb)/(x+1) where x is the weight of the implied probability of
-	 * the odds
+	 * x*impliedProb)/(x+1) where x is the weight of the implied probability of the
+	 * odds
 	 * 
 	 * @param all
 	 * @param oddsImpliedProbabilityWeight
@@ -2677,9 +2677,9 @@ public class Utils {
 	}
 
 	/**
-	 * Finds the best half time evaluatuan representing linear combination of
-	 * the average frequencies of 0,1,2 and more half time goals averages for
-	 * both teams The data is selected from database
+	 * Finds the best half time evaluatuan representing linear combination of the
+	 * average frequencies of 0,1,2 and more half time goals averages for both teams
+	 * The data is selected from database
 	 * 
 	 * @param start
 	 * @param end
@@ -2774,9 +2774,7 @@ public class Utils {
 						System.out.println("1 in " + currEval);
 
 						if (/* currentProfit > bestProfit */ currEval > bestEval/*
-																				 * currentWinRate
-																				 * >
-																				 * bestWinRatio
+																				 * currentWinRate > bestWinRatio
 																				 */) {
 							bestProfit = currentProfit;
 							bestEval = currEval;
@@ -2924,9 +2922,7 @@ public class Utils {
 			System.out.println("1 in " + currEval);
 
 			if (/* currentProfit > bestProfit */ currEval > bestEval/*
-																	 * currentWinRate
-																	 * >
-																	 * bestWinRatio
+																	 * currentWinRate > bestWinRatio
 																	 */) {
 				bestProfit = currentProfit;
 				bestEval = currEval;

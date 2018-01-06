@@ -72,14 +72,14 @@ public class Predictions {
 		// CHECKLIST.add("BRB");
 
 //		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-//		 UpdateType.AUTOMATIC, 3, 1);
-		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-		 OnlyTodayMatches.TRUE, 3, 1);
+//		 UpdateType.AUTOMATIC, 6, 1);
+//		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
+//		 OnlyTodayMatches.TRUE, 6, 1);
 
 //		 predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
 //		 OnlyTodayMatches.TRUE, 30, 12);
 		
-//		Scraper.checkAndUpdate("POR", OnlyTodayMatches.TRUE);
+		Scraper.checkAndUpdate("SPA", OnlyTodayMatches.FALSE);
 
 
 
@@ -207,9 +207,9 @@ public class Predictions {
 
 		FileInputStream file = null;
 		if (type.equals(DataType.ALLEURODATA))
-			file = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			file = new FileInputStream(new File(base + "/data/all-euro-data-" + year + "-" + (year + 1) + ".xls"));
 		else if (type.equals(DataType.ODDSPORTAL))
-			file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
+			file = new FileInputStream(new File(base + "/data/odds" + year + ".xls"));
 
 		HSSFWorkbook workbook = new HSSFWorkbook(file);
 		Iterator<Sheet> sheet = workbook.sheetIterator();
