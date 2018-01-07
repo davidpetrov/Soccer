@@ -19,6 +19,10 @@ public class Result {
 		this.goalsAwayTeam = result.goalsAwayTeam;
 	}
 
+	public static Result of(int goalsHomeTeam, int goalsAwayTeam) {
+		return new Result(goalsHomeTeam, goalsAwayTeam);
+	}
+
 	public String toString() {
 		return goalsHomeTeam + " : " + goalsAwayTeam;
 	}

@@ -17,6 +17,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
@@ -24,6 +25,7 @@ import org.openqa.selenium.interactions.Actions;
 import main.Fixture;
 import main.GameStats;
 import main.Result;
+import main.SQLiteJDBC;
 import utils.Pair;
 import utils.Utils;
 
@@ -46,6 +48,11 @@ public class GameStatsCollector {
 		return new GameStatsCollector(competition, year, null);
 	}
 
+	public void collectAndStore() throws Exception, IOException, ParseException {
+		ArrayList<Fixture> stats = collect();
+		SQLiteJDBC.storeGameStats(stats, competition, year);
+	}
+
 	// TODO possible smarter impl with js calls
 	public ArrayList<Fixture> collect() throws InterruptedException, IOException, ParseException {
 		ArrayList<Fixture> result = new ArrayList<>();
@@ -60,8 +67,12 @@ public class GameStatsCollector {
 		driver.manage().window().maximize();
 		driver.navigate().to(address);
 
+		// try to list by game week
+		Actions actions = new Actions(driver);
+		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
+				.perform();
+
 		while (true) {
-			int count = 0;
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
 			Element list = matches.select("table[class=matches   ]").first();
@@ -72,13 +83,8 @@ public class GameStatsCollector {
 					Fixture ef = getGameStatsFixture(fixture, competition);
 					result.add(ef);
 					set.add(ef);
-					count++;
-					if (count % 50 == 0)
-						System.out.println(count + "\n" + ef);
 				}
 			}
-
-			Actions actions = new Actions(driver);
 
 			// System.out.println(driver.findElement(By.className("previous")).getCssValue("cursor"));
 			actions.moveToElement(driver.findElement(By.className("previous"))).click().perform();
@@ -95,6 +101,7 @@ public class GameStatsCollector {
 
 		ArrayList<Fixture> setlist = new ArrayList<>();
 		set.addAll(result);
+
 		setlist.addAll(set);
 
 		fillMissingShotsData(setlist);

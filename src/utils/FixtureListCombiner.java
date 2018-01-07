@@ -46,7 +46,7 @@ public class FixtureListCombiner {
 		for (String team : teamsOdds) {
 			if (matchedOdds.contains(team))
 				continue;
-
+			
 			ArrayList<String> possibleCandidates = getPossibleCandidates(team, teamsgameStats, matchedgameStats);
 
 			if (possibleCandidates.isEmpty())
@@ -136,7 +136,7 @@ public class FixtureListCombiner {
 			boolean foundMatch = false;
 			for (Fixture j : fwa) {
 				if (Math.abs(i.getDate().getTime() - j.getDate().getTime()) <= 24 * 60 * 60 * 1000
-						&& i.getResult().equals(j.getResult()) && i.HTresult.equals(j.HTresult)) {
+						&& i.getResult().equals(j.getResult()) /*&& i.HTresult.equals(j.HTresult)*/) {
 					foundMatch = true;
 					break;
 				}
