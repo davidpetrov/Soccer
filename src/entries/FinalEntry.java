@@ -1,7 +1,10 @@
 package entries;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.stream.Collectors;
+
+import javax.print.attribute.HashAttributeSet;
 
 import main.Fixture;
 import main.Result;
@@ -12,6 +15,8 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public Fixture fixture;
 	public Float prediction;
 	public float line;
+	public OverUnderOdds overOdds;
+	public OverUnderOdds underOdds;
 	public Result result;
 	public float threshold;
 	public float upper;
@@ -44,6 +49,12 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		this.value = i.value;
 	}
 
+	public FinalEntry withOdds(OverUnderOdds over, OverUnderOdds under) {
+		this.overOdds = over;
+		this.underOdds = under;
+		return this;
+	}
+
 	public float getPrediction() {
 		return prediction;
 	}
@@ -57,7 +68,12 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	}
 
 	public float getValue() {
-		float gain = prediction > threshold ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
+		float over = overOdds != null ? overOdds.getOverOdds()
+				: fixture.getMaxClosingOUOddsByLine(line).get(0).overOdds;
+		float under = underOdds != null ? underOdds.getUnderOdds()
+				: fixture.getMaxClosingOUOddsByLine(line).get(1).underOdds;
+
+		float gain = prediction > threshold ? over : under;
 		return getCertainty() * gain;
 	}
 
@@ -65,14 +81,16 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public String toString() {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		String out = prediction >= upper ? "over" : "under";
-		float coeff = prediction >= upper ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
+		float coeff = prediction >= upper ? overOdds.getOverOdds() : underOdds.getUnderOdds();
+		String bookie = prediction >= upper ? overOdds.bookmaker : underOdds.bookmaker;
 		if (fixture.result.goalsHomeTeam == -1)
 			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
-					+ fixture.awayTeam + " " + out + " " + String.format("%.2f", coeff) + "\n";
+					+ fixture.awayTeam + " " + out + " " + line + " " + bookie + " " + String.format("%.2f", coeff)
+					+ "\n";
 		else
 			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
-					+ fixture.awayTeam + " " + totalGoals + " " + out + " " + successFull() + " "
-					+ String.format("%.2f", getProfit()) + "\n";
+					+ fixture.awayTeam + " " + totalGoals + " " + out + " " + line + " " + bookie + " " + successFull()
+					+ " " + String.format("%.2f", getProfit()) + "\n";
 	}
 
 	public boolean isOver() {
@@ -124,8 +142,13 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float getProfit() {
 		if (line == -1f)
 			return 0;
-		Pair odds = fixture.getMaxClosingOUOddsByLine(line);
-		float coeff = prediction >= upper ? odds.home : odds.away;
+
+		float over = overOdds != null ? overOdds.getOverOdds()
+				: fixture.getMaxClosingOUOddsByLine(line).get(0).overOdds;
+		float under = underOdds != null ? underOdds.getUnderOdds()
+				: fixture.getMaxClosingOUOddsByLine(line).get(1).underOdds;
+
+		float coeff = prediction >= upper ? over : under;
 		String success = successFull();
 		if (success.equals("W")) {
 			return coeff - 1;
@@ -144,7 +167,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public float getNormalizedProfit() {
 		if (fixture.getTotalGoals() < 0)
 			return 0f;
-		float coeff = prediction >= upper ? fixture.getMaxClosingOverOdds() : fixture.getMaxClosingUnderOdds();
+		float coeff = prediction >= upper ? overOdds.getOverOdds() : underOdds.getUnderOdds();
 		float betUnit = 1f / (coeff - 1);
 		if (success())
 			return 1f;
@@ -179,58 +202,62 @@ public class FinalEntry implements Comparable<FinalEntry> {
 
 	// returns max clsoing odds on all alowed bookies for the given line
 	public FinalEntry getPredictionForLine(int i) {
-		float line = fixture.getBaseOULines()[i];
-		Pair odds = fixture.getMaxClosingOUOddsByLine(line);
-		if (odds.equals(Pair.defaultValue()))
+		float line = fixture.getBaseOULines().get(i);
+		ArrayList<OverUnderOdds> odds = fixture.getMaxClosingOUOddsByLine(line);
+		if (odds.get(0).equals(OverUnderOdds.defaultOdds()))
 			return null;
-		OverUnderOdds maxOdds = new OverUnderOdds("Max", fixture.date, line, odds.home, odds.away);
 
-		ArrayList<OverUnderOdds> overUnderOdds = new ArrayList<>();
-		overUnderOdds.add(maxOdds);
-
-		Fixture ff = new Fixture(fixture);
-		ff.overUnderOdds = overUnderOdds;
-		ff.asianOdds = fixture.asianOdds;
-		ff.matchOdds = fixture.matchOdds;
-
-		FinalEntry fe = new FinalEntry(ff, prediction, result, threshold, lower, upper).withLine(line);
+		FinalEntry fe = this.withLine(line).withOdds(odds.get(0), odds.get(1));
 		return fe;
 	}
 
-	public FinalEntry getValueBetOverPinnacle(boolean withPrediction) {
+	public FinalEntry getValueBetOverPinnacle(boolean withPrediction, float valueThreshold) {
 		float maxValue = -1f;
 		OverUnderOdds maxVlaueOdds = null;
+		boolean isOver = false;
 
-		float[] lines = fixture.getBaseOULines();
+		ArrayList<Float> lines = fixture.getBaseOULines();
 		for (int i = 0; i < 5; i++) {
-			Pair odds = fixture.getMaxClosingOUOddsByLine(lines[i]);
-			OverUnderOdds pinnOdds = fixture.getMaxCloingByLineAndBookie(lines[i], "Pinnacle");
+			ArrayList<OverUnderOdds> odds = fixture.getMaxClosingOUOddsByLine(lines.get(i));
+			OverUnderOdds pinnOdds = fixture.getMaxCloingByLineAndBookie(lines.get(i), "Pinnacle");
 
 			if (pinnOdds == null)
 				continue;
 
 			OverUnderOdds trueOdds = pinnOdds.getTrueOddsMarginal();
 			if ((withPrediction && prediction >= 0.55f) || !withPrediction) {
-				if (odds.home > trueOdds.overOdds) {
-					float value = odds.home / trueOdds.overOdds;
+				if (odds.get(0).overOdds > trueOdds.overOdds
+						&& odds.get(0).overOdds / trueOdds.overOdds > valueThreshold) {
+					float value = odds.get(0).overOdds / trueOdds.overOdds;
 					if (value > maxValue) {
-						maxVlaueOdds = new OverUnderOdds("Max", trueOdds.time, lines[i], odds.home, -1f);
+						maxVlaueOdds = odds.get(0);
+						isOver = true;
 					}
 				}
 			}
 
 			if ((withPrediction && prediction < 0.55f) || !withPrediction) {
-				if (odds.away > trueOdds.underOdds) {
-					float value = odds.away / trueOdds.underOdds;
+				if (odds.get(1).underOdds > trueOdds.underOdds
+						&& odds.get(1).underOdds / trueOdds.underOdds > valueThreshold) {
+					float value = odds.get(1).underOdds / trueOdds.underOdds;
 					if (value > maxValue) {
-						maxVlaueOdds = new OverUnderOdds("Max", trueOdds.time, lines[i], -1f, odds.away);
+						maxVlaueOdds = odds.get(1);
+						isOver = false;
 					}
 				}
 			}
 
 		}
 
-		return createCopyWithSingleOdds(maxVlaueOdds);
+		FinalEntry res = maxVlaueOdds == null ? null
+				: new FinalEntry(this).withLine(maxVlaueOdds.line).withOdds(
+						isOver ? maxVlaueOdds : OverUnderOdds.defaultOdds(),
+						isOver ? OverUnderOdds.defaultOdds() : maxVlaueOdds);
+
+		if (!withPrediction && res != null)
+			res.prediction = isOver ? 1f : 0f;
+
+		return res;
 	}
 
 	private FinalEntry createCopyWithSingleOdds(OverUnderOdds maxVlaueOdds) {
@@ -247,11 +274,12 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		float prediction = maxVlaueOdds.overOdds == -1f ? 0f : 1f;
 
 		FinalEntry fe = new FinalEntry(ff, prediction, result, threshold, lower, upper).withLine(maxVlaueOdds.line);
-//		FinalEntry fe = new FinalEntry(fixture, prediction, result, threshold, lower, upper);
-//		if (maxVlaueOdds.getOverOdds() > 1f)
-//			fe.overOdds = maxVlaueOdds;
-//		if (maxVlaueOdds.getUnderOdds() > 1f)
-//			fe.underOdds = maxVlaueOdds;
+		// FinalEntry fe = new FinalEntry(fixture, prediction, result, threshold, lower,
+		// upper);
+		// if (maxVlaueOdds.getOverOdds() > 1f)
+		// fe.overOdds = maxVlaueOdds;
+		// if (maxVlaueOdds.getUnderOdds() > 1f)
+		// fe.underOdds = maxVlaueOdds;
 		return fe;
 	}
 

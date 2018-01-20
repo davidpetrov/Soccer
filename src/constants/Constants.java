@@ -23,7 +23,7 @@ public class Constants {
 	public static final String[] FAKEBOOKS = { "Tempobet", "Interwetten", "Vulkanbet", "Scandibet", "Island Casino",
 			"Betser", "Bethard", "Vernons", "18bet", "BetOlimp", "TonyBet", "Betsafe", "Intertops", "Betcruise",
 			"ComeOn", "NordicBet", "RealDealBet", "BetOnline", "ScandiBet", /*"Asianodds",*/ "Jetbull", "youwin",
-			"BetCity", "Expekt",/* "Dafabet, "12BET",*/ "Betrally",
+			"BetCity", "Expekt", "Betrally",
 			"Unibet.it",
 			"youwin",
 			"iFortuna.cz",
@@ -53,6 +53,16 @@ public class Constants {
 			"Jetbull",
 			"iFortuna.sk",
 			"Expekt",
+			"Coolbet",
+			"France Pari",
+			"eFortuna.pl",
+			
+			
+			"Matchbook",
+			"Dafabet",
+			"Bovada",
+			"12BET",
+			
 	
 	};
 

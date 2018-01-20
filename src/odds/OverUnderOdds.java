@@ -105,4 +105,8 @@ public class OverUnderOdds extends Odds {
 		return this;
 	}
 
+	public static OverUnderOdds defaultOdds() {
+		return new OverUnderOdds("default", null, 2.5f, -1, -1);
+	}
+
 }

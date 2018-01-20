@@ -719,33 +719,32 @@ public class Utils {
 	}
 
 	public static void analysys(ArrayList<FinalEntry> all, String description, boolean verbose) {
+		System.out.println(description);
 		ArrayList<Stats> stats = new ArrayList<>();
 
 		// Utils.removeMarginProportional(all);
 		ArrayList<FinalEntry> noEquilibriums = Utils.noequilibriums(all);
 		ArrayList<FinalEntry> equilibriums = Utils.equilibriums(all);
-		
-		LineChart.draw(Utils.createProfitMovementData(noEquilibriums), description);
 
+		LineChart.draw(Utils.createProfitMovementData(noEquilibriums), description);
 
 		Stats equilibriumsAsUnders = new Stats(allUnders(onlyFixtures(equilibriums)), "Equilibriums as unders");
 		Stats equilibriumsAsOvers = new Stats(allOvers(onlyFixtures(equilibriums)), "Equilibriums as overs");
 		stats.add(equilibriumsAsOvers);
 		stats.add(equilibriumsAsUnders);
 		// if (verbose) {
-		System.out.println(equilibriumsAsUnders);
-		System.out.println(equilibriumsAsOvers);
+		if (!equilibriumsAsUnders.all.isEmpty())
+			System.out.println(equilibriumsAsUnders);
+		if (!equilibriumsAsUnders.all.isEmpty())
+			System.out.println(equilibriumsAsOvers);
 		// }
 
-		if (verbose)
-			System.out.println("Avg return: " + avgReturn(onlyFixtures(noEquilibriums)));
-		Stats allStats = new Stats(noEquilibriums, "all");
+		System.out.println("Avg return: " + avgReturn(onlyFixtures(noEquilibriums)));
+		Stats allStats = new Stats(noEquilibriums, description);
 		stats.add(allStats);
-		if (verbose)
-			System.out.println(allStats);
+		System.out.println(allStats);
 
-		if (verbose)
-			System.out.println(thresholdsByLeague(all));
+		System.out.println(thresholdsByLeague(all));
 
 		// Settings initial = new Settings("", 0f, 0f, 0f, 0.55f, 0.55f, 0.55f,
 		// 0.5f, 0f).withShots(1f);
@@ -767,54 +766,72 @@ public class Utils {
 			System.out.println();
 		}
 
-		if (verbose)
-			System.out.println();
 		ArrayList<Stats> byCertaintyandCOT = byCertaintyandCOT(noEquilibriums, "", verbose);
 		stats.addAll(byCertaintyandCOT);
-
-		if (verbose)
+		if (verbose) {
 			System.out.println();
+			byCertaintyandCOT.forEach(System.out::println);
+		}
+
 		ArrayList<Stats> byOdds = byOdds(noEquilibriums, "", verbose);
 		stats.addAll(byOdds);
-
-		if (verbose)
+		if (verbose) {
 			System.out.println();
+			byOdds.forEach(System.out::println);
+		}
+
 		ArrayList<Stats> byValue = byValue(noEquilibriums, "", verbose);
 		stats.addAll(byValue);
+		if (verbose) {
+			System.out.println();
+			byValue.forEach(System.out::println);
+		}
 
 		Stats underStats = new Stats(unders, "unders");
-		if (verbose)
-			System.out.println(underStats);
 		stats.add(underStats);
+		System.out.println(underStats);
 
-		if (verbose)
-			System.out.println();
 		ArrayList<Stats> byCertaintyandCOTUnders = byCertaintyandCOT(unders, "unders", verbose);
 		stats.addAll(byCertaintyandCOTUnders);
-
-		if (verbose)
+		if (verbose) {
 			System.out.println();
+			byCertaintyandCOTUnders.forEach(System.out::println);
+		}
+
 		ArrayList<Stats> byOddsUnders = byOdds(unders, "unders", verbose);
 		stats.addAll(byOddsUnders);
+		if (verbose) {
+			System.out.println();
+			byOddsUnders.forEach(System.out::println);
+		}
 
 		Stats overStats = new Stats(overs, "overs");
-		if (verbose)
-			System.out.println(overStats);
 		stats.add(overStats);
+		System.out.println(overStats);
 
-		System.out.println();
 		ArrayList<Stats> byCertaintyandCOTover = byCertaintyandCOT(overs, "overs", verbose);
 		stats.addAll(byCertaintyandCOTover);
+		if (verbose) {
+			System.out.println();
+			byCertaintyandCOTover.forEach(System.out::println);
+		}
 
-		System.out.println();
 		ArrayList<Stats> byOddsOvers = byOdds(overs, "overs", verbose);
 		stats.addAll(byOddsOvers);
+		if (verbose) {
+			System.out.println();
+			byOddsOvers.forEach(System.out::println);
+		}
 
-		System.out.println();
-		Utils.byYear(onlyUnders(noEquilibriums), "all");
+		if (verbose) {
+			System.out.println();
+			Utils.byYear(noEquilibriums, "all");
+		}
 
-		System.out.println();
-		Utils.byCompetition(onlyUnders(noEquilibriums), "all");
+		if (verbose) {
+			System.out.println();
+			Utils.byCompetition(noEquilibriums, "all");
+		}
 
 		Stats allOvers = new Stats(allOvers(Utils.onlyFixtures(noEquilibriums)), "all Overs");
 		stats.add(allOvers);
@@ -824,8 +841,10 @@ public class Utils {
 		}
 
 		Stats allUnders = new Stats(allUnders(Utils.onlyFixtures(noEquilibriums)), "all Unders");
-		if (verbose)
+		if (verbose) {
+			System.out.println();
 			System.out.println(allUnders);
+		}
 		stats.add(allUnders);
 
 		Stats higherOdds = new Stats(higherOdds(Utils.onlyFixtures(noEquilibriums)), "higher Odds");
@@ -836,39 +855,38 @@ public class Utils {
 			System.out.println();
 			System.out.println(higherOdds);
 			System.out.println(lowerOdds);
-		}
 
-		System.out.println();
-		int wins = 0;
-		float draws = 0f;
-		int certs = 0;
-		for (FinalEntry fe : noEquilibriums) {
-			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
-			if (certainty >= 0f) {
-				certs++;
-				if (fe.success()) {
-					wins++;
-				} else if ((fe.prediction >= fe.upper && fe.fixture.getTotalGoals() == 2)
-						|| (fe.prediction <= fe.lower && fe.fixture.getTotalGoals() == 3)) {
-					draws++;
+			System.out.println();
+			int wins = 0;
+			float draws = 0f;
+			int certs = 0;
+			for (FinalEntry fe : noEquilibriums) {
+				float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
+				if (certainty >= 0f) {
+					certs++;
+					if (fe.success()) {
+						wins++;
+					} else if ((fe.prediction >= fe.upper && fe.fixture.getTotalGoals() == 2)
+							|| (fe.prediction <= fe.lower && fe.fixture.getTotalGoals() == 3)) {
+						draws++;
+					}
 				}
 			}
-		}
 
-		if (verbose)
 			System.out.println("Soft lines wins: " + format((float) wins / certs) + " draws: "
 					+ format((float) draws / certs) + " not losses: " + format((float) (wins + draws) / certs));
 
-		ArrayList<Stats> normalizedStats = new ArrayList<>();
-		for (Stats st : stats)
-			if (st.getPvalueOdds() > 4 && !st.all.isEmpty())
-				normalizedStats.add(new NormalizedStats(st.all, "norm " + st.description));
-		stats.addAll(normalizedStats);
+			ArrayList<Stats> normalizedStats = new ArrayList<>();
+			for (Stats st : stats)
+				if (st.getPvalueOdds() > 4 && !st.all.isEmpty())
+					normalizedStats.add(new NormalizedStats(st.all, "norm " + st.description));
+			stats.addAll(normalizedStats);
 
-		System.out.println();
-		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
-		stats.stream().filter(v -> verbose ? true : (v.getPvalueOdds() > 4 && !v.all.isEmpty()))
-				.forEach(System.out::println);
+			System.out.println();
+			stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
+			stats.stream().filter(v -> verbose ? true : (v.getPvalueOdds() > 4 && !v.all.isEmpty()))
+					.forEach(System.out::println);
+		}
 	}
 
 	private static void removeMarginProportional(ArrayList<FinalEntry> all) {
@@ -928,27 +946,12 @@ public class Utils {
 
 		}
 
-		if (verbose) {
-			System.out.println(new Stats(cer80, prefix + " " + "cer80"));
-			System.out.println(new Stats(cer70, prefix + " " + "cer70"));
-			System.out.println(new Stats(cer60, prefix + " " + "cer60"));
-			System.out.println(new Stats(cer50, prefix + " " + "cer50"));
-			System.out.println(new Stats(cer40, prefix + " " + "cer40"));
-		}
 		result.add(new Stats(cer80, prefix + " " + "cer80"));
 		result.add(new Stats(cer70, prefix + " " + "cer70"));
 		result.add(new Stats(cer60, prefix + " " + "cer60"));
 		result.add(new Stats(cer50, prefix + " " + "cer50"));
 		result.add(new Stats(cer40, prefix + " " + "cer40"));
 
-		if (verbose) {
-			System.out.println();
-			System.out.println(new Stats(cot25, prefix + " " + "cot25"));
-			System.out.println(new Stats(cot20, prefix + " " + "cot20"));
-			System.out.println(new Stats(cot15, prefix + " " + "cot15"));
-			System.out.println(new Stats(cot10, prefix + " " + "cot10"));
-			System.out.println(new Stats(cot5, prefix + " " + "cot5"));
-		}
 		result.add(new Stats(cot25, prefix + " " + "cot25"));
 		result.add(new Stats(cot20, prefix + " " + "cot20"));
 		result.add(new Stats(cot15, prefix + " " + "cot15"));
@@ -986,12 +989,6 @@ public class Utils {
 			}
 		}
 
-		if (verbose) {
-			System.out.println(new Stats(under14, prefix + " " + "1.00 - 1.40"));
-			System.out.println(new Stats(under18, prefix + " " + "1.41 - 1.80"));
-			System.out.println(new Stats(under22, prefix + " " + "1.81 - 2.20"));
-			System.out.println(new Stats(over22, prefix + " " + " > 2.21"));
-		}
 		result.add(new Stats(under14, prefix + " " + "1.00 - 1.40"));
 		result.add(new Stats(under18, prefix + " " + "1.41 - 1.80"));
 		result.add(new Stats(under22, prefix + " " + "1.81 - 2.20"));
@@ -1034,18 +1031,6 @@ public class Utils {
 			} else {
 				over160.add(i);
 			}
-		}
-
-		if (verbose) {
-			System.out.println(new Stats(under09, prefix + " " + "< 0.9"));
-			System.out.println(new Stats(under1, prefix + " " + "0.9 - 1.0"));
-			System.out.println(new Stats(under110, prefix + " " + "1.00 - 1.10"));
-			System.out.println(new Stats(under120, prefix + " " + "1.10 - 1.2"));
-			System.out.println(new Stats(under130, prefix + " " + "1.2 - 1.3"));
-			System.out.println(new Stats(under140, prefix + " " + "1.3 - 1.4"));
-			System.out.println(new Stats(under150, prefix + " " + "1.4 - 1.5"));
-			System.out.println(new Stats(under160, prefix + " " + "1.5 - 1.6"));
-			System.out.println(new Stats(over160, prefix + " " + " > 1.6"));
 		}
 
 		result.add(new Stats(under09, prefix + " " + "< 0.9"));
@@ -1676,7 +1661,7 @@ public class Utils {
 	}
 
 	public static float getProfit(ArrayList<FinalEntry> finals) {
-		float profit = 0f;
+		float profit = 0;
 		for (FinalEntry i : finals) {
 			profit += i.getProfit();
 		}

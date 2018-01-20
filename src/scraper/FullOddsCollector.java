@@ -46,6 +46,7 @@ import utils.ThrowingSupplier;
 
 public class FullOddsCollector {
 	public static final DateFormat FORMATFULL = new SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.US);
+	public static final long WAITTOLOAD = 1400;
 
 	public String competition;
 	public int year;
@@ -144,7 +145,11 @@ public class FullOddsCollector {
 				e.printStackTrace();
 				page--;
 				System.out.println("Starting over from page:" + page);
-				driver.close();
+				try {
+					driver.close();
+				} catch (Exception e1) {
+				}
+
 				Thread.sleep(5000);
 				driver = new ChromeDriver(options);
 				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
@@ -164,6 +169,7 @@ public class FullOddsCollector {
 		return fin;
 	}
 
+	// TODO for big leagues i.e 24 teams finds incorrect result
 	private static int getMaxPageCount(WebDriver driver) {
 		int maxPage = -1;
 		try {
@@ -178,6 +184,9 @@ public class FullOddsCollector {
 		} catch (Exception e) {
 
 		}
+		// WebElement lastPage = driver.findElement(By.xpath("//*[contains(text(),
+		// '>>|')]"));
+
 		return maxPage;
 	}
 
@@ -459,10 +468,12 @@ public class FullOddsCollector {
 				float homeOdds = -1f, drawOdds = -1f, awayOdds = -1f;
 
 				if (closingObjectJSON instanceof JSONArray) {
-
-					homeOdds = (float) closingOddsObject.getJSONArray(b).getDouble(0);
-					drawOdds = (float) closingOddsObject.getJSONArray(b).getDouble(1);
-					awayOdds = (float) closingOddsObject.getJSONArray(b).getDouble(2);
+					JSONArray closingArr = closingOddsObject.getJSONArray(b);
+					homeOdds = (float) closingArr.getDouble(0);
+					if (closingArr.length() > 1)
+						drawOdds = (float) closingOddsObject.getJSONArray(b).getDouble(1);
+					if (closingArr.length() > 2)
+						awayOdds = (float) closingOddsObject.getJSONArray(b).getDouble(2);
 				} else {
 					if (closingOddsObject.getJSONObject(b).has("0"))
 						homeOdds = (float) closingOddsObject.getJSONObject(b).getDouble("0");
@@ -477,12 +488,18 @@ public class FullOddsCollector {
 				Object changeTimeJSON = changeTime.get(b);
 
 				if (changeTimeJSON instanceof JSONArray) {
-					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(0) * 1000);
+					JSONArray changeTimeArray = changeTime.getJSONArray(b);
+
+					cal.setTimeInMillis(changeTimeArray.getLong(0) * 1000);
 					timeHome = cal.getTime();
-					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(1) * 1000);
-					timeDraw = cal.getTime();
-					cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(2) * 1000);
-					timeAway = cal.getTime();
+					if (changeTimeArray.length() > 1) {
+						cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(1) * 1000);
+						timeDraw = cal.getTime();
+					}
+					if (changeTimeArray.length() > 1) {
+						cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(2) * 1000);
+						timeAway = cal.getTime();
+					}
 				} else {
 					if (changeTime.getJSONObject(b).has("0")) {
 						cal.setTimeInMillis(changeTime.getJSONObject(b).getLong("0") * 1000);
@@ -872,7 +889,8 @@ public class FullOddsCollector {
 			if (outcomedID instanceof JSONArray) {
 				JSONArray arr = (JSONArray) outcomedID;
 				overOutcomesID.put(arr.getString(0), handicapValue);
-				underOutcomesID.put(arr.getString(1), handicapValue);
+				if (arr.length() > 1)
+					underOutcomesID.put(arr.getString(1), handicapValue);
 			} else {
 				JSONObject obj = (JSONObject) outcomedID;
 				try {
@@ -905,7 +923,6 @@ public class FullOddsCollector {
 							underOdds = (float) closingOddsObject.getJSONObject(b).getDouble("1");
 					}
 				} catch (JSONException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
@@ -974,7 +991,7 @@ public class FullOddsCollector {
 			try {
 				navigateToTab(driver, type);
 				navigateToTab(driver, type);
-				Thread.sleep(2000);
+				Thread.sleep(WAITTOLOAD);
 				jse.executeScript(
 						"document.body.innerHTML += '<div style=\"display:none;\" id=\"hackerman\">' + JSON.stringify(page.getTableSet(page.bettingType, page.scopeId).data) + '</div>'");
 				String data = (String) jse.executeScript("return document.getElementById('hackerman').innerHTML");

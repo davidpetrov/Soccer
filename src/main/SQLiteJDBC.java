@@ -1035,6 +1035,8 @@ public class SQLiteJDBC {
 			System.exit(0);
 		}
 
+		
+		
 		addOddsData(result, competition, year);
 		ArrayList<Fixture> combined = addGameStatsData(result, competition, year);
 
@@ -1110,19 +1112,21 @@ public class SQLiteJDBC {
 		return result;
 	}
 
+	
+	//TODO loads only the OU odds for now, because of performance resa
 	private static void addOddsData(ArrayList<Fixture> result, String competition, int year) {
-		ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
-		ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
+//		ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
+//		ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
 		ArrayList<OverUnderOdds> overUnderOdds = selectOverUnderOdds(competition, year);
 
 		for (Fixture i : result) {
 			try {
-				i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-						.collect(Collectors.toCollection(ArrayList::new));
-				i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-						.collect(Collectors.toCollection(ArrayList::new));
+//				i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+//						.collect(Collectors.toCollection(ArrayList::new));
+//				i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+//						.collect(Collectors.toCollection(ArrayList::new));
 				i.overUnderOdds = overUnderOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
 						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
 						.collect(Collectors.toCollection(ArrayList::new));

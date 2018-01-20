@@ -6,13 +6,17 @@ import entries.FinalEntry;
 
 public class Stats {
 
-	String description;
-	ArrayList<FinalEntry> all;
+	public String description;
+	public ArrayList<FinalEntry> all;
 
 	public Stats(ArrayList<FinalEntry> all, String description) {
 		super();
 		this.description = description;
 		this.all = all;
+	}
+
+	public int getSize() {
+		return all.size();
 	}
 
 	public float getProfit() {

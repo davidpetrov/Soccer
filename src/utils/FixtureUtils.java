@@ -12,6 +12,7 @@ import entries.FinalEntry;
 import main.Fixture;
 import main.Fixture;
 import main.Result;
+import odds.OverUnderOdds;
 import settings.Settings;
 
 public class FixtureUtils {
@@ -37,8 +38,8 @@ public class FixtureUtils {
 	}
 
 	/**
-	 * Select the last count fixtures (both home and away) for the given team
-	 * from all fixtures list
+	 * Select the last count fixtures (both home and away) for the given team from
+	 * all fixtures list
 	 * 
 	 * @param all
 	 * @param team
@@ -58,8 +59,8 @@ public class FixtureUtils {
 	}
 
 	/**
-	 * Returns the last n fixtures based on data from a list of fixtures for a
-	 * given team
+	 * Returns the last n fixtures based on data from a list of fixtures for a given
+	 * team
 	 * 
 	 * @param fixtures
 	 * @param n
@@ -115,8 +116,8 @@ public class FixtureUtils {
 	}
 
 	/**
-	 * Calculate the prediction (the probability for over 2.5 goals) for a
-	 * fixture based on settings
+	 * Calculate the prediction (the probability for over 2.5 goals) for a fixture
+	 * based on settings
 	 * 
 	 * @param all
 	 * @param current
@@ -148,7 +149,9 @@ public class FixtureUtils {
 				finalScore += settings.shots * Classifiers.shots(f, all);
 
 			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
-					settings.threshold, settings.lowerBound, settings.upperBound);
+					settings.threshold, settings.lowerBound, settings.upperBound).withOdds(
+							new OverUnderOdds("max", f.date, 2.5f, f.getMaxClosingOverOdds(), -1f),
+							new OverUnderOdds("max", f.date, 2.5f, -1f, f.getMaxClosingUnderOdds()));
 			finals.add(fe);
 		}
 		return finals;
@@ -197,8 +200,8 @@ public class FixtureUtils {
 	}
 
 	/**
-	 * Calculates the average number of shots per game for the both home and
-	 * away team for all fixtures before the given date
+	 * Calculates the average number of shots per game for the both home and away
+	 * team for all fixtures before the given date
 	 * 
 	 * @param all
 	 * @param date
@@ -230,8 +233,8 @@ public class FixtureUtils {
 	}
 
 	/**
-	 * Calculates the average number of shots per game when the game is under
-	 * 2.5 and when it is over for all fixtures before the given date
+	 * Calculates the average number of shots per game when the game is under 2.5
+	 * and when it is over for all fixtures before the given date
 	 * 
 	 * @param all
 	 * @param date
@@ -354,8 +357,8 @@ public class FixtureUtils {
 	}
 
 	/**
-	 * Calculates the averages for and against goal for the given away team
-	 * playing away
+	 * Calculates the averages for and against goal for the given away team playing
+	 * away
 	 * 
 	 * @param all
 	 * @param awayTeam

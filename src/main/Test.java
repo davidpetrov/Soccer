@@ -44,7 +44,7 @@ public class Test {
 
 	public static void main(String[] args) throws JSONException, IOException, InterruptedException, ExecutionException {
 		long start = System.currentTimeMillis();
-
+		long initialMemory = getUsedMemory();
 		// Results.eval("test");
 
 		// float total = 0f;
@@ -56,14 +56,21 @@ public class Test {
 
 		// analysis(2017, 2017, DataType.ALLEURODATA);
 
-		Analysis analysis = new Analysis(2010, 2016, new String[] { "GER" });
+		String[] all = new String[] { "BRA", "ENG", "ENG2", "GER", "FR", "SPA", "IT", "NED", "SWI", "POR", "TUR" };
+
+		Analysis analysis = new Analysis(2009, 2016, all);
 		analysis.makePredictions();
 		analysis.printAnalysis();
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
+		System.out.println("Total used by program = " + (getUsedMemory() - initialMemory) / 1024 + " MB");
 
 	}
 
+	private static long getUsedMemory() {
+		Runtime runtime = Runtime.getRuntime();
+		return (runtime.totalMemory() - runtime.freeMemory()) / 1024;
+	}
 
 	private static void analysis(int start, int end, DataType type)
 			throws InterruptedException, ExecutionException, IOException {

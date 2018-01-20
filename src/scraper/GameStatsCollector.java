@@ -104,20 +104,25 @@ public class GameStatsCollector {
 
 		setlist.addAll(set);
 
-		fillMissingShotsData(setlist);
+		int missingData = fillMissingShotsData(setlist);
 
-		return setlist;
+		//does not store if missing data is too much
+		return missingData > setlist.size() / 2 ? new ArrayList<>() : setlist;
 	}
 
-	private void fillMissingShotsData(ArrayList<Fixture> setlist) {
+	private int fillMissingShotsData(ArrayList<Fixture> setlist) {
 		int missingDataCount = 0;
 		for (Fixture i : setlist) {
+			if (i.gameStats == null)
+				i.gameStats = GameStats.initial();
+
 			if (i.gameStats.equals(GameStats.initial()) || i.gameStats.getShotsHome() == -1) {
 				missingDataCount++;
 				i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
 			}
 		}
 		System.out.println("Missing data for: " + missingDataCount);
+		return missingDataCount;
 	}
 
 	private Fixture getGameStatsFixture(Document fixture, String competition) throws IOException, ParseException {

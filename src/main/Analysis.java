@@ -1,9 +1,11 @@
 package main;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import entries.FinalEntry;
+import odds.OverUnderOdds;
 import runner.RunnerAnalysis;
 import settings.Settings;
 import utils.FixtureUtils;
@@ -37,23 +40,29 @@ public class Analysis {
 	}
 
 	public void makePredictions() throws InterruptedException, ExecutionException {
-		HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new HashMap<>();
+		// HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new
+		// HashMap<>();
 
-		ExecutorService pool = Executors.newFixedThreadPool(3);
-		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
+		// ExecutorService pool = Executors.newFixedThreadPool(2);
+		// ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new
+		// ArrayList<Future<ArrayList<FinalEntry>>>();
 
 		for (int year = startYear; year <= endYear; year++) {
 			for (String league : leagues) {
+				// long start = System.currentTimeMillis();
 				ArrayList<Fixture> fixtures = SQLiteJDBC.selectFixtures(league, year);
-
-				threadArray.add(pool.submit(new RunnerAnalysis(fixtures, league, year)));
+				// System.out.println(
+				// (System.currentTimeMillis() - start) / 1000d + "sec loading data for: " +
+				// league + " " + year);
+				// threadArray.add(pool.submit(new RunnerAnalysis(fixtures, league, year)));
+				predictions.addAll(predict(fixtures, league, year));
 			}
 		}
 
-		for (Future<ArrayList<FinalEntry>> fd : threadArray)
-			predictions.addAll(fd.get());
-
-		pool.shutdown();
+		// for (Future<ArrayList<FinalEntry>> fd : threadArray)
+		// predictions.addAll(fd.get());
+		//
+		// pool.shutdown();
 	}
 
 	// TODO add support for different classifiers if needed
@@ -68,37 +77,102 @@ public class Analysis {
 			Settings temp = Settings.shots(league);
 			ArrayList<FinalEntry> finals = FixtureUtils.runWithSettingsList(fixtures, current, temp);
 
+			cleanUpUnnecessaryOddsData(finals);
+
 			result.addAll(finals);
 		}
 
 		return result;
 	}
 
-	public void printAnalysis() {
-		Utils.analysys(predictions, "ENG", true);
+	/**
+	 * 
+	 * @param finals
+	 */
+	private static void cleanUpUnnecessaryOddsData(ArrayList<FinalEntry> finals) {
+		for (FinalEntry i : finals) {
+			if (i.fixture.homeTeam.equals("Flamengo RJ") && i.fixture.awayTeam.equals("America MG"))
+				System.out.println();
 
-		byBookmaker(predictions);
-		byLine();
+			ArrayList<Float> lines = i.fixture.getBaseOULines();
+			Float overOdds = i.fixture.getMaxClosingOverOdds();
+			Float underOdds = i.fixture.getMaxClosingUnderOdds();
 
-		valueOverPinnacle();
+			i.overOdds = new OverUnderOdds("max", i.fixture.date, 2.5f, overOdds, -1f);
+			i.underOdds = new OverUnderOdds("max", i.fixture.date, 2.5f, -1f, underOdds);
+
+			for (Float l : lines) {
+				i.fixture.getMaxClosingOUOddsByLine(l);
+				i.fixture.getMaxCloingByLineAndBookie(l, "Pinnacle");
+			}
+
+			i.fixture.overUnderOdds = null;
+		}
 
 	}
 
-	private void valueOverPinnacle() {
-		ArrayList<FinalEntry> finals = predictions.stream().map(fe -> fe.getValueBetOverPinnacle(false))
-				.filter(fe -> fe != null).collect(Collectors.toCollection(ArrayList::new));
-		System.out.println(new Stats(finals, "Values over pinnacle"));
+	public void printAnalysis() {
+		long start = System.currentTimeMillis();
 
-		// Utils.analysys(finals, "Values over pinnacle", false);
+		Utils.analysys(predictions, "All max odds", false);
 
-		ArrayList<FinalEntry> valuesWithPrediction = predictions.stream().filter(fe -> fe.prediction != 0.5f)
-				.map(fe -> fe.getValueBetOverPinnacle(true)).filter(fe -> fe != null)
+		// byBookmaker(predictions);
+		// byLine();
+
+		ArrayList<Stats> stats = new ArrayList<>();
+		System.out.println();
+		for (int i = 0; i < 5; i++)
+			stats.add(valueOverPinnacle(false, 1.0f + i * 0.01f));
+
+		System.out.println();
+		for (int i = 0; i < 5; i++)
+			stats.add(valueOverPinnacle(true, 1.0f + i * 0.01f));
+
+		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
+
+		Stats best = stats.get(0);
+		Utils.analysys(best.all, best.description, false);
+		byBookieContent(best.all);
+
+		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec for analysis");
+
+	}
+
+	private Stats valueOverPinnacle(boolean withPrediction, float valueThreshold) {
+		ArrayList<FinalEntry> finals = predictions.stream().filter(fe -> fe.prediction != 0.5f)
+				.map(fe -> fe.getValueBetOverPinnacle(withPrediction, valueThreshold)).filter(fe -> fe != null)
 				.collect(Collectors.toCollection(ArrayList::new));
-		System.out.println(new Stats(valuesWithPrediction, "Values over pinnacle with predictions"));
+		Stats stats = new Stats(finals,
+				"Values over pinnacle" + (withPrediction ? " with predictions > " : " > ") + valueThreshold);
+		System.out.println(stats);
+		return stats;
+	}
 
-		Utils.analysys(valuesWithPrediction, "Values over pinnacle with predictions", false);
+	private void byBookieContent(ArrayList<FinalEntry> finals) {
+		HashMap<String, ArrayList<FinalEntry>> map = new HashMap<>();
 
-		// byBookmaker(valuesWithPrediction);
+		for (FinalEntry i : finals) {
+			if (i.isOver()) {
+				String book = i.overOdds.bookmaker;
+				if (!map.containsKey(book))
+					map.put(book, new ArrayList<>());
+				map.get(book).add(i);
+			}
+
+			if (i.isUnder()) {
+				String book = i.underOdds.bookmaker;
+				if (!map.containsKey(book))
+					map.put(book, new ArrayList<>());
+				map.get(book).add(i);
+			}
+		}
+
+		ArrayList<Stats> stats = new ArrayList<>();
+		for (Entry<String, ArrayList<FinalEntry>> i : map.entrySet())
+			stats.add(new Stats(i.getValue(), i.getKey()));
+
+		stats.sort(Comparator.comparing(Stats::getSize).reversed());
+		stats.forEach(System.out::println);
 
 	}
 
@@ -120,13 +194,17 @@ public class Analysis {
 	}
 
 	private void byLine() {
+		System.out.println("-----------------------------");
+		System.out.println("By line");
 		ArrayList<Stats> stats = new ArrayList<>();
 		for (int i = 0; i < 5; i++) {
 			final Integer intI = new Integer(i);
 			ArrayList<FinalEntry> finals = predictions.stream().map(fe -> fe.getPredictionForLine(intI))
 					.filter(fe -> fe != null).collect(Collectors.toCollection(ArrayList::new));
-			String description = new Float(-0.5f + i * 0.25f).toString();
+			String description = new Float(0.5f - i * 0.25f).toString();
 			stats.add(new Stats(Utils.noequilibriums(finals), description));
+			// System.out.println(i);
+			// finals.stream().limit(10).collect(Collectors.toList()).forEach(System.out::println);
 		}
 
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());

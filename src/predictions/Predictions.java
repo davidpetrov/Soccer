@@ -71,15 +71,15 @@ public class Predictions {
 		// CHECKLIST.add("BRA");
 		// CHECKLIST.add("BRB");
 
-		// Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-		// UpdateType.AUTOMATIC, 6, 1);
+//		 Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
+//		 UpdateType.AUTOMATIC, 19, 1);
 		 predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-		 OnlyTodayMatches.TRUE, 7, 1);
+		 OnlyTodayMatches.TRUE, 20, 1);
 
 		// predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
 		// OnlyTodayMatches.TRUE, 30, 12);
 
-//		Scraper.checkAndUpdate("SPA", OnlyTodayMatches.FALSE);
+//		Scraper.checkAndUpdate("ENG", OnlyTodayMatches.FALSE);
 //
 //		// Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
 //

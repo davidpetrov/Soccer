@@ -248,9 +248,14 @@ public class Fixture {
 		return result;
 	}
 
+	float maxClosingOverOdds = -1f;
+
 	// methods for leagacy code (line=2.5 maxOdds) closing
 	// TODO test for correctness
 	public float getMaxClosingOverOdds() {
+		if (maxClosingOverOdds != -1f)
+			return maxClosingOverOdds;
+
 		HashMap<String, ArrayList<OverUnderOdds>> baseLineOdds = getOUByLineandBookie().get(2.5f);
 
 		// baseLineOdds.keySet().stream().forEach(bookie ->
@@ -269,10 +274,16 @@ public class Fixture {
 					maxClosing = closing.get().getOverOdds();
 		}
 
+		maxClosingOverOdds = maxClosing;
 		return maxClosing;
 	}
 
+	float maxClosingUnderOdds = -1f;
+
 	public float getMaxClosingUnderOdds() {
+		if (maxClosingUnderOdds != -1f)
+			return maxClosingUnderOdds;
+
 		HashMap<String, ArrayList<OverUnderOdds>> baseLineOdds = getOUByLineandBookie().get(2.5f);
 
 		ArrayList<ArrayList<OverUnderOdds>> filteredBookies = baseLineOdds == null ? new ArrayList<>()
@@ -288,6 +299,7 @@ public class Fixture {
 					maxClosing = closing.get().getUnderOdds();
 		}
 
+		maxClosingUnderOdds = maxClosing;
 		return maxClosing;
 	}
 
@@ -413,7 +425,19 @@ public class Fixture {
 
 		for (Entry<Float, HashMap<String, ArrayList<OverUnderOdds>>> entry : byLineAndBookie.entrySet()) {
 			float line = entry.getKey();
-			ArrayList<Optional<OverUnderOdds>> closing = entry.getValue().values().stream()
+
+			
+			HashMap<String, ArrayList<OverUnderOdds>> filtered = new HashMap<>();
+			for (Entry<String, ArrayList<OverUnderOdds>> i : entry.getValue().entrySet()) {
+				if (!Arrays.asList(Constants.FAKEBOOKS).contains(i.getKey())) {
+					filtered.put(i.getKey(), i.getValue());
+				}
+			}
+			
+			if(filtered.isEmpty())
+				continue;
+			
+			ArrayList<Optional<OverUnderOdds>> closing = filtered.values().stream()
 					.map(list -> list.stream().max(Comparator.comparing(OverUnderOdds::getTime)))
 					.collect(Collectors.toCollection(ArrayList::new));
 
@@ -429,33 +453,70 @@ public class Fixture {
 		return optimalLine;
 	}
 
-	public float[] getBaseOULines() {
+	/**
+	 * Cashing of baseOULines
+	 */
+	ArrayList<Float> baseOULines = new ArrayList<>();
+
+	public ArrayList<Float> getBaseOULines() {
+		if (!baseOULines.isEmpty())
+			return baseOULines;
+
 		float optimalLine = getOptimalOULine();
-		return new float[] { optimalLine - 0.5f, optimalLine - 0.25f, optimalLine, optimalLine + 0.25f,
-				optimalLine + 0.5f };
+		baseOULines.add(optimalLine - 0.5f);
+		baseOULines.add(optimalLine - 0.25f);
+		baseOULines.add(optimalLine);
+		baseOULines.add(optimalLine + 0.25f);
+		baseOULines.add(optimalLine + 0.5f);
+		return baseOULines;
 	}
 
-	public Pair getMaxClosingOUOddsByLine(float line) {
-		float maxHome = 1f;
-		float maxAway = 1f;
+	HashMap<Float, ArrayList<OverUnderOdds>> maxClosingOUOdds = new HashMap<>();
 
-		if (getOUByLineandBookie().get(line) == null)
-			return Pair.defaultValue();
+	/**
+	 * Returns list of 2 odds, the first - max closing overOdds, the second - max
+	 * closing under Odds for the line Possible better implementation
+	 * 
+	 * @param line
+	 * @return
+	 */
+	public ArrayList<OverUnderOdds> getMaxClosingOUOddsByLine(float line) {
+		if (maxClosingOUOdds.get(line) != null)
+			return maxClosingOUOdds.get(line);
+
+		OverUnderOdds maxHome = OverUnderOdds.defaultOdds();
+		OverUnderOdds maxAway = OverUnderOdds.defaultOdds();
+
+		if (overUnderOdds == null || getOUByLineandBookie().get(line) == null) {
+			ArrayList<OverUnderOdds> defaulList = new ArrayList<>();
+			defaulList.add(OverUnderOdds.defaultOdds());
+			defaulList.add(OverUnderOdds.defaultOdds());
+			return defaulList;
+		}
 
 		for (ArrayList<OverUnderOdds> list : getOUByLineandBookie().get(line).values()) {
 			if (!list.isEmpty() && Arrays.asList(Constants.FAKEBOOKS).contains(list.get(0).bookmaker))
 				continue;
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 			if (closing.isPresent()) {
-				if (closing.get().overOdds > maxHome)
-					maxHome = closing.get().overOdds;
-				if (closing.get().underOdds > maxAway)
-					maxAway = closing.get().underOdds;
+				if (closing.get().overOdds > maxHome.overOdds)
+					maxHome = closing.get();
+				if (closing.get().underOdds > maxAway.underOdds)
+					maxAway = closing.get();
 			}
 		}
 
-		return Pair.of(maxHome, maxAway);
+		ArrayList<OverUnderOdds> result = new ArrayList<>();
+		result.add(maxHome);
+		result.add(maxAway);
+		maxClosingOUOdds.put(line, result);
+		return result;
 	}
+
+	/**
+	 * Cashe for Pinnacle odds
+	 */
+	HashMap<Float, OverUnderOdds> pinnOdds = new HashMap<>();
 
 	/**
 	 * Closing odds for specific line and bookmaker if present
@@ -465,6 +526,11 @@ public class Fixture {
 	 * @return
 	 */
 	public OverUnderOdds getMaxCloingByLineAndBookie(float line, String bookmaker) {
+		if (bookmaker.equals("Pinnacle") && pinnOdds.containsKey(line))
+			return pinnOdds.get(line);
+
+		if(overUnderOdds == null)
+			return null;
 		HashMap<String, ArrayList<OverUnderOdds>> bookMap = getOUByLineandBookie().get(line);
 		if (bookMap == null)
 			return null;
@@ -473,6 +539,7 @@ public class Fixture {
 			return null;
 
 		Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
+		pinnOdds.put(line, closing.get());
 		return closing.get();
 	}
 

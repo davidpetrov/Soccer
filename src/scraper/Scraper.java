@@ -84,33 +84,33 @@ public class Scraper {
 
 	public static void main(String[] args) throws Exception {
 		long start = System.currentTimeMillis();
-
+		
 		// =================================================================
 
 		// ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
 		// System.out.println(eng.size());
 		// eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
-
+		
 		// ====================================================================
 
-		for (int i = 2016; i <= 2016; i++)
-			GameStatsCollector.of("GER", i).collectAndStore();
+//			for (int i = 2012; i <= 2012; i++)
+//				GameStatsCollector.of("TUR", i).collectAndStore();
 
-		// for (int i = 2015; i <= 2015; i++)
-		// FullOddsCollector.of("FR", i).collectAndStore();
-
+		for (int i = 2016; i <= 2016; i++)	
+			FullOddsCollector.of("TUR", i).collectAndStore();
+		
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
 		// shotsList = new ArrayList<>();
 		// XlSUtils.storeInExcel(shotsList, "BRA", 2017, "manual");
 
-		//
+		//	
 		// ArrayList<Fixture> list = oddsInParallel("ENG", 2013, null);
 
 		// ArrayList<Fixture> list = odds("BRA", 2017, null);
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
-		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
+		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);   
 		// fastOdds("ENG", 2017, null);
 
 		// ArrayList<Fixture> list3 = fullOdds("ENG", 2010, null);

@@ -50,7 +50,7 @@ public class FixtureListCombiner {
 			ArrayList<String> possibleCandidates = getPossibleCandidates(team, teamsgameStats, matchedgameStats);
 
 			if (possibleCandidates.isEmpty())
-				System.out.println("No possible candidates for: " + team);
+				System.out.println("No possible candidates for:  " + team);
 
 			String bestMatch = null;
 			double bestSimilarity = -1d;

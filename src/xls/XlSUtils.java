@@ -2162,8 +2162,7 @@ public class XlSUtils {
 
 			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
-			Settings temp = runForLeagueWithOdds(sheet, data, year,
-					0.55f) /* runWithTH(sheet, data, year) */;
+			Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f) /* runWithTH(sheet, data, year) */;
 			// System.out.println("match " + i + temp);
 			// temp.maxOdds = maxOdds;
 			// temp.minOdds = minOdds;
@@ -2224,8 +2223,7 @@ public class XlSUtils {
 
 			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			// data = Utils.filterByOdds(data, minOdds, maxOdds);
-			Settings temp = runForLeagueWithOdds(sheet, data, year,
-					0.55f) /* runWithTH(sheet, data, year) */;
+			Settings temp = runForLeagueWithOdds(sheet, data, year, 0.55f) /* runWithTH(sheet, data, year) */;
 			// System.out.println("match " + i + temp);
 			// temp.maxOdds = maxOdds;
 			// temp.minOdds = minOdds;
@@ -2519,7 +2517,7 @@ public class XlSUtils {
 			// if(shotSetts.doNotPlay)
 			// finals = new ArrayList<>();
 			// else if(shotSetts.onlyUnders)
-//			finals = Utils.onlyUnders(finals);
+			// finals = Utils.onlyUnders(finals);
 			// else if(shotSetts.onlyOvers)
 			// finals = Utils.onlyOvers(finals);
 			// finals = Utils.cotRestrict(finals, 0.1f);
@@ -2691,7 +2689,7 @@ public class XlSUtils {
 
 	public static ArrayList<FinalEntry> runBestCotOUandTH(HSSFSheet sheet, ArrayList<Fixture> current,
 			String competition, int year, int period, String description, Settings temp)
-					throws InterruptedException, ParseException {
+			throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = runWithSettingsList(sheet, current, temp);
 
 		Triple triple = findCOTOUandTH(sheet.getSheetName(), year, period, description, temp);
@@ -2990,8 +2988,7 @@ public class XlSUtils {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
 		boolean flagShots = /*
-							 * Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.
-							 * getSheetName())
+							 * Arrays.asList(MinMaxOdds.SHOTS).contains(sheet. getSheetName())
 							 */false;
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
@@ -3205,12 +3202,11 @@ public class XlSUtils {
 	private static Settings predictiveFromDB(HSSFSheet sheet, ArrayList<Fixture> all, int year, Table table,
 			HashMap<Fixture, Float> basicMap, HashMap<Fixture, Float> poissonsMap, HashMap<Fixture, Float> weightedMap,
 			HashMap<Fixture, Float> ht1Map, HashMap<Fixture, Float> ht2Map, float initTH, String type, int maxMatchDay)
-					throws ParseException {
+			throws ParseException {
 
 		boolean escapeFlag = sheet.getSheetName().equals("D1") || sheet.getSheetName().equals("D2");
 		boolean flagShots = /*
-							 * Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.
-							 * getSheetName())
+							 * Arrays.asList(MinMaxOdds.SHOTS).contains(sheet. getSheetName())
 							 */false;
 
 		float bestProfit = Float.NEGATIVE_INFINITY;
@@ -3349,9 +3345,8 @@ public class XlSUtils {
 
 			ArrayList<Fixture> data = FixtureUtils.getBeforeMatchday(all, i);
 			Settings temp = /*
-							 * runForLeagueWithOdds(sheet, data, year, basics,
-							 * poissons, weighted, ht1, ht2, 0.55f)
-							 * .withValue(0.9f)
+							 * runForLeagueWithOdds(sheet, data, year, basics, poissons, weighted, ht1, ht2,
+							 * 0.55f) .withValue(0.9f)
 							 */ new Settings(sheet.getSheetName(), 0.5f, 0.5f, 0f, 0.55f, 0.55f, 0.55f, 0.5f, 0f);
 
 			ArrayList<FinalEntry> finals = runWithSettingsList(sheet, data, temp);
@@ -4251,7 +4246,7 @@ public class XlSUtils {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 
 		ArrayList<Fixture> all = selectAll(sheet, 0);
-		
+
 		Settings temp = Settings.shots(sheet.getSheetName());
 		// Settings shotSets = Settings.shots(sheet.getSheetName());
 		// Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
@@ -4388,7 +4383,7 @@ public class XlSUtils {
 
 	public static ArrayList<FinalEntry> runBestTHandCotOU(HSSFSheet sheet, ArrayList<Fixture> current,
 			String competition, int year, int period, String description, Settings temp)
-					throws InterruptedException, ParseException {
+			throws InterruptedException, ParseException {
 
 		Pair pair = findTHandCOTOU(sheet.getSheetName(), year, period, description, temp);
 		float bestTH = findTH(sheet.getSheetName(), year, period, description, temp);
@@ -4729,8 +4724,8 @@ public class XlSUtils {
 				lambda = lambda < 0 ? 0 : lambda;
 				mu = mu < 0 ? 0 : mu;
 
-				Fixture ef = i.withShots(
-						/* Math.round(lambda), Math.round(mu) */i.result.goalsHomeTeam, i.result.goalsAwayTeam);
+				Fixture ef = i.withShots(/* Math.round(lambda), Math.round(mu) */i.result.goalsHomeTeam,
+						i.result.goalsAwayTeam);
 				System.out.println(lambda + " s " + mu);
 				System.out.println(ef);
 				filled.add(ef);
@@ -4814,8 +4809,8 @@ public class XlSUtils {
 	}
 
 	/**
-	 * Describing maximizaion base on: BOTH - all finals UNDERS - only unders
-	 * OVERS - only overs
+	 * Describing maximizaion base on: BOTH - all finals UNDERS - only unders OVERS
+	 * - only overs
 	 *
 	 */
 	public enum MaximizingBy {
