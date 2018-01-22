@@ -56,9 +56,10 @@ public class Test {
 
 		// analysis(2017, 2017, DataType.ALLEURODATA);
 
-		String[] all = new String[] { "BRA", "ENG", "ENG2", "GER", "FR", "SPA", "IT", "NED", "SWI", "POR", "TUR" };
+		String[] all = new String[] { "BRA", "ENG", "ENG2", "GER", "FR", "SPA", "SPA2", "IT", "NED", "SWI", "POR",
+				"TUR" };
 
-		Analysis analysis = new Analysis(2009, 2016, all);
+		Analysis analysis = new Analysis(2017, 2017, new String[] {"GER"});
 		analysis.makePredictions();
 		analysis.printAnalysis();
 

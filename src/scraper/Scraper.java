@@ -84,33 +84,36 @@ public class Scraper {
 
 	public static void main(String[] args) throws Exception {
 		long start = System.currentTimeMillis();
-		
+
 		// =================================================================
 
 		// ArrayList<Fixture> eng = SQLiteJDBC.selectFixtures("ENG", 2016);
 		// System.out.println(eng.size());
 		// eng.stream().limit(20).collect(Collectors.toList()).forEach(System.out::println);
-		
+
 		// ====================================================================
 
-//			for (int i = 2012; i <= 2012; i++)
-//				GameStatsCollector.of("TUR", i).collectAndStore();
+		for (int i = 2017; i <= 2017; i++)
+			GameStatsCollector.of("FR", i).collectAndStore();
 
-		for (int i = 2016; i <= 2016; i++)	
-			FullOddsCollector.of("TUR", i).collectAndStore();
-		
+		// for (int i = 2013; i <= 2013; i++) {
+		// ArrayList<Fixture> data = new FullOddsCollector("SPA2", i,
+		// "http://www.oddsportal.com/soccer/spain/segunda-division-2013-2014/").collect();
+		// SQLiteJDBC.storeFixtures(data);
+		// }
+
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
 		// "http://int.soccerway.com/national/japan/j1-league/2016/2nd-stage/"));
 		// shotsList = new ArrayList<>();
 		// XlSUtils.storeInExcel(shotsList, "BRA", 2017, "manual");
 
-		//	
+		//
 		// ArrayList<Fixture> list = oddsInParallel("ENG", 2013, null);
 
 		// ArrayList<Fixture> list = odds("BRA", 2017, null);
 		// XlSUtils.storeInExcel(list, "BRA", 2017, "odds");
-		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);   
+		// nextMatches("SPA", null, OnlyTodayMatches.TRUE);
 		// fastOdds("ENG", 2017, null);
 
 		// ArrayList<Fixture> list3 = fullOdds("ENG", 2010, null);
@@ -1697,5 +1700,46 @@ public class Scraper {
 			return false;
 		}
 		return true;
+	}
+
+	public static void updateDB(ArrayList<String> list, int n, OnlyTodayMatches onlyToday, UpdateType automatic,
+			int day, int month) throws Exception {
+		// ExecutorService executor = Executors.newFixedThreadPool(n);
+		ArrayList<String> leagues = automatic.equals(UpdateType.AUTOMATIC) ? getTodaysLeagueList(day, month) : list;
+		System.out.println("Updating for: ");
+		System.out.println(leagues);
+
+		for (String league : leagues) {
+			// Runnable worker = new UpdateRunner(i, onlyToday);
+			// executor.execute(worker);
+			updateDBfor(league, onlyToday);
+		}
+		// executor.shutdown();
+	}
+
+	private static void updateDBfor(String league, OnlyTodayMatches onlyToday) throws Exception {
+		int collectYear = Arrays.asList(EntryPoints.SUMMER).contains(league) ? EntryPoints.SUMMERCURRENT
+				: EntryPoints.CURRENT;
+
+		ArrayList<Fixture> all = SQLiteJDBC.selectFixtures(league, collectYear);
+		Date oldestTocheck = Utils.findLastPendingFixture(all);
+		System.out.println(oldestTocheck);
+
+		ArrayList<Fixture> list = new ArrayList<>();
+		// check if update of previous results is necessary
+		if (new Date().after(oldestTocheck)) {
+			ArrayList<Fixture> odds = FullOddsCollector.of(league, collectYear).collectUpToDate(oldestTocheck);
+			System.out.println(odds.size() + " odds ");
+			SQLiteJDBC.storeFixtures(odds);
+
+			list = GameStatsCollector.of(league, collectYear).collectUpToDate(oldestTocheck);
+			System.out.println(list.size() + "shots");
+			SQLiteJDBC.storeGameStats(list, league, collectYear);
+		}
+
+		ArrayList<Fixture> next = FullOddsCollector.of(league, collectYear).nextMatches(onlyToday);
+		SQLiteJDBC.storeFixtures(next);
+
+		System.out.println(league + " successfully updated");
 	}
 }

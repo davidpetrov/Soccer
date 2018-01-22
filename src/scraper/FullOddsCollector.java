@@ -36,12 +36,15 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import com.gargoylesoftware.htmlunit.javascript.host.css.CSSValue;
+
 import main.Fixture;
 import main.Result;
 import main.SQLiteJDBC;
 import odds.AsianOdds;
 import odds.MatchOdds;
 import odds.OverUnderOdds;
+import predictions.Predictions.OnlyTodayMatches;
 import utils.ThrowingSupplier;
 
 public class FullOddsCollector {
@@ -69,6 +72,10 @@ public class FullOddsCollector {
 	}
 
 	public ArrayList<Fixture> collect() throws InterruptedException {
+		return collectUpToDate(null);
+	}
+
+	public ArrayList<Fixture> collectUpToDate(Date oldestTocheck) throws InterruptedException {
 		String address;
 		if (optionalFullAddress == null) {
 			address = EntryPoints.getOddsLink(competition, year);
@@ -78,11 +85,8 @@ public class FullOddsCollector {
 
 		Set<Fixture> result = new HashSet<>();
 
-		ChromeOptions options = new ChromeOptions();
-		options.addArguments("headless");
-		WebDriver driver = new ChromeDriver(options);
-		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		driver.manage().window().maximize();
+		WebDriver driver = createDriver();
+
 		driver.navigate().to(address + "/results/");
 
 		login(driver);
@@ -92,6 +96,7 @@ public class FullOddsCollector {
 		// Get page count
 		int maxPage = getMaxPageCount(driver);
 
+		boolean breakFlag = false;
 		HashMap<Integer, String> booksMap = new HashMap<>();
 		for (int page = 1; page <= maxPage; page++) {
 			try {
@@ -136,6 +141,11 @@ public class FullOddsCollector {
 						}
 					}
 
+					if (oldestTocheck != null && f.date.before(oldestTocheck)) {
+						breakFlag = true;
+						break;
+					}
+
 					if (f != null)
 						result.add(f);
 
@@ -151,13 +161,16 @@ public class FullOddsCollector {
 				}
 
 				Thread.sleep(5000);
-				driver = new ChromeDriver(options);
-				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-				driver.manage().window().maximize();
+				driver = createDriver();
 
 				driver.navigate().to(address + "/results/");
 				login(driver);
 				driver.navigate().to(address + "/results/");
+			}
+
+			if (breakFlag) {
+				page = maxPage + 1;
+				break;
 			}
 		}
 
@@ -167,6 +180,97 @@ public class FullOddsCollector {
 		fin.addAll(result);
 		System.out.println(fin.size());
 		return fin;
+	}
+
+	public ArrayList<Fixture> nextMatches(OnlyTodayMatches onlyTodaysMatches) throws Exception {
+		String address;
+		if (optionalFullAddress == null) {
+			address = EntryPoints.getOddsLink(competition, year);
+		} else
+			address = optionalFullAddress;
+		System.out.println(address);
+
+		ArrayList<Fixture> result = new ArrayList<>();
+		Set<String> teams = new HashSet<>();
+
+		WebDriver driver = createDriver();
+
+		driver.navigate().to(address);
+
+		login(driver);
+
+		driver.navigate().to(address);
+
+		HashMap<Integer, String> booksMap = new HashMap<>();
+
+		String[] splitAddress = address.split("/");
+		String leagueYear = splitAddress[splitAddress.length - 1];
+		List<WebElement> list = driver.findElements(By.cssSelector("a[href*='" + leagueYear + "']"));
+		ArrayList<String> links = new ArrayList<>();
+		HashMap<String, String> texts = new HashMap<>();
+		for (WebElement i : list) {
+			if (i.getText().contains("-")) {
+				String href = i.getAttribute("href");
+				links.add(href);
+				texts.put(href, i.getText());
+			}
+		}
+
+		for (String i : links) {
+			String homeTeam = texts.get(i).split("-")[0].trim();
+			String awayTeam = texts.get(i).split("-")[1].trim();
+			if (teams.contains(homeTeam) && teams.contains(awayTeam))
+				continue;
+
+			Fixture ef = getFixtureTest(driver, i, competition, year, booksMap);
+			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
+					&& !teams.contains(ef.awayTeam)) {
+				result.add(ef);
+				teams.add(ef.awayTeam);
+				teams.add(ef.homeTeam);
+			}
+
+		}
+		driver.close();
+
+		System.out.println(result);
+		return result;
+	}
+
+	private ArrayList<String> getLinkList(WebDriver driver) {
+		ArrayList<String> links = new ArrayList<>();
+		WebElement table = driver.findElement(By.id("tournamentTable"));
+		List<WebElement> tagrows = table.findElements(By.tagName("tr"));
+
+		for (int i = 0; i < tagrows.size(); i++) {
+			WebElement elem = tagrows.get(i);
+			Optional<String> classValue = ThrowingSupplier.tryTimes(10, () -> {
+				return elem.getAttribute("class");
+			});
+
+			System.out.println(classValue.get());
+			if (classValue.isPresent() && !classValue.get().contains("deactivate"))
+				continue;
+
+			WebElement aElem = elem.findElement(By.tagName("a"));
+			if (aElem != null) {
+				String href = aElem.getAttribute("href");
+				if (isFixtureLink(href)) {
+					links.add(href);
+				}
+			}
+		}
+
+		return links;
+	}
+
+	private WebDriver createDriver() {
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("headless");
+		WebDriver driver = new ChromeDriver(options);
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		driver.manage().window().maximize();
+		return driver;
 	}
 
 	// TODO for big leagues i.e 24 teams finds incorrect result
@@ -1023,4 +1127,5 @@ public class FullOddsCollector {
 				break;
 			}
 	}
+
 }

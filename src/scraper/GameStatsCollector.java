@@ -53,8 +53,13 @@ public class GameStatsCollector {
 		SQLiteJDBC.storeGameStats(stats, competition, year);
 	}
 
-	// TODO possible smarter impl with js calls
 	public ArrayList<Fixture> collect() throws InterruptedException, IOException, ParseException {
+		return collectUpToDate(null);
+	}
+
+	// TODO possible smarter impl with js calls
+	public ArrayList<Fixture> collectUpToDate(Date oldestTocheck)
+			throws InterruptedException, IOException, ParseException {
 		ArrayList<Fixture> result = new ArrayList<>();
 		Set<Fixture> set = new HashSet<>();
 		String address = getAddress();
@@ -69,22 +74,30 @@ public class GameStatsCollector {
 
 		// try to list by game week
 		Actions actions = new Actions(driver);
-		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
-				.perform();
+//		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
+//				.perform();
 
+		boolean breakFlag = false;
 		while (true) {
 			String html = driver.getPageSource();
 			Document matches = Jsoup.parse(html);
 			Element list = matches.select("table[class=matches   ]").first();
 			Elements linksM = list.select("a[href]");
-			for (Element linkM : linksM) {
-				if (isScore(linkM.text())) {
-					Document fixture = Jsoup.connect(BASE + linkM.attr("href")).get();
+			for (int i = linksM.size() - 1; i >= 0; i--) {
+				if (isScore(linksM.get(i).text())) {
+					Document fixture = Jsoup.connect(BASE + linksM.get(i).attr("href")).get();
 					Fixture ef = getGameStatsFixture(fixture, competition);
+					if (ef != null && oldestTocheck != null && ef.date.before(oldestTocheck)) {
+						breakFlag = true;
+						break;
+					}
 					result.add(ef);
 					set.add(ef);
 				}
 			}
+
+			if (breakFlag)
+				break;
 
 			// System.out.println(driver.findElement(By.className("previous")).getCssValue("cursor"));
 			actions.moveToElement(driver.findElement(By.className("previous"))).click().perform();
@@ -106,8 +119,8 @@ public class GameStatsCollector {
 
 		int missingData = fillMissingShotsData(setlist);
 
-		//does not store if missing data is too much
-		return missingData > setlist.size() / 2 ? new ArrayList<>() : setlist;
+		// does not store if missing data is too much
+		return (oldestTocheck == null && missingData > setlist.size() / 2) ? new ArrayList<>() : setlist;
 	}
 
 	private int fillMissingShotsData(ArrayList<Fixture> setlist) {
@@ -118,7 +131,7 @@ public class GameStatsCollector {
 
 			if (i.gameStats.equals(GameStats.initial()) || i.gameStats.getShotsHome() == -1) {
 				missingDataCount++;
-				i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
+				// i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
 			}
 		}
 		System.out.println("Missing data for: " + missingDataCount);

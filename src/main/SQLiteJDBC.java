@@ -899,7 +899,7 @@ public class SQLiteJDBC {
 			stmt = c.createStatement();
 			for (Fixture f : list) {
 
-				String sql = "INSERT OR IGNORE INTO Fixtures "
+				String sql = "REPLACE INTO Fixtures "
 						+ "(Date,Competition,StartYear,EndYear,Matchday,HomeTeamName,AwayTeamName,HomeGoals,AwayGoals,HTHome,HTAway)"
 						+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.competition) + "," + f.year
 						+ "," + f.year + "," + +f.matchday + "," + addQuotes(f.homeTeam) + "," + addQuotes(f.awayTeam)
@@ -1035,8 +1035,6 @@ public class SQLiteJDBC {
 			System.exit(0);
 		}
 
-		
-		
 		addOddsData(result, competition, year);
 		ArrayList<Fixture> combined = addGameStatsData(result, competition, year);
 
@@ -1046,10 +1044,33 @@ public class SQLiteJDBC {
 	private static ArrayList<Fixture> addGameStatsData(ArrayList<Fixture> result, String competition, int year) {
 		ArrayList<Fixture> gameStats = selectGameStats(competition, year);
 
-		FixtureListCombiner combiner = new FixtureListCombiner(result, gameStats, competition);
-		ArrayList<? extends Fixture> combined = combiner.combineWithDictionary();
+		fillMissingShotsData(gameStats);
 
-		return combined.stream().map(Fixture.class::cast).collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<Fixture> pending = result.stream().filter(f -> f.result.equals(Result.of(-1, -1)))
+				.collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<Fixture> finished = result.stream().filter(f -> !f.result.equals(Result.of(-1, -1)))
+				.collect(Collectors.toCollection(ArrayList::new));
+
+		FixtureListCombiner combiner = new FixtureListCombiner(finished, gameStats, competition);
+		ArrayList<Fixture> combined = combiner.combineWithDictionary();
+		combined.addAll(pending);
+
+		return combined;
+	}
+
+	private static void fillMissingShotsData(ArrayList<Fixture> gameStats) {
+		int missingDataCount = 0;
+		for (Fixture i : gameStats) {
+			if (i.gameStats == null)
+				i.gameStats = GameStats.initial();
+
+			if (i.gameStats.equals(GameStats.initial()) || i.gameStats.getShotsHome() == -1) {
+				missingDataCount++;
+				i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
+			}
+		}
+		if (missingDataCount > 0)
+			System.out.println("Missing data for: " + missingDataCount + " filled with goals equivalents");
 	}
 
 	private static ArrayList<Fixture> selectGameStats(String competition, int year) {
@@ -1112,21 +1133,20 @@ public class SQLiteJDBC {
 		return result;
 	}
 
-	
-	//TODO loads only the OU odds for now, because of performance resa
+	// TODO loads only the OU odds for now, because of performance resa
 	private static void addOddsData(ArrayList<Fixture> result, String competition, int year) {
-//		ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
-//		ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
+		// ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
+		// ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
 		ArrayList<OverUnderOdds> overUnderOdds = selectOverUnderOdds(competition, year);
 
 		for (Fixture i : result) {
 			try {
-//				i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-//						.collect(Collectors.toCollection(ArrayList::new));
-//				i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-//						.collect(Collectors.toCollection(ArrayList::new));
+				// i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+				// && mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+				// .collect(Collectors.toCollection(ArrayList::new));
+				// i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+				// && mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+				// .collect(Collectors.toCollection(ArrayList::new));
 				i.overUnderOdds = overUnderOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
 						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
 						.collect(Collectors.toCollection(ArrayList::new));
@@ -1277,7 +1297,6 @@ public class SQLiteJDBC {
 	public static void storeGameStats(ArrayList<Fixture> stats, String competition, int year) {
 		Connection c = null;
 		Statement stmt = null;
-		System.out.println("dsadas");
 		try {
 			Class.forName("org.sqlite.JDBC");
 			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");

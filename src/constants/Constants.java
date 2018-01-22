@@ -56,8 +56,14 @@ public class Constants {
 			"Coolbet",
 			"France Pari",
 			"eFortuna.pl",
+			"Dotabet",
+			"Babibet",
+			"MAXITIP.cz ",
+			"Marsbet",
+			"Totolotek.pl",
 			
 			
+			"Asianodds",
 			"Matchbook",
 			"Dafabet",
 			"Bovada",

@@ -133,6 +133,7 @@ public class Analysis {
 		Stats best = stats.get(0);
 		Utils.analysys(best.all, best.description, false);
 		byBookieContent(best.all);
+		System.out.println(best.all);
 
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec for analysis");
 
