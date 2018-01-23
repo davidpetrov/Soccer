@@ -1724,21 +1724,24 @@ public class Scraper {
 		ArrayList<Fixture> all = SQLiteJDBC.selectFixtures(league, collectYear);
 		Date oldestTocheck = Utils.findLastPendingFixture(all);
 		System.out.println(oldestTocheck);
+		ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league, collectYear);
+		Date oldestTocheckGS = Utils.findLastPendingFixture(gameStats);
+		System.out.println("GS " + oldestTocheckGS);
 
 		ArrayList<Fixture> list = new ArrayList<>();
 		// check if update of previous results is necessary
 		if (new Date().after(oldestTocheck)) {
 			ArrayList<Fixture> odds = FullOddsCollector.of(league, collectYear).collectUpToDate(oldestTocheck);
 			System.out.println(odds.size() + " odds ");
-			SQLiteJDBC.storeFixtures(odds);
+			SQLiteJDBC.storeFixtures(odds, CURRENT_YEAR);
 
-			list = GameStatsCollector.of(league, collectYear).collectUpToDate(oldestTocheck);
+			list = GameStatsCollector.of(league, collectYear).collectUpToDate(oldestTocheckGS);
 			System.out.println(list.size() + "shots");
 			SQLiteJDBC.storeGameStats(list, league, collectYear);
 		}
 
 		ArrayList<Fixture> next = FullOddsCollector.of(league, collectYear).nextMatches(onlyToday);
-		SQLiteJDBC.storeFixtures(next);
+		SQLiteJDBC.storeFixtures(next, CURRENT_YEAR);
 
 		System.out.println(league + " successfully updated");
 	}

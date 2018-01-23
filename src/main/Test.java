@@ -59,7 +59,7 @@ public class Test {
 		String[] all = new String[] { "BRA", "ENG", "ENG2", "GER", "FR", "SPA", "SPA2", "IT", "NED", "SWI", "POR",
 				"TUR" };
 
-		Analysis analysis = new Analysis(2017, 2017, new String[] {"GER"});
+		Analysis analysis = new Analysis(2017, 2017, new String[] {"TUR"});
 		analysis.makePredictions();
 		analysis.printAnalysis();
 

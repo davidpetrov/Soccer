@@ -15,6 +15,7 @@ public class OverUnderOdds extends Odds {
 		this.line = line;
 		this.overOdds = overOdds;
 		this.underOdds = underOdds;
+		this.isActive = true;
 	}
 
 	public float getOverOdds() {
@@ -107,6 +108,11 @@ public class OverUnderOdds extends Odds {
 
 	public static OverUnderOdds defaultOdds() {
 		return new OverUnderOdds("default", null, 2.5f, -1, -1);
+	}
+
+	public OverUnderOdds withIsActive(Boolean isActive) {
+		this.isActive=isActive;
+		return this;
 	}
 
 }

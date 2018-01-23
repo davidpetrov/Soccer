@@ -888,12 +888,13 @@ public class SQLiteJDBC {
 		}
 	}
 
-	public static void storeFixtures(ArrayList<Fixture> list) {
+	public static void storeFixtures(ArrayList<Fixture> list, int year) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -936,12 +937,12 @@ public class SQLiteJDBC {
 	private static void storeAsianOdds(Fixture f, Statement stmt) {
 		// store all Asian odds for the fixture
 		for (AsianOdds i : f.asianOdds) {
-			String sqlOU = "INSERT OR IGNORE INTO AsianOdds "
-					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,HomeOdds,AwayOdds,isOpening,isClosing)"
+			String sqlOU = "REPLACE INTO AsianOdds "
+					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,HomeOdds,AwayOdds,isOpening,isClosing,isActive)"
 					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
 					+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + "," + addQuotes(format.format(i.time))
 					+ "," + i.line + "," + i.homeOdds + "," + i.awayOdds + "," + (i.isOpening ? 1 : 0) + ","
-					+ (i.isClosing ? 1 : 0) + " );";
+					+ (i.isClosing ? 1 : 0) + "," + (i.isActive ? 1 : 0) + " );";
 			try {
 				stmt.executeUpdate(sqlOU);
 			} catch (SQLException e) {
@@ -955,12 +956,12 @@ public class SQLiteJDBC {
 	private static void storeOverUnderOdds(Fixture f, Statement stmt) {
 		// store all O/U odds for the fixture
 		for (OverUnderOdds i : f.overUnderOdds) {
-			String sqlOU = "INSERT OR IGNORE INTO OverUnderOdds "
-					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing)"
+			String sqlOU = "REPLACE INTO OverUnderOdds "
+					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing,isActive)"
 					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
 					+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + "," + addQuotes(format.format(i.time))
 					+ "," + i.line + "," + i.overOdds + "," + i.underOdds + "," + (i.isOpening ? 1 : 0) + ","
-					+ (i.isClosing ? 1 : 0) + " );";
+					+ (i.isClosing ? 1 : 0) + "," + (i.isActive ? 1 : 0) + " );";
 			try {
 				stmt.executeUpdate(sqlOU);
 			} catch (SQLException e) {
@@ -975,12 +976,12 @@ public class SQLiteJDBC {
 	private static void storeMatchOdds(Fixture f, Statement stmt) {
 		// store all 1x2 odds for the fixture
 		for (MatchOdds i : f.matchOdds) {
-			String sqlOU = "INSERT OR IGNORE INTO MatchOdds "
-					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,HomeOdds,DrawOdds,AwayOdds,isOpening,isClosing)"
+			String sqlOU = "REPLACE INTO MatchOdds "
+					+ "(Date,HomeTeamName,AwayTeamName,Bookmaker,Time,HomeOdds,DrawOdds,AwayOdds,isOpening,isClosing,isActive)"
 					+ "VALUES (" + addQuotes(format.format(f.date)) + "," + addQuotes(f.homeTeam) + ","
 					+ addQuotes(f.awayTeam) + "," + addQuotes(i.bookmaker) + "," + addQuotes(format.format(i.time))
 					+ "," + i.homeOdds + "," + i.drawOdds + "," + i.awayOdds + "," + (i.isOpening ? 1 : 0) + ","
-					+ (i.isClosing ? 1 : 0) + " );";
+					+ (i.isClosing ? 1 : 0) + "," + (i.isActive ? 1 : 0) + " );";
 			try {
 				stmt.executeUpdate(sqlOU);
 			} catch (SQLException e) {
@@ -1005,7 +1006,8 @@ public class SQLiteJDBC {
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -1044,7 +1046,7 @@ public class SQLiteJDBC {
 	private static ArrayList<Fixture> addGameStatsData(ArrayList<Fixture> result, String competition, int year) {
 		ArrayList<Fixture> gameStats = selectGameStats(competition, year);
 
-		fillMissingShotsData(gameStats);
+		fillMissingShotsData(gameStats, competition);
 
 		ArrayList<Fixture> pending = result.stream().filter(f -> f.result.equals(Result.of(-1, -1)))
 				.collect(Collectors.toCollection(ArrayList::new));
@@ -1058,7 +1060,7 @@ public class SQLiteJDBC {
 		return combined;
 	}
 
-	private static void fillMissingShotsData(ArrayList<Fixture> gameStats) {
+	private static void fillMissingShotsData(ArrayList<Fixture> gameStats, String competition) {
 		int missingDataCount = 0;
 		for (Fixture i : gameStats) {
 			if (i.gameStats == null)
@@ -1070,10 +1072,11 @@ public class SQLiteJDBC {
 			}
 		}
 		if (missingDataCount > 0)
-			System.out.println("Missing data for: " + missingDataCount + " filled with goals equivalents");
+			System.out.println(
+					"Missing data for: " + competition + " : " + missingDataCount + " filled with goals equivalents");
 	}
 
-	private static ArrayList<Fixture> selectGameStats(String competition, int year) {
+	public static ArrayList<Fixture> selectGameStats(String competition, int year) {
 		ArrayList<Fixture> result = new ArrayList<>();
 
 		Connection c = null;
@@ -1165,7 +1168,8 @@ public class SQLiteJDBC {
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -1184,11 +1188,13 @@ public class SQLiteJDBC {
 				float underOdds = matchRs.getFloat("underOdds");
 				int isOpening = matchRs.getInt("isOpening");
 				int isClosing = matchRs.getInt("isClosing");
+				int isActive = matchRs.getInt("isActive");
 
 				OverUnderOdds mo = new OverUnderOdds(bookmaker, format.parse(time), line, overOdds, underOdds)
 						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
 				mo.isOpening = isOpening == 1;
 				mo.isClosing = isClosing == 1;
+				mo.isActive = isActive == 1;
 				result.add(mo);
 			}
 
@@ -1196,6 +1202,7 @@ public class SQLiteJDBC {
 			stmt.close();
 			c.close();
 		} catch (Exception e) {
+			e.printStackTrace();
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
 		}
@@ -1210,7 +1217,8 @@ public class SQLiteJDBC {
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -1229,11 +1237,13 @@ public class SQLiteJDBC {
 				float awayOdds = matchRs.getFloat("awayOdds");
 				int isOpening = matchRs.getInt("isOpening");
 				int isClosing = matchRs.getInt("isClosing");
+				int isActive = matchRs.getInt("isActive");
 
 				AsianOdds mo = new AsianOdds(bookmaker, format.parse(time), line, homeOdds, awayOdds)
 						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
 				mo.isOpening = isOpening == 1;
 				mo.isClosing = isClosing == 1;
+				mo.isActive = isActive == 1;
 				result.add(mo);
 			}
 
@@ -1255,7 +1265,8 @@ public class SQLiteJDBC {
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -1275,11 +1286,13 @@ public class SQLiteJDBC {
 				float awayOdds = matchRs.getFloat("awayOdds");
 				int isOpening = matchRs.getInt("isOpening");
 				int isClosing = matchRs.getInt("isClosing");
+				int isActive = matchRs.getInt("isActive");
 
 				MatchOdds mo = new MatchOdds(bookmaker, format.parse(time), homeOdds, drawOdds, awayOdds)
 						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
 				mo.isOpening = isOpening == 1;
 				mo.isClosing = isClosing == 1;
+				mo.isActive = isActive == 1;
 				result.add(mo);
 			}
 

@@ -13,6 +13,7 @@ public abstract class Odds {
 	public Date time;
 	public boolean isOpening;
 	public boolean isClosing;
+	public boolean isActive;
 
 	public abstract float getMargin();
 

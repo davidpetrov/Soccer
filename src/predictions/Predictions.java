@@ -28,6 +28,7 @@ import main.SQLiteJDBC;
 import main.Test.DataType;
 import runner.RunnerAsianPredictions;
 import runner.RunnerPredictions;
+import scraper.FullOddsCollector;
 import scraper.Scraper;
 import settings.Settings;
 import utils.Utils;
@@ -40,16 +41,16 @@ public class Predictions {
 	public static void main(String[] args) throws Exception {
 
 		// CHECKLIST.add("ENG");
-		// CHECKLIST.add("ENG2");
+//		CHECKLIST.add("ENG2");
 		// CHECKLIST.add("ENG3");
 		// CHECKLIST.add("ENG4");
 		// CHECKLIST.add("ENG5");
 		// CHECKLIST.add("ENG");
-//		 CHECKLIST.add("IT");
+		// CHECKLIST.add("IT");
 		// CHECKLIST.add("IT2");
 		// CHECKLIST.add("FR");
 		// CHECKLIST.add("FR2");
-//		 CHECKLIST.add("SPA");
+		// CHECKLIST.add("SPA");
 		// CHECKLIST.add("SPA2");
 		 CHECKLIST.add("GER");
 		// CHECKLIST.add("GER2");
@@ -80,13 +81,17 @@ public class Predictions {
 		// UpdateType.AUTOMATIC, 19, 1);
 		// predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
 		// OnlyTodayMatches.TRUE, 20, 1);
-
-		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.MANUAL, 21, 1);
-
 		// predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
 		// OnlyTodayMatches.TRUE, 21, 01);
 
-//		 predictionsFromDB(2017, UpdateType.MANUAL, OnlyTodayMatches.TRUE, 21, 1);
+//		 Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC,
+//		 27, 1);
+
+		predictionsFromDB(2017, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 27, 1);
+
+		// ArrayList<Fixture> nexts = FullOddsCollector.of("IT",
+		// 2017).nextMatches(OnlyTodayMatches.TRUE);
+		// SQLiteJDBC.storeFixtures(nexts,2017);
 
 		// Scraper.checkAndUpdate("ENG", OnlyTodayMatches.FALSE);
 		//
@@ -104,7 +109,9 @@ public class Predictions {
 		System.out.println(leagues);
 
 		for (String league : leagues) {
+			long start = System.currentTimeMillis();
 			ArrayList<Fixture> fixtures = SQLiteJDBC.selectFixtures(league, year);
+			System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 			all.addAll(Analysis.predict(fixtures, league, year));
 		}
 
@@ -163,16 +170,11 @@ public class Predictions {
 					.println("---------------------------------------------------------------------------------------");
 		}
 
-		result.sort(new Comparator<FinalEntry>() {
+		result.sort(Comparator.comparing(FinalEntry::getPrediction));
 
-			@Override
-			public int compare(FinalEntry o1, FinalEntry o2) {
-
-				return ((Float) o2.prediction).compareTo((Float) o1.prediction);
-			}
-
-		});
 		System.out.println(result);
+
+		Analysis.valueFinder(result);
 
 		return all;
 	}

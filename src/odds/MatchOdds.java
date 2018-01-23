@@ -15,6 +15,7 @@ public class MatchOdds extends Odds {
 		this.homeOdds = homeOdds;
 		this.drawOdds = drawOdds;
 		this.awayOdds = awayOdds;
+		this.isActive = true;
 	}
 
 	@Override
@@ -103,6 +104,11 @@ public class MatchOdds extends Odds {
 		this.fixtureDate = date;
 		this.homeTeamName = homeTeam;
 		this.awayTeamName = awayTeam;
+		return this;
+	}
+
+	public MatchOdds withIsActive(Boolean isActive) {
+		this.isActive = isActive;
 		return this;
 	}
 

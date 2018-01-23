@@ -1,6 +1,7 @@
 package entries;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
@@ -59,6 +60,10 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		return prediction;
 	}
 
+	public Date getDate() {
+		return fixture.getDate();
+	}
+
 	public float getCertainty() {
 		return prediction > threshold ? prediction : (1f - prediction);
 	}
@@ -82,15 +87,28 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		int totalGoals = result.goalsAwayTeam + result.goalsHomeTeam;
 		String out = prediction >= upper ? "over" : "under";
 		float coeff = prediction >= upper ? overOdds.getOverOdds() : underOdds.getUnderOdds();
+		float valueOverPinnacle = getValueOverPinnacle();
 		String bookie = prediction >= upper ? overOdds.bookmaker : underOdds.bookmaker;
 		if (fixture.result.goalsHomeTeam == -1)
 			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
 					+ fixture.awayTeam + " " + out + " " + line + " " + bookie + " " + String.format("%.2f", coeff)
-					+ "\n";
+					+ " " + (valueOverPinnacle > 0 ? String.format("%.2f", valueOverPinnacle) + "%" : "") + "\n";
 		else
 			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
 					+ fixture.awayTeam + " " + totalGoals + " " + out + " " + line + " " + bookie + " " + successFull()
 					+ " " + String.format("%.2f", getProfit()) + "\n";
+	}
+
+	private float getValueOverPinnacle() {
+		float coeff = prediction >= upper ? overOdds.getOverOdds() : underOdds.getUnderOdds();
+		OverUnderOdds pinnOU = fixture.pinnOdds.get(line);
+		if (pinnOU == null)
+			return -1;
+		OverUnderOdds trueOdds = pinnOU.getTrueOddsMarginal();
+		float pinnOdds = prediction >= upper ? trueOdds.getOverOdds() : trueOdds.getUnderOdds();
+		float value = coeff / pinnOdds;
+
+		return value >= 1 ? 100 * (value - 1f) : -1f;
 	}
 
 	public boolean isOver() {

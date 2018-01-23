@@ -46,10 +46,11 @@ import odds.MatchOdds;
 import odds.OverUnderOdds;
 import predictions.Predictions.OnlyTodayMatches;
 import utils.ThrowingSupplier;
+import utils.Utils;
 
 public class FullOddsCollector {
 	public static final DateFormat FORMATFULL = new SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.US);
-	public static final long WAITTOLOAD = 1400;
+	public static final long WAITTOLOAD = 2000;
 
 	public String competition;
 	public int year;
@@ -68,7 +69,7 @@ public class FullOddsCollector {
 
 	public void collectAndStore() throws InterruptedException {
 		ArrayList<Fixture> fixtures = collect();
-		SQLiteJDBC.storeFixtures(fixtures);
+		SQLiteJDBC.storeFixtures(fixtures, year);
 	}
 
 	public ArrayList<Fixture> collect() throws InterruptedException {
@@ -130,7 +131,7 @@ public class FullOddsCollector {
 					int count = 0;
 					while (true) {
 						try {
-							f = getFixtureTest(driver, i, competition, year, booksMap);
+							f = getFixtureTest(driver, i, competition, year, booksMap, OnlyTodayMatches.FALSE);
 							break;
 						} catch (Exception e) {
 							System.out.println(" retry " + count);
@@ -208,11 +209,13 @@ public class FullOddsCollector {
 		List<WebElement> list = driver.findElements(By.cssSelector("a[href*='" + leagueYear + "']"));
 		ArrayList<String> links = new ArrayList<>();
 		HashMap<String, String> texts = new HashMap<>();
+		// HashMap<String, String> dates = new HashMap<>();
 		for (WebElement i : list) {
 			if (i.getText().contains("-")) {
 				String href = i.getAttribute("href");
 				links.add(href);
 				texts.put(href, i.getText());
+				// dates.put(href, getDate(i));
 			}
 		}
 
@@ -222,7 +225,7 @@ public class FullOddsCollector {
 			if (teams.contains(homeTeam) && teams.contains(awayTeam))
 				continue;
 
-			Fixture ef = getFixtureTest(driver, i, competition, year, booksMap);
+			Fixture ef = getFixtureTest(driver, i, competition, year, booksMap, onlyTodaysMatches);
 			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
 					&& !teams.contains(ef.awayTeam)) {
 				result.add(ef);
@@ -235,6 +238,24 @@ public class FullOddsCollector {
 
 		System.out.println(result);
 		return result;
+	}
+
+	// TODO try to get the date before navigating to the fixture (performance boost)
+	// for next
+	private String getDate(WebElement i) {
+
+		WebElement dateTD = i.findElement(By.xpath("(.//td)[1]"));
+		System.out.println(dateTD.getText());
+		// String millisString = dat.outerHtml().split("
+		// ")[3].split("-")[0].substring(1);
+
+		// long timeInMillis = Long.parseLong(millisString) * 1000;
+		//
+		// Calendar cal = Calendar.getInstance();
+		// cal.setTimeInMillis(timeInMillis);
+		// Date date = cal.getTime();
+		// System.out.println(date);
+		return null;
 	}
 
 	private ArrayList<String> getLinkList(WebDriver driver) {
@@ -341,17 +362,22 @@ public class FullOddsCollector {
 	}
 
 	public static Fixture getFixtureTest(WebDriver driver, String i, String competition, int year,
-			HashMap<Integer, String> booksMap) throws Exception {
+			HashMap<Integer, String> booksMap, OnlyTodayMatches onlyTodaysMatches) throws Exception {
 		long start = System.currentTimeMillis();
 		driver.navigate().to(i);
-
-		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
-		String home = title.split(" - ")[0].trim();
-		String away = title.split(" - ")[1].trim();
 
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
 		dateString = dateString.split(",")[1] + dateString.split(",")[2];
 		Date date = FORMATFULL.parse(dateString);
+
+		// skipping to update matches that are played later than today (for
+		// performance in nextMatches())
+		if (onlyTodaysMatches.equals(OnlyTodayMatches.TRUE) && !Utils.isToday(date))
+			return null;
+
+		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
+		String home = title.split(" - ")[0].trim();
+		String away = title.split(" - ")[1].trim();
 
 		// Result
 		Result fullResult = new Result(-1, -1);
@@ -548,6 +574,7 @@ public class FullOddsCollector {
 			JSONObject entry = backOdds.getJSONObject(i);
 			float handicapValue = (float) entry.getDouble("handicapValue" + "");
 			// System.out.println(handicapValue);
+			HashMap<String, Boolean> isActiveMap = getIsActiveMap(entry.getJSONObject("act"), booksMap);
 			Object outcomedID = entry.get("OutcomeID");
 			if (outcomedID instanceof JSONArray) {
 				JSONArray arr = (JSONArray) outcomedID;
@@ -619,9 +646,12 @@ public class FullOddsCollector {
 					}
 				}
 
-				MatchOdds closingHome = new MatchOdds(bookmaker, timeHome, homeOdds, -1f, -1f).withIsClosing();
-				MatchOdds closingDraw = new MatchOdds(bookmaker, timeDraw, -1f, drawOdds, -1f).withIsClosing();
-				MatchOdds closingAway = new MatchOdds(bookmaker, timeAway, -1f, -1f, awayOdds).withIsClosing();
+				MatchOdds closingHome = new MatchOdds(bookmaker, timeHome, homeOdds, -1f, -1f).withIsClosing()
+						.withIsActive(isActiveMap.get(bookmaker));
+				MatchOdds closingDraw = new MatchOdds(bookmaker, timeDraw, -1f, drawOdds, -1f).withIsClosing()
+						.withIsActive(isActiveMap.get(bookmaker));
+				MatchOdds closingAway = new MatchOdds(bookmaker, timeAway, -1f, -1f, awayOdds).withIsClosing()
+						.withIsActive(isActiveMap.get(bookmaker));
 
 				closingOdds.add(closingHome);
 				closingOdds.add(closingDraw);
@@ -711,6 +741,7 @@ public class FullOddsCollector {
 						: awayMap.get(new TreeMap<Date, MatchOdds>(awayMap).headMap(t).lastKey());
 				MatchOdds newm = new MatchOdds(bookmaker, t, homeOdds.homeOdds, drawOdds.drawOdds, awayOdds.awayOdds);
 				newm.isClosing = homeOdds.isClosing && drawOdds.isClosing && awayOdds.isClosing;
+				newm.isActive = homeOdds.isActive && drawOdds.isActive && awayOdds.isActive;
 				if (!booklist.contains(newm))
 					booklist.add(newm);
 
@@ -969,6 +1000,7 @@ public class FullOddsCollector {
 
 					OverUnderOdds newm = new OverUnderOdds(bookie, t, line, over.overOdds, under.underOdds);
 					newm.isClosing = over.isClosing && under.isClosing;
+					newm.isActive = over.isActive && under.isActive;
 					if (!oulist.contains(newm))
 						oulist.add(newm);
 				}
@@ -989,6 +1021,7 @@ public class FullOddsCollector {
 			JSONObject entry = backOdds.getJSONObject(i);
 			float handicapValue = (float) entry.getDouble("handicapValue" + "");
 			// System.out.println(handicapValue);
+			HashMap<String, Boolean> isActiveMap = getIsActiveMap(entry.getJSONObject("act"), booksMap);
 			Object outcomedID = entry.get("OutcomeID");
 			if (outcomedID instanceof JSONArray) {
 				JSONArray arr = (JSONArray) outcomedID;
@@ -1058,15 +1091,26 @@ public class FullOddsCollector {
 				}
 
 				OverUnderOdds closingOver = new OverUnderOdds(bookmaker, timeOver == null ? timeUnder : timeOver,
-						handicapValue, overOdds, -1f).withIsClosing();
+						handicapValue, overOdds, -1f).withIsClosing().withIsActive(isActiveMap.get(bookmaker));
 				OverUnderOdds closingUnder = new OverUnderOdds(bookmaker, timeUnder == null ? timeOver : timeUnder,
-						handicapValue, -1f, underOdds).withIsClosing();
+						handicapValue, -1f, underOdds).withIsClosing().withIsActive(isActiveMap.get(bookmaker));
 				closingOdds.add(closingOver);
 				closingOdds.add(closingUnder);
 			}
 
 		}
 
+	}
+
+	private static HashMap<String, Boolean> getIsActiveMap(JSONObject isActiveObject,
+			HashMap<Integer, String> booksMap) {
+		HashMap<String, Boolean> result = new HashMap<>();
+		Set<String> bookies = isActiveObject.keySet();
+
+		for (String id : bookies)
+			result.put(booksMap.get(Integer.parseInt(id)), (Boolean) isActiveObject.get(id));
+
+		return result;
 	}
 
 	private static HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> getOverUnderDataFromJS(WebDriver driver,

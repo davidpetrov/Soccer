@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.apache.xalan.xsltc.compiler.sym;
+
 import entries.FinalEntry;
 import odds.OverUnderOdds;
 import runner.RunnerAnalysis;
@@ -68,10 +70,9 @@ public class Analysis {
 	// TODO add support for different classifiers if needed
 	public static ArrayList<FinalEntry> predict(ArrayList<Fixture> fixtures, String league, int year) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
-
 		int maxMatchDay = FixtureUtils.addMatchDay(fixtures);
 
-		for (int i = /* dictionary == null ? 100 : */ 14; i < maxMatchDay; i++) {
+		for (int i = /* dictionary == null ? 100 : */ 14; i <= maxMatchDay; i++) {
 			ArrayList<Fixture> current = FixtureUtils.getByMatchday(fixtures, i);
 
 			Settings temp = Settings.shots(league);
@@ -91,8 +92,6 @@ public class Analysis {
 	 */
 	private static void cleanUpUnnecessaryOddsData(ArrayList<FinalEntry> finals) {
 		for (FinalEntry i : finals) {
-			if (i.fixture.homeTeam.equals("Flamengo RJ") && i.fixture.awayTeam.equals("America MG"))
-				System.out.println();
 
 			ArrayList<Float> lines = i.fixture.getBaseOULines();
 			Float overOdds = i.fixture.getMaxClosingOverOdds();
@@ -119,14 +118,21 @@ public class Analysis {
 		// byBookmaker(predictions);
 		// byLine();
 
+		valueFinder(predictions);
+
+		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec for analysis");
+
+	}
+
+	public static void valueFinder(ArrayList<FinalEntry> predictions) {
 		ArrayList<Stats> stats = new ArrayList<>();
 		System.out.println();
 		for (int i = 0; i < 5; i++)
-			stats.add(valueOverPinnacle(false, 1.0f + i * 0.01f));
+			stats.add(valueOverPinnacle(predictions, false, 1.0f + i * 0.01f));
 
 		System.out.println();
 		for (int i = 0; i < 5; i++)
-			stats.add(valueOverPinnacle(true, 1.0f + i * 0.01f));
+			stats.add(valueOverPinnacle(predictions, true, 1.0f + i * 0.01f));
 
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
 
@@ -134,22 +140,21 @@ public class Analysis {
 		Utils.analysys(best.all, best.description, false);
 		byBookieContent(best.all);
 		System.out.println(best.all);
-
-		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec for analysis");
-
 	}
 
-	private Stats valueOverPinnacle(boolean withPrediction, float valueThreshold) {
+	public static Stats valueOverPinnacle(ArrayList<FinalEntry> predictions, boolean withPrediction,
+			float valueThreshold) {
 		ArrayList<FinalEntry> finals = predictions.stream().filter(fe -> fe.prediction != 0.5f)
 				.map(fe -> fe.getValueBetOverPinnacle(withPrediction, valueThreshold)).filter(fe -> fe != null)
 				.collect(Collectors.toCollection(ArrayList::new));
 		Stats stats = new Stats(finals,
 				"Values over pinnacle" + (withPrediction ? " with predictions > " : " > ") + valueThreshold);
-		System.out.println(stats);
+		if (!finals.isEmpty())
+			System.out.println(stats);
 		return stats;
 	}
 
-	private void byBookieContent(ArrayList<FinalEntry> finals) {
+	private static void byBookieContent(ArrayList<FinalEntry> finals) {
 		HashMap<String, ArrayList<FinalEntry>> map = new HashMap<>();
 
 		for (FinalEntry i : finals) {

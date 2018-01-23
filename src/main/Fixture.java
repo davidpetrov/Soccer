@@ -426,17 +426,16 @@ public class Fixture {
 		for (Entry<Float, HashMap<String, ArrayList<OverUnderOdds>>> entry : byLineAndBookie.entrySet()) {
 			float line = entry.getKey();
 
-			
 			HashMap<String, ArrayList<OverUnderOdds>> filtered = new HashMap<>();
 			for (Entry<String, ArrayList<OverUnderOdds>> i : entry.getValue().entrySet()) {
 				if (!Arrays.asList(Constants.FAKEBOOKS).contains(i.getKey())) {
 					filtered.put(i.getKey(), i.getValue());
 				}
 			}
-			
-			if(filtered.isEmpty())
+
+			if (filtered.isEmpty())
 				continue;
-			
+
 			ArrayList<Optional<OverUnderOdds>> closing = filtered.values().stream()
 					.map(list -> list.stream().max(Comparator.comparing(OverUnderOdds::getTime)))
 					.collect(Collectors.toCollection(ArrayList::new));
@@ -498,7 +497,7 @@ public class Fixture {
 			if (!list.isEmpty() && Arrays.asList(Constants.FAKEBOOKS).contains(list.get(0).bookmaker))
 				continue;
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
-			if (closing.isPresent()) {
+			if (closing.isPresent() && closing.get().isActive) {
 				if (closing.get().overOdds > maxHome.overOdds)
 					maxHome = closing.get();
 				if (closing.get().underOdds > maxAway.underOdds)
@@ -516,7 +515,7 @@ public class Fixture {
 	/**
 	 * Cashe for Pinnacle odds
 	 */
-	HashMap<Float, OverUnderOdds> pinnOdds = new HashMap<>();
+	public HashMap<Float, OverUnderOdds> pinnOdds = new HashMap<>();
 
 	/**
 	 * Closing odds for specific line and bookmaker if present
@@ -529,7 +528,7 @@ public class Fixture {
 		if (bookmaker.equals("Pinnacle") && pinnOdds.containsKey(line))
 			return pinnOdds.get(line);
 
-		if(overUnderOdds == null)
+		if (overUnderOdds == null)
 			return null;
 		HashMap<String, ArrayList<OverUnderOdds>> bookMap = getOUByLineandBookie().get(line);
 		if (bookMap == null)
@@ -539,8 +538,10 @@ public class Fixture {
 			return null;
 
 		Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
-		pinnOdds.put(line, closing.get());
-		return closing.get();
+
+		if (bookmaker.equals("Pinnacle") && closing.get().isActive)
+			pinnOdds.put(line, closing.get());
+		return closing.get().isActive ? closing.get() : null;
 	}
 
 }

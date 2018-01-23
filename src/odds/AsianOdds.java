@@ -15,6 +15,7 @@ public class AsianOdds extends Odds {
 		this.line = line;
 		this.homeOdds = homeOdds;
 		this.awayOdds = awayOdds;
+		this.isActive = true;
 	}
 
 	/**
@@ -31,6 +32,7 @@ public class AsianOdds extends Odds {
 		this.awayOdds = ou.underOdds;
 		this.isClosing = ou.isClosing;
 		this.isOpening = ou.isOpening;
+		this.isActive = ou.isActive;
 	}
 
 	@Override
@@ -96,6 +98,11 @@ public class AsianOdds extends Odds {
 		this.fixtureDate = date;
 		this.homeTeamName = homeTeam;
 		this.awayTeamName = awayTeam;
+		return this;
+	}
+	
+	public AsianOdds withIsActive(Boolean isActive) {
+		this.isActive = isActive;
 		return this;
 	}
 
