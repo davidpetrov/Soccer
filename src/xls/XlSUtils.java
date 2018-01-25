@@ -1109,7 +1109,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1137,7 +1138,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1166,7 +1168,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1272,7 +1275,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1300,7 +1304,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1329,7 +1334,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -1784,8 +1790,8 @@ public class XlSUtils {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry fe : finals) {
 
-			float gain = fe.prediction > settings.threshold ? fe.fixture.getMaxClosingOverOdds()
-					: fe.fixture.getMaxClosingUnderOdds();
+			float gain = fe.prediction > settings.threshold ? fe.fixture.getMaxClosingOverOdds().getOverOdds()
+					: fe.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			float certainty = fe.prediction > settings.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > settings.value && Utils.oddsInRange(gain, fe.prediction, settings)
@@ -1828,7 +1834,8 @@ public class XlSUtils {
 						+ (1f - sett.halfTimeOverOne) * halfTimeOnly(f, league, 2));
 
 		float certainty = score > sett.threshold ? score : (1f - score);
-		float coeff = score > sett.threshold ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+		float coeff = score > sett.threshold ? f.getMaxClosingOverOdds().getOverOdds()
+				: f.getMaxClosingUnderOdds().getUnderOdds();
 		float value = certainty * coeff;
 
 		float cot = score > sett.threshold ? (score - sett.threshold) : (sett.threshold - score);
@@ -2879,7 +2886,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * basics[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -2905,7 +2913,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -2931,7 +2940,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -2957,7 +2967,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * shots[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3045,7 +3056,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * poissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3075,7 +3087,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * weightedPoissons[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3105,7 +3118,8 @@ public class XlSUtils {
 				Fixture f = all.get(i);
 				float finalScore = x * 0.05f * basics[i] + y * 0.05f * htCombos[i];
 
-				float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+				float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+						: f.getMaxClosingUnderOdds().getUnderOdds();
 				float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 				float value = certainty * gain;
 
@@ -3134,7 +3148,7 @@ public class XlSUtils {
 		// Fixture f = all.get(i);
 		// float finalScore = x * 0.05f * poissons[i] + y * 0.05f * similars[i];
 		//
-		// float gain = finalScore > initTH ? f.getMaxClosingOverOdds() :
+		// float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds() :
 		// f.getMaxClosingUnderOdds;
 		// float certainty = finalScore > initTH ? finalScore : (1f -
 		// finalScore);
@@ -3166,7 +3180,8 @@ public class XlSUtils {
 					Fixture f = all.get(i);
 					float finalScore = x * 0.05f * basics[i] + y * 0.05f * shots[i];
 
-					float gain = finalScore > initTH ? f.getMaxClosingOverOdds() : f.getMaxClosingUnderOdds();
+					float gain = finalScore > initTH ? f.getMaxClosingOverOdds().getOverOdds()
+							: f.getMaxClosingUnderOdds().getUnderOdds();
 					float certainty = finalScore > initTH ? finalScore : (1f - finalScore);
 					float value = certainty * gain;
 
@@ -4108,8 +4123,8 @@ public class XlSUtils {
 
 		ArrayList<FinalEntry> values = new ArrayList<>();
 		for (FinalEntry fe : result) {
-			float gain = fe.prediction > fe.threshold ? fe.fixture.getMaxClosingOverOdds()
-					: fe.fixture.getMaxClosingUnderOdds();
+			float gain = fe.prediction > fe.threshold ? fe.fixture.getMaxClosingOverOdds().getOverOdds()
+					: fe.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			float certainty = fe.prediction > fe.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (certainty > 0.5f)
@@ -4567,10 +4582,10 @@ public class XlSUtils {
 			row.createCell(9).setCellValue(ef.getMaxClosingHomeOdds());
 			row.createCell(10).setCellValue(ef.getMaxClosingDrawOdds());
 			row.createCell(11).setCellValue(ef.getMaxClosingAwayOdds());
-			row.createCell(12).setCellValue(ef.getMaxClosingOverOdds());
-			row.createCell(13).setCellValue(ef.getMaxClosingOverOdds());
-			row.createCell(14).setCellValue(ef.getMaxClosingUnderOdds());
-			row.createCell(15).setCellValue(ef.getMaxClosingUnderOdds());
+			row.createCell(12).setCellValue(ef.getMaxClosingOverOdds().getOverOdds());
+			row.createCell(13).setCellValue(ef.getMaxClosingOverOdds().getOverOdds());
+			row.createCell(14).setCellValue(ef.getMaxClosingUnderOdds().getUnderOdds());
+			row.createCell(15).setCellValue(ef.getMaxClosingUnderOdds().getUnderOdds());
 			row.createCell(16).setCellValue(ef.getOptimalAsianLine());
 			row.createCell(17).setCellValue(ef.getMaxClosingAsian().home);
 			row.createCell(18).setCellValue(ef.getMaxClosingAsian().away);

@@ -94,7 +94,7 @@ public class Scraper {
 		// ====================================================================
 
 		for (int i = 2017; i <= 2017; i++)
-			GameStatsCollector.of("FR", i).collectAndStore();
+			GameStatsCollector.of("ENG2", i).collectAndStore();
 
 		// for (int i = 2013; i <= 2013; i++) {
 		// ArrayList<Fixture> data = new FullOddsCollector("SPA2", i,
@@ -1720,13 +1720,14 @@ public class Scraper {
 	private static void updateDBfor(String league, OnlyTodayMatches onlyToday) throws Exception {
 		int collectYear = Arrays.asList(EntryPoints.SUMMER).contains(league) ? EntryPoints.SUMMERCURRENT
 				: EntryPoints.CURRENT;
-
-		ArrayList<Fixture> all = SQLiteJDBC.selectFixtures(league, collectYear);
-		Date oldestTocheck = Utils.findLastPendingFixture(all);
-		System.out.println(oldestTocheck);
-		ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league, collectYear);
-		Date oldestTocheckGS = Utils.findLastPendingFixture(gameStats);
+		
+		Date oldestTocheckGS = SQLiteJDBC.findLastPendingGameStatsDate(league,collectYear);
 		System.out.println("GS " + oldestTocheckGS);
+		Date oldestTocheck = SQLiteJDBC.findLastPendingFixtureDate(league, collectYear);
+		oldestTocheck = oldestTocheck.before(oldestTocheckGS) ? oldestTocheck : oldestTocheckGS;
+		System.out.println(oldestTocheck);
+		
+//		ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league, collectYear);
 
 		ArrayList<Fixture> list = new ArrayList<>();
 		// check if update of previous results is necessary

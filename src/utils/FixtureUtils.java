@@ -149,9 +149,8 @@ public class FixtureUtils {
 				finalScore += settings.shots * Classifiers.shots(f, all);
 
 			FinalEntry fe = new FinalEntry(f, finalScore, new Result(f.result.goalsHomeTeam, f.result.goalsAwayTeam),
-					settings.threshold, settings.lowerBound, settings.upperBound).withOdds(
-							new OverUnderOdds("max", f.date, 2.5f, f.getMaxClosingOverOdds(), -1f),
-							new OverUnderOdds("max", f.date, 2.5f, -1f, f.getMaxClosingUnderOdds()));
+					settings.threshold, settings.lowerBound, settings.upperBound).withOdds(f.getMaxClosingOverOdds(),
+							f.getMaxClosingUnderOdds());
 			finals.add(fe);
 		}
 		return finals;

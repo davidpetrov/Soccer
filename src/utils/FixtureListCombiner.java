@@ -1,10 +1,12 @@
 package utils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import entries.FinalEntry;
 import main.Fixture;
 
 public class FixtureListCombiner {
@@ -23,7 +25,8 @@ public class FixtureListCombiner {
 	public HashMap<String, String> deduceDictionary() {
 
 		if (odds.size() != gameStats.size())
-			System.out.println("Deducing dictionary with different sizes: " + odds.size() + " " + gameStats.size());
+			System.out.println("Deducing dictionary with different sizes for: " + competition + " " + odds.size() + " "
+					+ gameStats.size());
 		HashMap<String, String> dictionary = new HashMap<>();
 
 		ArrayList<String> teamsOdds = getTeamsList(odds);
@@ -46,7 +49,7 @@ public class FixtureListCombiner {
 		for (String team : teamsOdds) {
 			if (matchedOdds.contains(team))
 				continue;
-			
+
 			ArrayList<String> possibleCandidates = getPossibleCandidates(team, teamsgameStats, matchedgameStats);
 
 			if (possibleCandidates.isEmpty())
@@ -98,8 +101,16 @@ public class FixtureListCombiner {
 	public ArrayList<Fixture> combineWithDictionary() {
 		HashMap<String, String> dictionary = deduceDictionary();
 
-		return odds.stream().map(i -> findCorresponding(i, gameStats, dictionary))
-				.collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<Fixture> combined = new ArrayList<>();
+		for (Fixture i : odds) {
+			Fixture matchedGS = findCorresponding(i, gameStats, dictionary);
+			if (matchedGS == null)
+				System.out.println("No match found for: \n" + i);
+			else
+				combined.add(matchedGS);
+		}
+
+		return combined;
 
 	}
 
@@ -136,7 +147,7 @@ public class FixtureListCombiner {
 			boolean foundMatch = false;
 			for (Fixture j : fwa) {
 				if (Math.abs(i.getDate().getTime() - j.getDate().getTime()) <= 24 * 60 * 60 * 1000
-						&& i.getResult().equals(j.getResult()) /*&& i.HTresult.equals(j.HTresult)*/) {
+						&& i.getResult().equals(j.getResult()) /* && i.HTresult.equals(j.HTresult) */) {
 					foundMatch = true;
 					break;
 				}

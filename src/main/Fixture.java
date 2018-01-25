@@ -248,40 +248,37 @@ public class Fixture {
 		return result;
 	}
 
-	float maxClosingOverOdds = -1f;
+	OverUnderOdds maxClosingOverOdds;
 
 	// methods for leagacy code (line=2.5 maxOdds) closing
 	// TODO test for correctness
-	public float getMaxClosingOverOdds() {
-		if (maxClosingOverOdds != -1f)
+	public OverUnderOdds getMaxClosingOverOdds() {
+		if (maxClosingOverOdds != null)
 			return maxClosingOverOdds;
 
 		HashMap<String, ArrayList<OverUnderOdds>> baseLineOdds = getOUByLineandBookie().get(2.5f);
-
-		// baseLineOdds.keySet().stream().forEach(bookie ->
-		// System.out.println("\"" + bookie + "\","));
 
 		ArrayList<ArrayList<OverUnderOdds>> filteredBookies = baseLineOdds == null ? new ArrayList<>()
 				: baseLineOdds.entrySet().stream()
 						.filter(map -> !Arrays.asList(Constants.FAKEBOOKS).contains(map.getKey()))
 						.map(map -> map.getValue()).collect(Collectors.toCollection(ArrayList::new));
 
-		float maxClosing = -1f;
+		OverUnderOdds maxClosing = OverUnderOdds.defaultOdds();
 		for (ArrayList<OverUnderOdds> list : filteredBookies) {
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 			if (closing.isPresent())
-				if (closing.get().getOverOdds() > maxClosing)
-					maxClosing = closing.get().getOverOdds();
+				if (closing.get().getOverOdds() > maxClosing.overOdds)
+					maxClosing = closing.get();
 		}
 
 		maxClosingOverOdds = maxClosing;
 		return maxClosing;
 	}
 
-	float maxClosingUnderOdds = -1f;
+	OverUnderOdds maxClosingUnderOdds;
 
-	public float getMaxClosingUnderOdds() {
-		if (maxClosingUnderOdds != -1f)
+	public OverUnderOdds getMaxClosingUnderOdds() {
+		if (maxClosingUnderOdds != null)
 			return maxClosingUnderOdds;
 
 		HashMap<String, ArrayList<OverUnderOdds>> baseLineOdds = getOUByLineandBookie().get(2.5f);
@@ -291,12 +288,12 @@ public class Fixture {
 						.filter(map -> !Arrays.asList(Constants.FAKEBOOKS).contains(map.getKey()))
 						.map(map -> map.getValue()).collect(Collectors.toCollection(ArrayList::new));
 
-		float maxClosing = -1f;
+		OverUnderOdds maxClosing = OverUnderOdds.defaultOdds();
 		for (ArrayList<OverUnderOdds> list : filteredBookies) {
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 			if (closing.isPresent())
-				if (closing.get().getUnderOdds() > maxClosing)
-					maxClosing = closing.get().getUnderOdds();
+				if (closing.get().getUnderOdds() > maxClosing.underOdds)
+					maxClosing = closing.get();
 		}
 
 		maxClosingUnderOdds = maxClosing;

@@ -355,7 +355,8 @@ public class Utils {
 	public static ArrayList<FinalEntry> filterByOdds(ArrayList<FinalEntry> finals, float minOdds, float maxOdds) {
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : finals) {
-			float coeff = fe.isOver() ? fe.fixture.getMaxClosingOverOdds() : fe.fixture.getMaxClosingUnderOdds();
+			float coeff = fe.isOver() ? fe.fixture.getMaxClosingOverOdds().getOverOdds()
+					: fe.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			if (coeff > minOdds && coeff <= maxOdds)
 				filtered.add(fe);
 		}
@@ -402,11 +403,11 @@ public class Utils {
 		for (FinalEntry i : finals) {
 			if (i.prediction > i.upper) {
 				overCnt++;
-				overProfit += i.success() ? (i.fixture.getMaxClosingOverOdds() - 1f) : -1f;
+				overProfit += i.success() ? (i.fixture.getMaxClosingOverOdds().getOverOdds() - 1f) : -1f;
 			}
 			if (i.prediction < i.lower) {
 				underCnt++;
-				underProfit += i.success() ? (i.fixture.getMaxClosingUnderOdds() - 1f) : -1f;
+				underProfit += i.success() ? (i.fixture.getMaxClosingUnderOdds().getUnderOdds() - 1f) : -1f;
 			}
 		}
 
@@ -440,7 +441,8 @@ public class Utils {
 	// filterByOdds(ArrayList<Fixture> data, float min, float max) {
 	// ArrayList<Fixture> filtered = new ArrayList<>();
 	// for (Fixture i : data) {
-	// if (i.getMaxClosingOverOdds() <= max && i.getMaxClosingOverOdds() >= min)
+	// if (i.getMaxClosingOverOdds().getOverOdds() <= max &&
+	// i.getMaxClosingOverOdds().getOverOdds() >= min)
 	// filtered.add(i);
 	// }
 	// return filtered;
@@ -651,8 +653,8 @@ public class Utils {
 						for (int j = 0; j < n; j++) {
 							if (curr.get(j).success()) {
 								coeff *= curr.get(j).prediction >= curr.get(j).upper
-										? curr.get(j).fixture.getMaxClosingOverOdds()
-										: curr.get(j).fixture.getMaxClosingUnderOdds();
+										? curr.get(j).fixture.getMaxClosingOverOdds().getOverOdds()
+										: curr.get(j).fixture.getMaxClosingUnderOdds().getUnderOdds();
 								successes++;
 								notlosses++;
 							} else if ((curr.get(j).prediction >= curr.get(j).upper
@@ -977,7 +979,8 @@ public class Utils {
 		ArrayList<FinalEntry> over22 = new ArrayList<>();
 
 		for (FinalEntry i : all) {
-			float odds = i.isOver() ? i.fixture.getMaxClosingOverOdds() : i.fixture.getMaxClosingUnderOdds();
+			float odds = i.isOver() ? i.fixture.getMaxClosingOverOdds().getOverOdds()
+					: i.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			if (odds <= 1.4f) {
 				under14.add(i);
 			} else if (odds <= 1.8f) {
@@ -1070,14 +1073,15 @@ public class Utils {
 					break;
 				}
 				if (all.get(i).success() && all.get(i + 1).success() && all.get(i + 2).success()) {
-					float c1 = all.get(i).prediction > all.get(i).upper ? all.get(i).fixture.getMaxClosingOverOdds()
-							: all.get(i).fixture.getMaxClosingUnderOdds();
+					float c1 = all.get(i).prediction > all.get(i).upper
+							? all.get(i).fixture.getMaxClosingOverOdds().getOverOdds()
+							: all.get(i).fixture.getMaxClosingUnderOdds().getUnderOdds();
 					float c2 = all.get(i + 1).prediction > all.get(i + 1).upper
-							? all.get(i + 1).fixture.getMaxClosingOverOdds()
-							: all.get(i + 1).fixture.getMaxClosingUnderOdds();
+							? all.get(i + 1).fixture.getMaxClosingOverOdds().getOverOdds()
+							: all.get(i + 1).fixture.getMaxClosingUnderOdds().getUnderOdds();
 					float c3 = all.get(i + 2).prediction > all.get(i + 2).upper
-							? all.get(i + 2).fixture.getMaxClosingOverOdds()
-							: all.get(i + 2).fixture.getMaxClosingUnderOdds();
+							? all.get(i + 2).fixture.getMaxClosingOverOdds().getOverOdds()
+							: all.get(i + 2).fixture.getMaxClosingUnderOdds().getUnderOdds();
 					bankroll += unit * (c1 * c2 * c3 - 1f);
 					yes++;
 				} else {
@@ -1123,8 +1127,8 @@ public class Utils {
 		for (FinalEntry i : all) {
 			cal.setTime(i.fixture.date);
 			if (cal.get(Calendar.MONTH) == month) {
-				float gain = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
-						: i.fixture.getMaxClosingUnderOdds();
+				float gain = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds().getOverOdds()
+						: i.fixture.getMaxClosingUnderOdds().getUnderOdds();
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
 				succ += i.success() ? 1 : 0;
 				alls++;
@@ -1135,8 +1139,8 @@ public class Utils {
 				previous = bank;
 				betSize = bank * percent;
 				month = cal.get(Calendar.MONTH);
-				float gain = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
-						: i.fixture.getMaxClosingUnderOdds();
+				float gain = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds().getOverOdds()
+						: i.fixture.getMaxClosingUnderOdds().getUnderOdds();
 				bank += betSize * (i.success() ? (gain - 1f) : -1f);
 				alls = 1;
 				succ = i.success() ? 1 : 0;
@@ -1562,7 +1566,8 @@ public class Utils {
 	public static ArrayList<FinalEntry> higherOdds(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (Fixture i : current) {
-			float prediction = i.getMaxClosingOverOdds() >= i.getMaxClosingUnderOdds() ? 1f : 0f;
+			float prediction = i.getMaxClosingOverOdds().getOverOdds() >= i.getMaxClosingUnderOdds().getUnderOdds() ? 1f
+					: 0f;
 			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
 			result.add(n);
 		}
@@ -1572,7 +1577,8 @@ public class Utils {
 	public static ArrayList<FinalEntry> lowerOdds(ArrayList<Fixture> current) {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (Fixture i : current) {
-			float prediction = i.getMaxClosingOverOdds() >= i.getMaxClosingUnderOdds() ? 0f : 1f;
+			float prediction = i.getMaxClosingOverOdds().getOverOdds() >= i.getMaxClosingUnderOdds().getUnderOdds() ? 0f
+					: 1f;
 			FinalEntry n = new FinalEntry(i, prediction, i.result, 0.55f, 0.55f, 0.55f);
 			result.add(n);
 		}
@@ -1679,8 +1685,8 @@ public class Utils {
 	public static float getAvgOdds(ArrayList<FinalEntry> finals) {
 		float total = 0f;
 		for (FinalEntry i : finals) {
-			float coeff = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
-					: i.fixture.getMaxClosingUnderOdds();
+			float coeff = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds().getOverOdds()
+					: i.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			total += coeff;
 		}
 		return finals.size() == 0 ? 0 : total / finals.size();
@@ -1716,8 +1722,8 @@ public class Utils {
 	private static float getNormalizedStakeSum(ArrayList<FinalEntry> all) {
 		float stakeSum = 0f;
 		for (FinalEntry i : all) {
-			float coeff = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds()
-					: i.fixture.getMaxClosingUnderOdds();
+			float coeff = i.prediction >= i.upper ? i.fixture.getMaxClosingOverOdds().getOverOdds()
+					: i.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			float betUnit = 1f / (coeff - 1);
 			stakeSum += betUnit;
 		}
@@ -1752,8 +1758,8 @@ public class Utils {
 		float total = 0f;
 		int count = 0;
 		for (Fixture i : all) {
-			float overOdds = i.getMaxClosingOverOdds();
-			float underOdds = i.getMaxClosingUnderOdds();
+			float overOdds = i.getMaxClosingOverOdds().getOverOdds();
+			float underOdds = i.getMaxClosingUnderOdds().getUnderOdds();
 
 			if (overOdds >= 1f && underOdds >= 1f) {
 				total += 1f / overOdds + 1f / underOdds;
@@ -2655,8 +2661,8 @@ public class Utils {
 	 */
 	public static void weightedPredictions(ArrayList<FinalEntry> all, float oddsImpliedProbabilityWeight) {
 		for (FinalEntry i : all) {
-			float gain = i.prediction > i.threshold ? i.fixture.getMaxClosingOverOdds()
-					: i.fixture.getMaxClosingUnderOdds();
+			float gain = i.prediction > i.threshold ? i.fixture.getMaxClosingOverOdds().getOverOdds()
+					: i.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			i.prediction = (i.prediction + oddsImpliedProbabilityWeight / gain) / (oddsImpliedProbabilityWeight + 1f);
 		}
 	}

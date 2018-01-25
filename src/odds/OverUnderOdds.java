@@ -107,11 +107,11 @@ public class OverUnderOdds extends Odds {
 	}
 
 	public static OverUnderOdds defaultOdds() {
-		return new OverUnderOdds("default", null, 2.5f, -1, -1);
+		return new OverUnderOdds("default", null, 2.5f, -1f, -1f);
 	}
 
 	public OverUnderOdds withIsActive(Boolean isActive) {
-		this.isActive=isActive;
+		this.isActive = isActive;
 		return this;
 	}
 

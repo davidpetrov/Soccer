@@ -8,6 +8,8 @@ import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,7 @@ import entries.HTEntry;
 import odds.AsianOdds;
 import odds.MatchOdds;
 import odds.OverUnderOdds;
+import scraper.Scraper;
 import settings.Settings;
 import utils.FixtureListCombiner;
 import utils.Pair;
@@ -1083,7 +1086,8 @@ public class SQLiteJDBC {
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -1312,7 +1316,8 @@ public class SQLiteJDBC {
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:full_data.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 
 			stmt = c.createStatement();
@@ -1351,6 +1356,80 @@ public class SQLiteJDBC {
 			System.exit(0);
 		}
 
+	}
+
+	public static Date findLastPendingGameStatsDate(String league, int collectYear) {
+		Connection c = null;
+		Statement stmt = null;
+		Date date = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			String dbname = "full_data" + (collectYear == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
+			c.setAutoCommit(false);
+			// System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select max(date) as date from gamestats where competition="
+					+ addQuotes(league) + " and year=" + collectYear + ";");
+			while (rs.next()) {
+				String dateStr = rs.getString("date");
+				if (dateStr != null)
+					date = format.parse(rs.getString("date"));
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		if (date == null) {
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.YEAR, Scraper.CURRENT_YEAR);
+			cal.set(Calendar.DAY_OF_YEAR, 1);
+			date = cal.getTime();
+		}
+
+		return date;
+	}
+
+	public static Date findLastPendingFixtureDate(String league, int collectYear) {
+		Connection c = null;
+		Statement stmt = null;
+		Date date = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			String dbname = "full_data" + (collectYear == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
+			c.setAutoCommit(false);
+			// System.out.println("Opened database successfully");
+
+			stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery("select min(date) as date from fixtures where competition="
+					+ addQuotes(league) + " and startyear=" + collectYear + " and homegoals=-1;");
+			while (rs.next()) {
+				String dateStr = rs.getString("date");
+				if (dateStr != null)
+					date = format.parse(rs.getString("date"));
+			}
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+
+		if (date == null) {
+			Calendar cal = Calendar.getInstance();
+			cal.set(Calendar.YEAR, Scraper.CURRENT_YEAR);
+			cal.set(Calendar.DAY_OF_YEAR, 1);
+			date = cal.getTime();
+		}
+
+		return date;
 	}
 
 }

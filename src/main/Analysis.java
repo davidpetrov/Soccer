@@ -94,11 +94,9 @@ public class Analysis {
 		for (FinalEntry i : finals) {
 
 			ArrayList<Float> lines = i.fixture.getBaseOULines();
-			Float overOdds = i.fixture.getMaxClosingOverOdds();
-			Float underOdds = i.fixture.getMaxClosingUnderOdds();
 
-			i.overOdds = new OverUnderOdds("max", i.fixture.date, 2.5f, overOdds, -1f);
-			i.underOdds = new OverUnderOdds("max", i.fixture.date, 2.5f, -1f, underOdds);
+			i.overOdds = i.fixture.getMaxClosingOverOdds();
+			i.underOdds = i.fixture.getMaxClosingUnderOdds();
 
 			for (Float l : lines) {
 				i.fixture.getMaxClosingOUOddsByLine(l);
@@ -126,19 +124,17 @@ public class Analysis {
 
 	public static void valueFinder(ArrayList<FinalEntry> predictions) {
 		ArrayList<Stats> stats = new ArrayList<>();
-		System.out.println();
 		for (int i = 0; i < 5; i++)
 			stats.add(valueOverPinnacle(predictions, false, 1.0f + i * 0.01f));
 
-		System.out.println();
 		for (int i = 0; i < 5; i++)
 			stats.add(valueOverPinnacle(predictions, true, 1.0f + i * 0.01f));
 
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
 
 		Stats best = stats.get(0);
-		Utils.analysys(best.all, best.description, false);
-		byBookieContent(best.all);
+		// Utils.analysys(best.all, best.description, false);
+		// byBookieContent(best.all);
 		System.out.println(best.all);
 	}
 
@@ -149,8 +145,6 @@ public class Analysis {
 				.collect(Collectors.toCollection(ArrayList::new));
 		Stats stats = new Stats(finals,
 				"Values over pinnacle" + (withPrediction ? " with predictions > " : " > ") + valueThreshold);
-		if (!finals.isEmpty())
-			System.out.println(stats);
 		return stats;
 	}
 
@@ -188,7 +182,8 @@ public class Analysis {
 		for (String b : bookies) {
 			ArrayList<FinalEntry> finals = predictions.stream().map(fe -> fe.getPredictionBy(b))
 					.collect(Collectors.toCollection(ArrayList::new));
-			ArrayList<FinalEntry> missing = finals.stream().filter(fe -> fe.fixture.getMaxClosingOverOdds() >= 1f)
+			ArrayList<FinalEntry> missing = finals.stream()
+					.filter(fe -> fe.fixture.getMaxClosingOverOdds().overOdds >= 1f)
 					.collect(Collectors.toCollection(ArrayList::new));
 			if (!missing.isEmpty()) {
 				stats.add(new Stats(Utils.noequilibriums(missing), b));

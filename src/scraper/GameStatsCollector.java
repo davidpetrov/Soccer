@@ -60,23 +60,35 @@ public class GameStatsCollector {
 	// TODO possible smarter impl with js calls
 	public ArrayList<Fixture> collectUpToDate(Date oldestTocheck)
 			throws InterruptedException, IOException, ParseException {
-		ArrayList<Fixture> result = new ArrayList<>();
 		Set<Fixture> set = new HashSet<>();
 		String address = getAddress();
 		System.out.println(address);
 
-		ChromeOptions options = new ChromeOptions();
-		options.addArguments("headless");
-		WebDriver driver = new ChromeDriver(options);
-		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		driver.manage().window().maximize();
+		WebDriver driver = createDriver();
 		driver.navigate().to(address);
 
+		getFixtures(driver, set, oldestTocheck);
 		// try to list by game week
 		Actions actions = new Actions(driver);
-//		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
-//				.perform();
+		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
+				.perform();
 
+		getFixtures(driver, set, oldestTocheck);
+
+		driver.close();
+		System.out.println(set.size());
+
+		ArrayList<Fixture> setlist = new ArrayList<>();
+		setlist.addAll(set);
+
+		int missingData = countMissingShotsData(setlist);
+
+		// does not store if missing data is too much
+		return (oldestTocheck == null && missingData > setlist.size() / 2) ? new ArrayList<>() : setlist;
+	}
+
+	private void getFixtures(WebDriver driver, Set<Fixture> set, Date oldestTocheck)
+			throws IOException, ParseException, InterruptedException {
 		boolean breakFlag = false;
 		while (true) {
 			String html = driver.getPageSource();
@@ -91,7 +103,6 @@ public class GameStatsCollector {
 						breakFlag = true;
 						break;
 					}
-					result.add(ef);
 					set.add(ef);
 				}
 			}
@@ -99,7 +110,7 @@ public class GameStatsCollector {
 			if (breakFlag)
 				break;
 
-			// System.out.println(driver.findElement(By.className("previous")).getCssValue("cursor"));
+			Actions actions = new Actions(driver);
 			actions.moveToElement(driver.findElement(By.className("previous"))).click().perform();
 			Thread.sleep(1000);
 			String htmlAfter = driver.getPageSource();
@@ -107,23 +118,18 @@ public class GameStatsCollector {
 			if (html.equals(htmlAfter))
 				break;
 		}
-
-		driver.close();
-		System.out.println(result.size());
-		System.out.println(set.size());
-
-		ArrayList<Fixture> setlist = new ArrayList<>();
-		set.addAll(result);
-
-		setlist.addAll(set);
-
-		int missingData = fillMissingShotsData(setlist);
-
-		// does not store if missing data is too much
-		return (oldestTocheck == null && missingData > setlist.size() / 2) ? new ArrayList<>() : setlist;
 	}
 
-	private int fillMissingShotsData(ArrayList<Fixture> setlist) {
+	private WebDriver createDriver() {
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("headless");
+		WebDriver driver = new ChromeDriver(options);
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		driver.manage().window().maximize();
+		return driver;
+	}
+
+	private int countMissingShotsData(ArrayList<Fixture> setlist) {
 		int missingDataCount = 0;
 		for (Fixture i : setlist) {
 			if (i.gameStats == null)
@@ -131,7 +137,6 @@ public class GameStatsCollector {
 
 			if (i.gameStats.equals(GameStats.initial()) || i.gameStats.getShotsHome() == -1) {
 				missingDataCount++;
-				// i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
 			}
 		}
 		System.out.println("Missing data for: " + missingDataCount);

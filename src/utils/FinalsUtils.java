@@ -11,8 +11,8 @@ public class FinalsUtils {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 		for (FinalEntry fe : finals) {
 
-			float gain = fe.prediction > settings.threshold ? fe.fixture.getMaxClosingOverOdds()
-					: fe.fixture.getMaxClosingUnderOdds();
+			float gain = fe.prediction > settings.threshold ? fe.fixture.getMaxClosingOverOdds().getOverOdds()
+					: fe.fixture.getMaxClosingUnderOdds().getUnderOdds();
 			float certainty = fe.prediction > settings.threshold ? fe.prediction : (1f - fe.prediction);
 			float value = certainty * gain;
 			if (value > settings.value && Utils.oddsInRange(gain, fe.prediction, settings)
