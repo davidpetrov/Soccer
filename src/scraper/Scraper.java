@@ -94,7 +94,7 @@ public class Scraper {
 		// ====================================================================
 
 		for (int i = 2017; i <= 2017; i++)
-			GameStatsCollector.of("ENG2", i).collectAndStore();
+			GameStatsCollector.of("ENG", i).collectAndStore();
 
 		// for (int i = 2013; i <= 2013; i++) {
 		// ArrayList<Fixture> data = new FullOddsCollector("SPA2", i,
@@ -1724,7 +1724,7 @@ public class Scraper {
 		Date oldestTocheckGS = SQLiteJDBC.findLastPendingGameStatsDate(league,collectYear);
 		System.out.println("GS " + oldestTocheckGS);
 		Date oldestTocheck = SQLiteJDBC.findLastPendingFixtureDate(league, collectYear);
-		oldestTocheck = oldestTocheck.before(oldestTocheckGS) ? oldestTocheck : oldestTocheckGS;
+//		oldestTocheck = oldestTocheck.before(oldestTocheckGS) ? oldestTocheck : oldestTocheckGS;
 		System.out.println(oldestTocheck);
 		
 //		ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league, collectYear);

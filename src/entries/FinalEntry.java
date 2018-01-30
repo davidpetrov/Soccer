@@ -1,12 +1,17 @@
 package entries;
 
+import java.awt.Container;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import javax.print.attribute.HashAttributeSet;
 
+import constants.Constants;
 import main.Fixture;
 import main.Result;
 import odds.OverUnderOdds;
@@ -207,8 +212,6 @@ public class FinalEntry implements Comparable<FinalEntry> {
 	public FinalEntry getPredictionBy(String bookie) {
 		ArrayList<OverUnderOdds> filtered = fixture.overUnderOdds.stream().filter(ou -> ou.bookmaker.equals(bookie))
 				.collect(Collectors.toCollection(ArrayList::new));
-		// if(filtered.isEmpty())
-		// System.out.println();
 
 		Fixture ff = new Fixture(fixture);
 		ff.overUnderOdds = filtered;
@@ -292,13 +295,77 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		float prediction = maxVlaueOdds.overOdds == -1f ? 0f : 1f;
 
 		FinalEntry fe = new FinalEntry(ff, prediction, result, threshold, lower, upper).withLine(maxVlaueOdds.line);
-		// FinalEntry fe = new FinalEntry(fixture, prediction, result, threshold, lower,
-		// upper);
-		// if (maxVlaueOdds.getOverOdds() > 1f)
-		// fe.overOdds = maxVlaueOdds;
-		// if (maxVlaueOdds.getUnderOdds() > 1f)
-		// fe.underOdds = maxVlaueOdds;
 		return fe;
+	}
+
+	public void printValueOddsHistory() {
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> byLineAndBookie = fixture.getOUByLineandBookie();
+		for (Float line : fixture.getBaseOULines()) {
+			ArrayList<OverUnderOdds> pinnHistory = fixture.getOddsHistoryForLineAndBookie(line, "Pinnacle");
+			if (pinnHistory != null) {
+				pinnHistory.sort(Comparator.comparing(OverUnderOdds::getTime));
+
+				HashMap<String, ArrayList<OverUnderOdds>> byBookie = byLineAndBookie.get(line);
+
+				for (Entry<String, ArrayList<OverUnderOdds>> book : byBookie.entrySet()) {
+					if (book.getKey().equals("Pinnacle") || Arrays.asList(Constants.FAKEBOOKS).contains(book.getKey()))
+						continue;
+
+					ArrayList<OverUnderOdds> history = book.getValue();
+					history.sort(Comparator.comparing(OverUnderOdds::getTime));
+					checkForValueOverPinnacleInHistory(pinnHistory, history, 1f);
+				}
+			}
+		}
+
+	}
+
+	private void checkForValueOverPinnacleInHistory(ArrayList<OverUnderOdds> pinnHistory,
+			ArrayList<OverUnderOdds> history, float valueCutoff) {
+		if (pinnHistory == null || history == null)
+			return;
+
+		for (OverUnderOdds ou : history) {
+			OverUnderOdds pinnOdds = getActualPinnOdds(pinnHistory, ou.getTime());
+			if (pinnOdds == null)
+				continue;
+
+			OverUnderOdds trueOdds = pinnOdds.getTrueOddsMarginal();
+			if (ou.overOdds > trueOdds.overOdds) {
+				float value = ou.overOdds / trueOdds.overOdds;
+				if (value > valueCutoff)
+					System.out.println(ou.bookmaker + " " + ou.time + " over " + ou.line + " at " + ou.overOdds + " "
+							+ String.format("%.2f", 100 * (value - 1f)) + "%");
+
+			}
+
+			if (ou.underOdds > trueOdds.underOdds) {
+				float value = ou.underOdds / trueOdds.underOdds;
+				if (value > valueCutoff)
+					System.out.println(ou.bookmaker + " " + ou.time + " under " + ou.line + " at " + ou.underOdds + " "
+							+ String.format("%.2f", 100 * (value - 1f)) + "%");
+			}
+		}
+
+	}
+
+	/**
+	 * Return the actual pinn odds at a given time
+	 * 
+	 * @param pinnHistory
+	 * @param time
+	 * @return
+	 */
+	private OverUnderOdds getActualPinnOdds(ArrayList<OverUnderOdds> pinnHistory, Date time) {
+		OverUnderOdds currentOdds = null;
+		for (int i = 0; i < pinnHistory.size(); i++) {
+			OverUnderOdds pinnOU = pinnHistory.get(i);
+			if (pinnOU.getTime().before(time)
+					&& (i + 1 == pinnHistory.size() || pinnHistory.get(i + 1).getTime().after(time)))
+				if (!pinnOU.isOpening)
+					currentOdds = pinnOU;
+		}
+		return currentOdds;
 	}
 
 }

@@ -40,7 +40,8 @@ public class OverUnderOdds extends Odds {
 	}
 
 	public String toString() {
-		return bookmaker + " " + time + "  " + line + "  " + overOdds + "  " + underOdds;
+		return bookmaker + " " + time + "  " + line + "  " + overOdds + "  " + underOdds + "  "
+				+ String.format("%.2f", getPayout() * 100);
 	}
 
 	@Override
@@ -49,6 +50,10 @@ public class OverUnderOdds extends Odds {
 		float trueOverOdds = 2 * overOdds / (2f - margin * overOdds);
 		float trueUnderOdds = 2 * underOdds / (2f - margin * underOdds);
 		return new OverUnderOdds(bookmaker, time, line, trueOverOdds, trueUnderOdds);
+	}
+
+	public float getPayout() {
+		return 1f / (1f / overOdds + 1f / underOdds);
 	}
 
 	public void removeMarginProportional() {

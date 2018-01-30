@@ -41,63 +41,17 @@ public class Predictions {
 
 	public static void main(String[] args) throws Exception {
 
-		// CHECKLIST.add("ENG");
-		 CHECKLIST.add("ENG2");
-		// CHECKLIST.add("ENG3");
-		// CHECKLIST.add("ENG4");
-		// CHECKLIST.add("ENG5");
-		// CHECKLIST.add("ENG");
-//		CHECKLIST.add("IT");
-		// CHECKLIST.add("IT2");
-		// CHECKLIST.add("FR");
-		// CHECKLIST.add("FR2");
-		// CHECKLIST.add("SPA");
-		// CHECKLIST.add("SPA2");
-		// CHECKLIST.add("GER");
-		// CHECKLIST.add("GER2");
-		// CHECKLIST.add("SCO");
-		// CHECKLIST.add("NED");
-		// CHECKLIST.add("BEL");
-		// CHECKLIST.add("SWI");
-		// CHECKLIST.add("POR");
-		// CHECKLIST.add("GRE");
-		// CHECKLIST.add("TUR");
-		// CHECKLIST.add("BUL");
-		// CHECKLIST.add("RUS");
-		// CHECKLIST.add("AUS");
-		// CHECKLIST.add("DEN");
-		// CHECKLIST.add("CZE");
-		// CHECKLIST.add("ARG");
-		// CHECKLIST.add("POL");
-		// CHECKLIST.add("CRO");
-		// CHECKLIST.add("SLO");
-		// CHECKLIST.add("USA");
-		// CHECKLIST.add("SWE");
-		// CHECKLIST.add("NOR");
-		// CHECKLIST.add("FIN");
-		// CHECKLIST.add("BRA");
-		// CHECKLIST.add("BRB");
+		CHECKLIST.add("ENG");
 
-		// Scraper.updateInParallel(CHECKLIST, 2, OnlyTodayMatches.FALSE,
-		// UpdateType.AUTOMATIC, 19, 1);
-		// predictions(2017, DataType.ODDSPORTAL, UpdateType.AUTOMATIC,
-		// OnlyTodayMatches.TRUE, 20, 1);
-		// predictions(2017, DataType.ODDSPORTAL, UpdateType.MANUAL,
-		// OnlyTodayMatches.TRUE, 21, 01);
+//		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC, 30, 1);
 
-		 Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.TRUE, UpdateType.AUTOMATIC,
-		 26, 1);
-
-//		predictionsFromDB(2017, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 26, 1);
-
+		predictionsFromDB(2017, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 30, 1);
+			
 		// ArrayList<Fixture> nexts = FullOddsCollector.of("IT",
 		// 2017).nextMatches(OnlyTodayMatches.TRUE);
 		// SQLiteJDBC.storeFixtures(nexts,2017);
 
-		// Scraper.checkAndUpdate("ENG", OnlyTodayMatches.FALSE);
-		//
 		// // Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
-		//
 	}
 
 	public static ArrayList<FinalEntry> predictionsFromDB(int year, UpdateType automatic, OnlyTodayMatches onlyToday,
@@ -165,13 +119,13 @@ public class Predictions {
 			Utils.printStats(Utils.onlyUnders(dataProper), "unders");
 			result.addAll(pendingProper);
 			ArrayList<FinalEntry> pendingUnders = Utils.onlyUnders(pendingProper);
-			if(!pendingUnders.isEmpty())
+			if (!pendingUnders.isEmpty())
 				System.out.println(pendingUnders);
 			Utils.printStats(Utils.onlyOvers(dataProper), "overs");
 			ArrayList<FinalEntry> pendingOvers = Utils.onlyOvers(pendingProper);
-			if(!pendingOvers.isEmpty())
+			if (!pendingOvers.isEmpty())
 				System.out.println(pendingOvers);
-			
+
 			ArrayList<FinalEntry> vop = Analysis.valueOverPinnacle(dataProper, true, 1.0f).all;
 			System.out.println(new Stats(vop, "value over pinn with predict > 1.0"));
 			Utils.printStats(Utils.onlyUnders(vop), "unders");

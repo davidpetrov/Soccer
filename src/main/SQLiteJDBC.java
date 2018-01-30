@@ -1192,13 +1192,16 @@ public class SQLiteJDBC {
 				float underOdds = matchRs.getFloat("underOdds");
 				int isOpening = matchRs.getInt("isOpening");
 				int isClosing = matchRs.getInt("isClosing");
-				int isActive = matchRs.getInt("isActive");
+				int isActive = -1;
+				if (year >= 2017)
+					isActive = matchRs.getInt("isActive");
 
 				OverUnderOdds mo = new OverUnderOdds(bookmaker, format.parse(time), line, overOdds, underOdds)
 						.withFixtureFields(format.parse(fixtureDate), homeTeam, awayTeam);
 				mo.isOpening = isOpening == 1;
 				mo.isClosing = isClosing == 1;
-				mo.isActive = isActive == 1;
+				if (year >= 2017)
+					mo.isActive = isActive == 1;
 				result.add(mo);
 			}
 

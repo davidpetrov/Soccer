@@ -98,6 +98,7 @@ public class GameStatsCollector {
 			for (int i = linksM.size() - 1; i >= 0; i--) {
 				if (isScore(linksM.get(i).text())) {
 					Document fixture = Jsoup.connect(BASE + linksM.get(i).attr("href")).get();
+					
 					Fixture ef = getGameStatsFixture(fixture, competition);
 					if (ef != null && oldestTocheck != null && ef.date.before(oldestTocheck)) {
 						breakFlag = true;

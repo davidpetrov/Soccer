@@ -100,7 +100,6 @@ public class FixtureListCombiner {
 
 	public ArrayList<Fixture> combineWithDictionary() {
 		HashMap<String, String> dictionary = deduceDictionary();
-
 		ArrayList<Fixture> combined = new ArrayList<>();
 		for (Fixture i : odds) {
 			Fixture matchedGS = findCorresponding(i, gameStats, dictionary);

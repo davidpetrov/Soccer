@@ -50,7 +50,7 @@ import utils.Utils;
 
 public class FullOddsCollector {
 	public static final DateFormat FORMATFULL = new SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.US);
-	public static final long WAITTOLOAD = 2000;
+	public static final long WAITTOLOAD = 1700;
 
 	public String competition;
 	public int year;
@@ -86,7 +86,7 @@ public class FullOddsCollector {
 
 		Set<Fixture> result = new HashSet<>();
 
-		WebDriver driver = createDriver();
+		WebDriver driver = createDriver(false);
 
 		driver.navigate().to(address + "/results/");
 
@@ -162,7 +162,7 @@ public class FullOddsCollector {
 				}
 
 				Thread.sleep(5000);
-				driver = createDriver();
+				driver = createDriver(true);
 
 				driver.navigate().to(address + "/results/");
 				login(driver);
@@ -194,7 +194,7 @@ public class FullOddsCollector {
 		ArrayList<Fixture> result = new ArrayList<>();
 		Set<String> teams = new HashSet<>();
 
-		WebDriver driver = createDriver();
+		WebDriver driver = createDriver(true);
 
 		driver.navigate().to(address);
 
@@ -285,9 +285,10 @@ public class FullOddsCollector {
 		return links;
 	}
 
-	private WebDriver createDriver() {
+	private WebDriver createDriver(boolean isHeadless) {
 		ChromeOptions options = new ChromeOptions();
-		options.addArguments("headless");
+		if (isHeadless)
+			options.addArguments("headless");
 		WebDriver driver = new ChromeDriver(options);
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
@@ -580,7 +581,8 @@ public class FullOddsCollector {
 				JSONArray arr = (JSONArray) outcomedID;
 				homeOutcomesID.put(arr.getString(0), handicapValue);
 				drawOutcomesID.put(arr.getString(1), handicapValue);
-				awayOutcomesID.put(arr.getString(2), handicapValue);
+				if (arr.length() > 2)
+					awayOutcomesID.put(arr.getString(2), handicapValue);
 			} else {
 				JSONObject obj = (JSONObject) outcomedID;
 				homeOutcomesID.put(obj.getString("0"), handicapValue);
@@ -627,7 +629,7 @@ public class FullOddsCollector {
 						cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(1) * 1000);
 						timeDraw = cal.getTime();
 					}
-					if (changeTimeArray.length() > 1) {
+					if (changeTimeArray.length() > 2) {
 						cal.setTimeInMillis(changeTime.getJSONArray(b).getLong(2) * 1000);
 						timeAway = cal.getTime();
 					}

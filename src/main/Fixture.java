@@ -541,4 +541,17 @@ public class Fixture {
 		return closing.get().isActive ? closing.get() : null;
 	}
 
+	public ArrayList<OverUnderOdds> getOddsHistoryForLineAndBookie(Float line, String bookmaker) {
+		if (overUnderOdds == null)
+			return null;
+		HashMap<String, ArrayList<OverUnderOdds>> bookMap = getOUByLineandBookie().get(line);
+		if (bookMap == null)
+			return null;
+		ArrayList<OverUnderOdds> list = bookMap.get(bookmaker);
+		if (list == null || list.isEmpty())
+			return null;
+
+		return list;
+	}
+
 }

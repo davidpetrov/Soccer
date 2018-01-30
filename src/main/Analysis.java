@@ -78,7 +78,7 @@ public class Analysis {
 			Settings temp = Settings.shots(league);
 			ArrayList<FinalEntry> finals = FixtureUtils.runWithSettingsList(fixtures, current, temp);
 
-			cleanUpUnnecessaryOddsData(finals);
+			// cleanUpUnnecessaryOddsData(finals);
 
 			result.addAll(finals);
 		}
@@ -133,9 +133,17 @@ public class Analysis {
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
 
 		Stats best = stats.get(0);
-		// Utils.analysys(best.all, best.description, false);
-		// byBookieContent(best.all);
+		Utils.analysys(best.all, best.description, false);
+		byBookieContent(best.all);
+		best.all.sort(Comparator.comparing(FinalEntry::getDate).reversed());
+
 		System.out.println(best.all);
+		predictions.sort(Comparator.comparing(FinalEntry::getDate).reversed());
+		for (FinalEntry fe : best.all) {
+			System.out.println(fe);
+			fe.printValueOddsHistory();
+			break;
+		}
 	}
 
 	public static Stats valueOverPinnacle(ArrayList<FinalEntry> predictions, boolean withPrediction,

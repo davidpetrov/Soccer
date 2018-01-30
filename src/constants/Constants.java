@@ -58,7 +58,7 @@ public class Constants {
 			"eFortuna.pl",
 			"Dotabet",
 			"Babibet",
-			"MAXITIP.cz ",
+			"MAXITIP.cz",
 			"Marsbet",
 			"Totolotek.pl",
 			
