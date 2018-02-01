@@ -42,10 +42,11 @@ public class Predictions {
 	public static void main(String[] args) throws Exception {
 
 		CHECKLIST.add("ENG");
+//		CHECKLIST.add("POR");
 
-//		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC, 30, 1);
+		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.TRUE, UpdateType.MANUAL, 31, 1);
 
-		predictionsFromDB(2017, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 30, 1);
+//		predictionsFromDB(2017, UpdateType.MANUAL, OnlyTodayMatches.TRUE, 31, 1);
 			
 		// ArrayList<Fixture> nexts = FullOddsCollector.of("IT",
 		// 2017).nextMatches(OnlyTodayMatches.TRUE);

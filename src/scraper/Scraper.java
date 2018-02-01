@@ -93,14 +93,11 @@ public class Scraper {
 
 		// ====================================================================
 
-		for (int i = 2017; i <= 2017; i++)
-			GameStatsCollector.of("ENG", i).collectAndStore();
+		// for (int i = 2017; i <= 2017; i++)
+		// GameStatsCollector.of("ENG3", i).collectAndStore();
 
-		// for (int i = 2013; i <= 2013; i++) {
-		// ArrayList<Fixture> data = new FullOddsCollector("SPA2", i,
-		// "http://www.oddsportal.com/soccer/spain/segunda-division-2013-2014/").collect();
-		// SQLiteJDBC.storeFixtures(data);
-		// }
+		for (int i = 2017; i <= 2017; i++)
+			FullOddsCollector.of("ENG", i).collectAndStore();
 
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -1720,14 +1717,16 @@ public class Scraper {
 	private static void updateDBfor(String league, OnlyTodayMatches onlyToday) throws Exception {
 		int collectYear = Arrays.asList(EntryPoints.SUMMER).contains(league) ? EntryPoints.SUMMERCURRENT
 				: EntryPoints.CURRENT;
-		
-		Date oldestTocheckGS = SQLiteJDBC.findLastPendingGameStatsDate(league,collectYear);
+
+		Date oldestTocheckGS = SQLiteJDBC.findLastPendingGameStatsDate(league, collectYear);
 		System.out.println("GS " + oldestTocheckGS);
 		Date oldestTocheck = SQLiteJDBC.findLastPendingFixtureDate(league, collectYear);
-//		oldestTocheck = oldestTocheck.before(oldestTocheckGS) ? oldestTocheck : oldestTocheckGS;
+		// oldestTocheck = oldestTocheck.before(oldestTocheckGS) ? oldestTocheck :
+		// oldestTocheckGS;
 		System.out.println(oldestTocheck);
-		
-//		ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league, collectYear);
+
+		// ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league,
+		// collectYear);
 
 		ArrayList<Fixture> list = new ArrayList<>();
 		// check if update of previous results is necessary

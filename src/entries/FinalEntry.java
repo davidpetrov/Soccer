@@ -101,10 +101,11 @@ public class FinalEntry implements Comparable<FinalEntry> {
 		else
 			return String.format("%.2f", prediction * 100) + " " + fixture.date + " " + fixture.homeTeam + " : "
 					+ fixture.awayTeam + " " + totalGoals + " " + out + " " + line + " " + bookie + " " + successFull()
-					+ " " + String.format("%.2f", getProfit()) + "\n";
+					+ " " + String.format("%.2f", getProfit()) + " "
+					+ (valueOverPinnacle > 0 ? String.format("%.2f", valueOverPinnacle) + "%" : "") + "\n";
 	}
 
-	private float getValueOverPinnacle() {
+	public float getValueOverPinnacle() {
 		float coeff = prediction >= upper ? overOdds.getOverOdds() : underOdds.getUnderOdds();
 		OverUnderOdds pinnOU = fixture.pinnOdds.get(line);
 		if (pinnOU == null)

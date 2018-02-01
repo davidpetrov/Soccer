@@ -1,0 +1,13 @@
+
+delete  from overunderodds 
+where  date in (select f.date from fixtures f where f.competition='ENG')
+and hometeamname in (select f.hometeamname from fixtures f where f.competition='ENG')
+and awayteamname in (select f.awayteamname from fixtures f where f.competition='ENG')
+
+select count(*) from fixtures f join overunderodds  ou on
+			 (f.date = ou.date and f.hometeamname=ou.hometeamname  and f.awayteamname=ou.awayteamname )
+					 where f.competition='ENG'
+					 
+select count(*) from fixtures
+where competition='ENG'			 
+					 

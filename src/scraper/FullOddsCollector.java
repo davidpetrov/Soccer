@@ -101,7 +101,7 @@ public class FullOddsCollector {
 		HashMap<Integer, String> booksMap = new HashMap<>();
 		for (int page = 1; page <= maxPage; page++) {
 			try {
-				driver.navigate().to(address + "/results/#/page/" + page + "/");
+				driver.get(address + "/results/#/page/" + page + "/");
 
 				ArrayList<String> links = new ArrayList<>();
 				WebElement table = driver.findElement(By.id("tournamentTable"));
@@ -416,13 +416,15 @@ public class FullOddsCollector {
 		if (booksMap.isEmpty())
 			booksMap.putAll(getBooksMapIfEmpty(driver));
 
-		HashMap<String, ArrayList<MatchOdds>> matchOdds = getMatchDataFromJS(driver, booksMap);
+		// HashMap<String, ArrayList<MatchOdds>> matchOdds = getMatchDataFromJS(driver,
+		// booksMap);
 		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overUnderOdds = getOverUnderDataFromJS(driver,
 				booksMap);
-		HashMap<Float, HashMap<String, ArrayList<AsianOdds>>> asianOdds = getAsianDataFromJS(driver, booksMap);
+		// HashMap<Float, HashMap<String, ArrayList<AsianOdds>>> asianOdds =
+		// getAsianDataFromJS(driver, booksMap);
 
 		Fixture f = new Fixture(date, competition, home, away, fullResult).withHTResult(htResult).withYear(year)
-				.withOUodds(overUnderOdds).withAsianOdds(asianOdds).withMatchOdds(matchOdds);
+				.withOUodds(overUnderOdds)/* .withAsianOdds(asianOdds).withMatchOdds(matchOdds) */;
 
 		System.out.println(f);
 		System.out.println("full odds data time " + (System.currentTimeMillis() - start) / 1000d + "sec");
@@ -532,37 +534,47 @@ public class FullOddsCollector {
 			}
 		}
 
-		// add the closing odds before combining
+		addClosingMatchOddsBeforeCombining(closingOdds, homeHistoriesMap, drawHistoriesMap, awayHistoriesMap);
+
+		HashMap<String, ArrayList<MatchOdds>> combined = combineMatchOddsHistories(homeHistoriesMap, drawHistoriesMap,
+				awayHistoriesMap);
+
+		return combined;
+	}
+
+	private static void addClosingMatchOddsBeforeCombining(ArrayList<MatchOdds> closingOdds,
+			HashMap<String, ArrayList<MatchOdds>> homeHistoriesMap,
+			HashMap<String, ArrayList<MatchOdds>> drawHistoriesMap,
+			HashMap<String, ArrayList<MatchOdds>> awayHistoriesMap) {
+
 		for (MatchOdds i : closingOdds) {
 			if (i.homeOdds != -1f) {
 				if (homeHistoriesMap.get(i.bookmaker) == null)
 					homeHistoriesMap.put(i.bookmaker, new ArrayList<>());
 
-				if (!homeHistoriesMap.get(i.bookmaker).contains(i))
-					homeHistoriesMap.get(i.bookmaker).add(i);
+				if (homeHistoriesMap.get(i.bookmaker).contains(i))
+					homeHistoriesMap.get(i.bookmaker).remove(i);
+				homeHistoriesMap.get(i.bookmaker).add(i);
 			}
 
 			if (i.drawOdds != -1f) {
 				if (drawHistoriesMap.get(i.bookmaker) == null)
 					drawHistoriesMap.put(i.bookmaker, new ArrayList<>());
 
-				if (!drawHistoriesMap.get(i.bookmaker).contains(i))
-					drawHistoriesMap.get(i.bookmaker).add(i);
+				if (drawHistoriesMap.get(i.bookmaker).contains(i))
+					drawHistoriesMap.get(i.bookmaker).remove(i);
+				drawHistoriesMap.get(i.bookmaker).add(i);
 			}
 
 			if (i.awayOdds != -1f) {
 				if (awayHistoriesMap.get(i.bookmaker) == null)
 					awayHistoriesMap.put(i.bookmaker, new ArrayList<>());
 
-				if (!awayHistoriesMap.get(i.bookmaker).contains(i))
-					awayHistoriesMap.get(i.bookmaker).add(i);
+				if (awayHistoriesMap.get(i.bookmaker).contains(i))
+					awayHistoriesMap.get(i.bookmaker).remove(i);
+				awayHistoriesMap.get(i.bookmaker).add(i);
 			}
 		}
-
-		HashMap<String, ArrayList<MatchOdds>> combined = combineMatchOddsHistories(homeHistoriesMap, drawHistoriesMap,
-				awayHistoriesMap);
-
-		return combined;
 	}
 
 	private static void getOutcomesIDandClosingMatchOdds(JSONObject json, HashMap<String, Float> homeOutcomesID,
@@ -686,7 +698,6 @@ public class FullOddsCollector {
 				drawHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
 				awayHistory.sort(Comparator.comparing(MatchOdds::getTime).reversed());
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -699,7 +710,8 @@ public class FullOddsCollector {
 			MatchOdds openingDraw = drawHistory.remove(drawHistory.size() - 1);
 			MatchOdds openingAway = awayHistory.remove(awayHistory.size() - 1);
 			MatchOdds opening = new MatchOdds(bookmaker, openingHome.time, openingHome.homeOdds, openingDraw.drawOdds,
-					openingAway.awayOdds).withIsOpening();
+					openingAway.awayOdds).withIsOpening()
+							.withIsActive(openingHome.isActive && openingDraw.isActive && openingAway.isActive);
 
 			// in the corner case where there is no change in odds, i.e. opening
 			// and closing are the same
@@ -843,7 +855,6 @@ public class FullOddsCollector {
 			Set<String> bookies = outcome1.keySet();
 			for (String b : bookies) {
 				String bookmaker = booksMap.get(Integer.parseInt(b));
-				// System.out.println(bookmaker);
 				JSONArray history = outcome1.getJSONArray(b);
 				ArrayList<OverUnderOdds> oddsHistory = new ArrayList<>();
 				for (int j = 0; j < history.length(); j++) {
@@ -890,7 +901,17 @@ public class FullOddsCollector {
 			}
 		}
 
-		// add the closing odds before combining
+		addClosingOddsBeforeCombining(closingOdds, overHistoriesMap, underHistoriesMap);
+
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> historyDataOU = combineOddsHistories(overHistoriesMap,
+				underHistoriesMap);
+
+		return historyDataOU;
+	}
+
+	private static void addClosingOddsBeforeCombining(ArrayList<OverUnderOdds> closingOdds,
+			HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overHistoriesMap,
+			HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> underHistoriesMap) {
 		for (OverUnderOdds i : closingOdds)
 			if (i.underOdds == -1f) {
 				if (overHistoriesMap.get(i.line) == null)
@@ -899,25 +920,23 @@ public class FullOddsCollector {
 				if (overHistoriesMap.get(i.line).get(i.bookmaker) == null)
 					overHistoriesMap.get(i.line).put(i.bookmaker, new ArrayList<>());
 
-				if (!overHistoriesMap.get(i.line).get(i.bookmaker).contains(i))
-					overHistoriesMap.get(i.line).get(i.bookmaker).add(i);
-			} else if (i.overOdds == -1f) {
+				if (overHistoriesMap.get(i.line).get(i.bookmaker).contains(i))
+					overHistoriesMap.get(i.line).get(i.bookmaker).remove(i);
 
+				overHistoriesMap.get(i.line).get(i.bookmaker).add(i);
+			} else if (i.overOdds == -1f) {
 				if (underHistoriesMap.get(i.line) == null)
 					underHistoriesMap.put(i.line, new HashMap<>());
 
 				if (underHistoriesMap.get(i.line).get(i.bookmaker) == null)
 					underHistoriesMap.get(i.line).put(i.bookmaker, new ArrayList<>());
 
-				if (!underHistoriesMap.get(i.line).get(i.bookmaker).contains(i))
-					underHistoriesMap.get(i.line).get(i.bookmaker).add(i);
+				if (underHistoriesMap.get(i.line).get(i.bookmaker).contains(i))
+					underHistoriesMap.get(i.line).get(i.bookmaker).remove(i);
+
+				underHistoriesMap.get(i.line).get(i.bookmaker).add(i);
 			}
 
-		// CLOSING odds are missing
-		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> historyDataOU = combineOddsHistories(overHistoriesMap,
-				underHistoriesMap);
-
-		return historyDataOU;
 	}
 
 	private static HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> combineOddsHistories(
@@ -934,10 +953,8 @@ public class FullOddsCollector {
 			HashMap<String, ArrayList<OverUnderOdds>> overBookMap = i.getValue();
 			HashMap<String, ArrayList<OverUnderOdds>> underBookMap = underHistoriesMap.get(line);
 
-			if (overBookMap == null || underBookMap == null) {
-				System.out.println();
+			if (overBookMap == null || underBookMap == null)
 				continue;
-			}
 
 			if (overBookMap.size() != underBookMap.size())
 				System.out.println("Histories map size differ for line: " + line);
@@ -952,13 +969,14 @@ public class FullOddsCollector {
 				underOdds.sort(Comparator.comparing(OverUnderOdds::getTime).reversed());
 
 				if (!overOdds.get(overOdds.size() - 1).time.equals(overOdds.get(overOdds.size() - 1).time))
-					System.out.println("Opening  odds dates differ: " + line + " at " + bookie);
+					System.out.println("Opening  odds dates differ : " + line + " at " + bookie);
 
 				ArrayList<OverUnderOdds> oulist = new ArrayList<>();
 				OverUnderOdds openingOver = overOdds.remove(overOdds.size() - 1);
 				OverUnderOdds openingUnder = underOdds.remove(underOdds.size() - 1);
 				OverUnderOdds opening = new OverUnderOdds(bookie, openingOver.time, line, openingOver.overOdds,
-						openingUnder.underOdds).withIsOpening();
+						openingUnder.underOdds).withIsOpening()
+								.withIsActive(openingOver.isActive && openingUnder.isActive);
 
 				// in the corner case where there is no change in odds, i.e.
 				// opening and closing are the same
@@ -1022,7 +1040,7 @@ public class FullOddsCollector {
 		for (String i : keysOdds) {
 			JSONObject entry = backOdds.getJSONObject(i);
 			float handicapValue = (float) entry.getDouble("handicapValue" + "");
-			// System.out.println(handicapValue);
+//			System.out.println(handicapValue);
 			HashMap<String, Boolean> isActiveMap = getIsActiveMap(entry.getJSONObject("act"), booksMap);
 			Object outcomedID = entry.get("OutcomeID");
 			if (outcomedID instanceof JSONArray) {
@@ -1088,7 +1106,6 @@ public class FullOddsCollector {
 						}
 					}
 				} catch (JSONException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
@@ -1099,7 +1116,7 @@ public class FullOddsCollector {
 				closingOdds.add(closingOver);
 				closingOdds.add(closingUnder);
 			}
-
+//			System.out.println(isActiveMap);
 		}
 
 	}
