@@ -61,6 +61,7 @@ public class Constants {
 			"MAXITIP.cz",
 			"Marsbet",
 			"Totolotek.pl",
+			"Smarkets",
 			
 			
 			"Asianodds",

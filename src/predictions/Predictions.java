@@ -22,6 +22,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import com.gargoylesoftware.htmlunit.javascript.host.media.AnalyserNode;
 
 import entries.FinalEntry;
+import jdbc.PostgreSQL;
 import main.Analysis;
 import main.Fixture;
 import main.SQLiteJDBC;
@@ -41,15 +42,16 @@ public class Predictions {
 
 	public static void main(String[] args) throws Exception {
 
-		CHECKLIST.add("ENG");
+		CHECKLIST.add("SCO");
+//		CHECKLIST.add("GER");
 //		CHECKLIST.add("POR");
 
-		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.TRUE, UpdateType.MANUAL, 31, 1);
-
-//		predictionsFromDB(2017, UpdateType.MANUAL, OnlyTodayMatches.TRUE, 31, 1);
+		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC, 8, 2);
+		
+		predictionsFromDB(2017, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 8, 2);
 			
 		// ArrayList<Fixture> nexts = FullOddsCollector.of("IT",
-		// 2017).nextMatches(OnlyTodayMatches.TRUE);
+		// 2017).nextMatches(OnlyTodayMatches.TRUE);	
 		// SQLiteJDBC.storeFixtures(nexts,2017);
 
 		// // Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
@@ -66,7 +68,7 @@ public class Predictions {
 
 		for (String league : leagues) {
 			long start = System.currentTimeMillis();
-			ArrayList<Fixture> fixtures = SQLiteJDBC.selectFixtures(league, year);
+			ArrayList<Fixture> fixtures = PostgreSQL.selectFixtures(league, year);
 			System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 			all.addAll(Analysis.predict(fixtures, league, year));
 		}
@@ -104,6 +106,7 @@ public class Predictions {
 				Utils.printStats(Utils.allOvers(Utils.onlyFixtures(equilibriumsData)), "Equilibriums as overs");
 			} else {
 				System.out.println("No value in equilibriums");
+				Utils.printStats(equilibriumsData, "Equilibriums as unders");
 			}
 
 			if (allUnders) {

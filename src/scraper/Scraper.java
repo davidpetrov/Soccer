@@ -56,6 +56,7 @@ import org.openqa.selenium.interactions.Actions;
 
 import constants.Constants;
 import entries.FinalEntry;
+import jdbc.PostgreSQL;
 import main.Fixture;
 import main.PlayerFixture;
 import main.Result;
@@ -96,8 +97,11 @@ public class Scraper {
 		// for (int i = 2017; i <= 2017; i++)
 		// GameStatsCollector.of("ENG3", i).collectAndStore();
 
-		for (int i = 2017; i <= 2017; i++)
-			FullOddsCollector.of("ENG", i).collectAndStore();
+		// for (int i = 2017; i <= 2017; i++)
+		// FullOddsCollector.of("ENG2", i).collectAndStore();
+
+		FullOddsCollector.of("ENG2", 2017).testSingleFixture(
+				"http://www.oddsportal.com/soccer/england/championship/norwich-middlesbrough-CA6pOqJS/");
 
 		// ArrayList<Fixture> shotsList = collect("ENG", 2016, null);
 		// list.addAll(collect("JP", 2016,
@@ -1718,30 +1722,30 @@ public class Scraper {
 		int collectYear = Arrays.asList(EntryPoints.SUMMER).contains(league) ? EntryPoints.SUMMERCURRENT
 				: EntryPoints.CURRENT;
 
-		Date oldestTocheckGS = SQLiteJDBC.findLastPendingGameStatsDate(league, collectYear);
+		Date oldestTocheckGS = PostgreSQL.findLastPendingGameStatsDate(league, collectYear);
 		System.out.println("GS " + oldestTocheckGS);
-		Date oldestTocheck = SQLiteJDBC.findLastPendingFixtureDate(league, collectYear);
+		Date oldestTocheck = PostgreSQL.findLastPendingFixtureDate(league, collectYear);
 		// oldestTocheck = oldestTocheck.before(oldestTocheckGS) ? oldestTocheck :
 		// oldestTocheckGS;
 		System.out.println(oldestTocheck);
-
+		
 		// ArrayList<Fixture> gameStats = SQLiteJDBC.selectGameStats(league,
 		// collectYear);
 
 		ArrayList<Fixture> list = new ArrayList<>();
 		// check if update of previous results is necessary
-		if (new Date().after(oldestTocheck)) {
+		if (!(oldestTocheck.equals(oldestTocheckGS) && new Date().after(oldestTocheck))) {
 			ArrayList<Fixture> odds = FullOddsCollector.of(league, collectYear).collectUpToDate(oldestTocheck);
 			System.out.println(odds.size() + " odds ");
-			SQLiteJDBC.storeFixtures(odds, CURRENT_YEAR);
+			PostgreSQL.storeFixtures(odds, CURRENT_YEAR);
 
 			list = GameStatsCollector.of(league, collectYear).collectUpToDate(oldestTocheckGS);
 			System.out.println(list.size() + "shots");
-			SQLiteJDBC.storeGameStats(list, league, collectYear);
+			PostgreSQL.storeGameStats(list, league, collectYear);
 		}
 
 		ArrayList<Fixture> next = FullOddsCollector.of(league, collectYear).nextMatches(onlyToday);
-		SQLiteJDBC.storeFixtures(next, CURRENT_YEAR);
+		PostgreSQL.storeFixtures(next, CURRENT_YEAR);
 
 		System.out.println(league + " successfully updated");
 	}

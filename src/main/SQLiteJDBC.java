@@ -27,6 +27,7 @@ import utils.FixtureListCombiner;
 import utils.Pair;
 import xls.XlSUtils;
 
+@Deprecated
 public class SQLiteJDBC {
 
 	public static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -973,7 +974,6 @@ public class SQLiteJDBC {
 				System.out.println(i);
 			}
 		}
-
 	}
 
 	private static void storeMatchOdds(Fixture f, Statement stmt) {
@@ -1018,7 +1018,6 @@ public class SQLiteJDBC {
 					+ addQuotes(competition) + ";");
 			while (rs.next()) {
 				String date = rs.getString("date");
-				// int matchday = rs.getInt("matchday");
 				String homeTeamName = rs.getString("hometeamname");
 				String awayTeamName = rs.getString("awayteamname");
 				int homeGoals = rs.getInt("homeGoals");
@@ -1142,18 +1141,18 @@ public class SQLiteJDBC {
 
 	// TODO loads only the OU odds for now, because of performance resa
 	private static void addOddsData(ArrayList<Fixture> result, String competition, int year) {
-		// ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
-		// ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
+//		ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
+//		ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
 		ArrayList<OverUnderOdds> overUnderOdds = selectOverUnderOdds(competition, year);
 
 		for (Fixture i : result) {
 			try {
-				// i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-				// && mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-				// .collect(Collectors.toCollection(ArrayList::new));
-				// i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-				// && mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-				// .collect(Collectors.toCollection(ArrayList::new));
+//				i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+//						.collect(Collectors.toCollection(ArrayList::new));
+//				i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+//						.collect(Collectors.toCollection(ArrayList::new));
 				i.overUnderOdds = overUnderOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
 						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
 						.collect(Collectors.toCollection(ArrayList::new));
@@ -1407,7 +1406,6 @@ public class SQLiteJDBC {
 			String dbname = "full_data" + (collectYear == 2017 ? "2017" : "");
 			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
-			// System.out.println("Opened database successfully");
 
 			stmt = c.createStatement();
 			ResultSet rs = stmt.executeQuery("select min(date) as date from fixtures where competition="
@@ -1417,6 +1415,17 @@ public class SQLiteJDBC {
 				if (dateStr != null)
 					date = format.parse(rs.getString("date"));
 			}
+
+			if (date == null) {
+				rs = stmt.executeQuery("select max(date) as date from fixtures where competition=" + addQuotes(league)
+						+ " and startyear=" + collectYear + ";");
+				while (rs.next()) {
+					String dateStr = rs.getString("date");
+					if (dateStr != null)
+						date = format.parse(rs.getString("date"));
+				}
+			}
+
 			rs.close();
 			stmt.close();
 			c.close();

@@ -6,15 +6,15 @@ public class GameStats {
 
 	// check for better presentation, i.e not with pair
 	public Pair shots;
-	Pair shotsWide;
-	Pair corners;
-	Pair fouls;
-	Pair offsides;
+	public Pair shotsWide;
+	public Pair corners;
+	public Pair fouls;
+	public Pair offsides;
 
 	// for shots from all euro data
-	Pair AllEuroShots;
+	public Pair AllEuroShots;
 
-	int possessionHome;
+	public int possessionHome;
 
 	public GameStats(Pair shots, Pair shotsWide, Pair corners, Pair fouls, Pair offsides) {
 		super();

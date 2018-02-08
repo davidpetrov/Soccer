@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.xalan.xsltc.compiler.sym;
 
 import entries.FinalEntry;
+import jdbc.PostgreSQL;
 import odds.OverUnderOdds;
 import runner.RunnerAnalysis;
 import settings.Settings;
@@ -78,7 +79,7 @@ public class Analysis {
 			Settings temp = Settings.shots(league);
 			ArrayList<FinalEntry> finals = FixtureUtils.runWithSettingsList(fixtures, current, temp);
 
-			// cleanUpUnnecessaryOddsData(finals);
+			 cleanUpUnnecessaryOddsData(finals);
 
 			result.addAll(finals);
 		}

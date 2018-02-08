@@ -30,4 +30,8 @@ public class Result {
 	public boolean equals(Result other) {
 		return goalsAwayTeam == other.goalsAwayTeam && goalsHomeTeam == other.goalsHomeTeam;
 	}
+
+	public static Result postponed() {
+		return new Result(-2, -2);
+	}
 }
