@@ -139,18 +139,19 @@ public class SQLiteJDBC {
 		return flag;
 	}
 
-	public static ArrayList<String> getLeagues(int season) {
+	public static ArrayList<String> getLeagues(int year) {
 		ArrayList<String> leagues = new ArrayList<>();
 
 		Connection c = null;
 		Statement stmt = null;
 		try {
 			Class.forName("org.sqlite.JDBC");
-			c = DriverManager.getConnection("jdbc:sqlite:test.db");
+			String dbname = "full_data" + (year == 2017 ? "2017" : "");
+			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
 			stmt = c.createStatement();
 
-			ResultSet rs = stmt.executeQuery("select distinct competition from results" + season);
+			ResultSet rs = stmt.executeQuery("select distinct competition from fixtures where startYear=" + year);
 			while (rs.next()) {
 				leagues.add(rs.getString("competition"));
 			}
@@ -1012,8 +1013,8 @@ public class SQLiteJDBC {
 			String dbname = "full_data" + (year == 2017 ? "2017" : "");
 			c = DriverManager.getConnection("jdbc:sqlite:" + dbname + ".db");
 			c.setAutoCommit(false);
-
 			stmt = c.createStatement();
+
 			ResultSet rs = stmt.executeQuery("select * from Fixtures" + " where StartYear=" + year + " AND competition="
 					+ addQuotes(competition) + ";");
 			while (rs.next()) {
@@ -1141,18 +1142,18 @@ public class SQLiteJDBC {
 
 	// TODO loads only the OU odds for now, because of performance resa
 	private static void addOddsData(ArrayList<Fixture> result, String competition, int year) {
-//		ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
-//		ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
+		// ArrayList<MatchOdds> matchOdds = selectMatchOdds(competition, year);
+		// ArrayList<AsianOdds> asianOdds = selectAsianOdds(competition, year);
 		ArrayList<OverUnderOdds> overUnderOdds = selectOverUnderOdds(competition, year);
 
 		for (Fixture i : result) {
 			try {
-//				i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-//						.collect(Collectors.toCollection(ArrayList::new));
-//				i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
-//						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
-//						.collect(Collectors.toCollection(ArrayList::new));
+				// i.matchOdds = matchOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+				// && mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+				// .collect(Collectors.toCollection(ArrayList::new));
+				// i.asianOdds = asianOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
+				// && mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
+				// .collect(Collectors.toCollection(ArrayList::new));
 				i.overUnderOdds = overUnderOdds.stream().filter(mo -> mo.fixtureDate.equals(i.date)
 						&& mo.homeTeamName.equals(i.homeTeam) && mo.awayTeamName.equals(i.awayTeam))
 						.collect(Collectors.toCollection(ArrayList::new));

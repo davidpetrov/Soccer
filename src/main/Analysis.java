@@ -1,23 +1,15 @@
 package main;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-
-import org.apache.xalan.xsltc.compiler.sym;
 
 import entries.FinalEntry;
 import jdbc.PostgreSQL;
-import odds.OverUnderOdds;
-import runner.RunnerAnalysis;
 import settings.Settings;
 import utils.FixtureUtils;
 import utils.Stats;
@@ -53,7 +45,7 @@ public class Analysis {
 		for (int year = startYear; year <= endYear; year++) {
 			for (String league : leagues) {
 				// long start = System.currentTimeMillis();
-				ArrayList<Fixture> fixtures = SQLiteJDBC.selectFixtures(league, year);
+				ArrayList<Fixture> fixtures = PostgreSQL.selectFixtures(league, year);
 				// System.out.println(
 				// (System.currentTimeMillis() - start) / 1000d + "sec loading data for: " +
 				// league + " " + year);
@@ -79,7 +71,7 @@ public class Analysis {
 			Settings temp = Settings.shots(league);
 			ArrayList<FinalEntry> finals = FixtureUtils.runWithSettingsList(fixtures, current, temp);
 
-			 cleanUpUnnecessaryOddsData(finals);
+			cleanUpUnnecessaryOddsData(finals);
 
 			result.addAll(finals);
 		}
@@ -132,19 +124,21 @@ public class Analysis {
 			stats.add(valueOverPinnacle(predictions, true, 1.0f + i * 0.01f));
 
 		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
+		stats.forEach(System.out::println);
 
+		System.out.println("Best value:");
 		Stats best = stats.get(0);
 		Utils.analysys(best.all, best.description, false);
 		byBookieContent(best.all);
-		best.all.sort(Comparator.comparing(FinalEntry::getValueOverPinnacle).reversed());
+		// best.all.sort(Comparator.comparing(FinalEntry::getValueOverPinnacle).reversed());
 
-		System.out.println(best.all);
-//		predictions.sort(Comparator.comparing(FinalEntry::getDate).reversed());
-//		for (FinalEntry fe : best.all) {
-//			System.out.println(fe);
-//			fe.printValueOddsHistory();
-//			break;
-//		}
+		System.out.println(best.all.stream().filter(f -> f.getValueOverPinnacle() > 5f).collect(Collectors.toList()));
+		// predictions.sort(Comparator.comparing(FinalEntry::getDate).reversed());
+		// for (FinalEntry fe : best.all) {
+		// System.out.println(fe);
+		// fe.printValueOddsHistory();
+		// break;
+		// }
 	}
 
 	public static Stats valueOverPinnacle(ArrayList<FinalEntry> predictions, boolean withPrediction,

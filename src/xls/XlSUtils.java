@@ -4256,77 +4256,23 @@ public class XlSUtils {
 
 	}
 
-	public static ArrayList<FinalEntry> finalsShots(HSSFSheet sheet, int year)
+	public static ArrayList<FinalEntry> finalsShots(ArrayList<Fixture> all, String competition, int year)
 			throws InterruptedException, ParseException {
 		ArrayList<FinalEntry> result = new ArrayList<>();
 
-		ArrayList<Fixture> all = selectAll(sheet, 0);
-
-		Settings temp = Settings.shots(sheet.getSheetName());
-		// Settings shotSets = Settings.shots(sheet.getSheetName());
-		// Settings ht = Settings.halfTime(sheet.getSheetName(), 0.3f);
-
-		// Settings poisson = new Settings(sheet.getSheetName(), 0f, 0f, 1f,
-		// 0.55f, 0.55f, 0.55f, 0.5f, 0f);
+		Settings temp = Settings.shots(competition);
 		int maxMatchDay = FixtureUtils.addMatchDay(all);
-		// ArrayList<PlayerFixture> pfs = SQLiteJDBC
-		// .selectPlayerFixtures(Arrays.asList(MinMaxOdds.SHOTS).contains(sheet.getSheetName())
-		// ? MinMaxOdds.reverseEquivalents.get(sheet.getSheetName()) :
-		// sheet.getSheetName(), year);
-		// ArrayList<Fixture> allPfs = Utils.getFixtures(pfs);
-		// HashMap<String, String> dictionary = null;
-		// if (!allPfs.isEmpty())
-		// dictionary = XlSUtils.deduceDictionary(Utils.notPending(all),
-		// allPfs);
 
 		for (int i = /* dictionary == null ? 100 : */ 14; i < maxMatchDay; i++) {
 			ArrayList<Fixture> current = FixtureUtils.getByMatchday(all, i);
-			// ArrayList<Fixture> data =
-			// FixtureUtils.getBeforeMatchday(all, i);
 
 			ArrayList<FinalEntry> finals = new ArrayList<>();
-			// ArrayList<FinalEntry> shots = runWithSettingsList(sheet, current,
-			// shotSets);
-			// shots = Utils.noequilibriums(shots);
-
-			// finals = runWithSettingsList(sheet, data, temp);
-
-			// temp = findThreshold(Utils.noequilibriums(finals), temp,
-			// MaximizingBy.BOTH);
 
 			finals = FixtureUtils.runWithSettingsList(all, current, temp);
-			// SQLiteJDBC.storeFinals(finals, year, sheet.getSheetName(),
-			// "shots");
-			// finals = Utils.allUnders(current);
-			// finals = Utils.higherOdds(current);
-
-			// hts = runWithSettingsList(sheet, current,
-			// new Settings(sheet.getSheetName(), 0f, 0f, 1f, 0.55f, 0.55f,
-			// 0.55f, 0.5f, 0f));
-
-			// finals = runBestCotOUandTH(sheet, current, sheet.getSheetName(),
-			// year, 4, "shots", temp);
-			// ShotsSettings shotSetts = checkOUoptimality(sheet.getSheetName(),
-			// year, 3, "shots");
-			// ArrayList<FinalEntry> finalsPFS = new ArrayList<>();
-			// finalsPFS = Utils.runWithPlayersData(current, pfs, dictionary,
-			// sheet, 0.525f);
-			// finals = finalsPFS;
-			// finals = Utils.noequilibriums(finals);
-			// finals = Utils.intersectDiff(finals, shots);
-			// if (shotSetts.onlyOvers)
-			// finals = Utils.onlyOvers(finals);
-			// finals = Utils.removePending(finals);
-			// finals = Utils.certaintyRestrict(finals, 0.9f);
-			// finals = Utils.intersectDiff(finals, ps);
-			// if (shotSetts.onlyUnders)
-			// finals = Utils.onlyUnders(finals);
-			// finals = Utils.cotRestrict(finals, 0.25f);
-
-			// finals = Utils.intersectDiff(finals, hts);
+			finals = Utils.noequilibriums(finals);
+			finals = Utils.onlyUnders(finals);
 
 			result.addAll(finals);
-			// System.out.println(finals);
 		}
 
 		return result;

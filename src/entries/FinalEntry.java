@@ -18,6 +18,8 @@ import odds.OverUnderOdds;
 import utils.Pair;
 
 public class FinalEntry implements Comparable<FinalEntry> {
+	public static final long maxDateDiff = 24 * 60 * 60 * 1000;
+
 	public Fixture fixture;
 	public Float prediction;
 	public float line;
@@ -139,7 +141,7 @@ public class FinalEntry implements Comparable<FinalEntry> {
 			} else if (diff == 0f) {
 				return "D";
 			} else if (diff == -0.25f) {
-				return "HL";
+				return 	"HL";
 			} else {
 				return "L";
 			}

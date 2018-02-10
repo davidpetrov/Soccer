@@ -395,21 +395,29 @@ public class FullOddsCollector {
 			HashMap<Integer, String> booksMap, OnlyTodayMatches onlyTodaysMatches) throws Exception {
 		long start = System.currentTimeMillis();
 		driver.navigate().to(i);
+		System.out.println("navigating  " + (System.currentTimeMillis() - start) / 1000d + "sec");
 
+		start = System.currentTimeMillis();
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
 		dateString = dateString.split(",")[1] + dateString.split(",")[2];
 		Date date = FORMATFULL.parse(dateString);
-
+		System.out.println("finding date  " + (System.currentTimeMillis() - start) / 1000d + "sec");
+		
 		// skipping to update matches that are played later than today (for
 		// performance in nextMatches())
 		if (onlyTodaysMatches.equals(OnlyTodayMatches.TRUE) && !Utils.isToday(date))
 			return null;
 
+		start = System.currentTimeMillis();
 		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
 		String home = title.split(" - ")[0].trim();
 		String away = title.split(" - ")[1].trim();
+		System.out.println("finding home-away  " + (System.currentTimeMillis() - start) / 1000d + "sec");
 		
+		
+		start = System.currentTimeMillis();
 		ArrayList<Result> results = getResults(driver, home, away);
+		System.out.println("navigating  " + (System.currentTimeMillis() - start) / 1000d + "sec");
 		Result fullResult = results.get(0);
 		Result htResult = results.get(1);
 
@@ -1175,11 +1183,14 @@ public class FullOddsCollector {
 
 	private static HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> getOverUnderDataFromJS(WebDriver driver,
 			HashMap<Integer, String> booksMap) throws Exception {
-
+		long start =  System.currentTimeMillis();
 		JSONObject json = getJsonDataFromJS(driver, "O/U");
-
-		return getFullOddsHistoryOverUnder(json, booksMap);
-
+		System.out.println("getting json  " + (System.currentTimeMillis() - start) / 1000d + "sec");
+		
+		start =  System.currentTimeMillis();
+		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> res = getFullOddsHistoryOverUnder(json, booksMap);
+		System.out.println("ou processing  " + (System.currentTimeMillis() - start) / 1000d + "sec");
+		return res;
 	}
 
 	/**

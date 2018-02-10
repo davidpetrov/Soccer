@@ -22,6 +22,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 
+import jdbc.PostgreSQL;
 import main.Fixture;
 import main.GameStats;
 import main.Result;
@@ -50,7 +51,7 @@ public class GameStatsCollector {
 
 	public void collectAndStore() throws Exception, IOException, ParseException {
 		ArrayList<Fixture> stats = collect();
-		SQLiteJDBC.storeGameStats(stats, competition, year);
+		PostgreSQL.storeGameStats(stats, competition, year);
 	}
 
 	public ArrayList<Fixture> collect() throws InterruptedException, IOException, ParseException {

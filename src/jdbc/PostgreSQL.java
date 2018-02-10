@@ -34,19 +34,21 @@ public class PostgreSQL {
 		String[] competitions = new String[] { "BRA", "SWI", "SPA", "BEL", "IT", "ENG5", "IT2", "ENG2", "TUR", "FR2",
 				"ENG3", "ENG4", "GRE", "FR", "NED", "POR", "SPA2", "SCO", "GER2", "GER", };
 
-		// for (String i : competitions) {
-		// long start = System.currentTimeMillis();
-		//
-		// ArrayList<Fixture> list = selectFixtures(i, 2017);
-		// System.out.println((System.currentTimeMillis() - start) / 1000d + "sec
-		// loading data for: " + i);
-		// // storeFixtures(list, 2017);
-		// }
-		Calendar cal = Calendar.getInstance();
-		cal.set(2017, Calendar.DECEMBER, 1); // Year, month and day of month
-		Date date = cal.getTime();
-		ArrayList<Fixture> list = FullOddsCollector.of("BUL", 2017).collectUpToDate(date);
-		storeFixtures(list, 2017);
+		for (int year = 2010; year <= 2014; year++) {
+			for (String i : SQLiteJDBC.getLeagues(year)) {
+				long start = System.currentTimeMillis();
+				ArrayList<Fixture> list = SQLiteJDBC.selectFixtures(i, year);
+				System.out.println((System.currentTimeMillis() - start) / 1000d + "sec loading data for: " + i);
+				storeFixtures(list, year);
+				storeGameStats(list, i, year);
+			}
+		}
+		// Calendar cal = Calendar.getInstance();
+		// cal.set(2017, Calendar.DECEMBER, 1); // Year, month and day of month
+		// Date date = cal.getTime();
+		// ArrayList<Fixture> list = FullOddsCollector.of("BUL",
+		// 2017).collectUpToDate(date);
+		// storeFixtures(list, 2017);
 
 		// storeGameStats(list, i, 2017);
 
@@ -116,7 +118,7 @@ public class PostgreSQL {
 	private static void storeOverUnderOddsPart(Fixture f, Statement stmt, int year) {
 		if (f.result.equals(Result.postponed()))
 			return;
-		// store all O/U odds for the fixture 
+		// store all O/U odds for the fixture
 		for (OverUnderOdds i : f.overUnderOdds) {
 			String sqlOU = "INSERT INTO OverUnderOddsPart "
 					+ "(year,competition,Date,HomeTeamName,AwayTeamName,Bookmaker,Time,Line,OverOdds,UnderOdds,isOpening,isClosing,isActive)"
@@ -579,8 +581,8 @@ public class PostgreSQL {
 
 				Fixture f = new Fixture(date, competition, homeTeam, awayTeam, new Result(homeGoals, awayGoals))
 						.withHTResult(new Result(hthome, htaway)).withYear(year).withGameStats(gs);
-
-				result.add(f);
+				if (!f.result.equals(Result.of(-1, -1)))
+					result.add(f);
 			}
 
 			matchRs.close();

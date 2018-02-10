@@ -30,6 +30,7 @@ import main.Test.DataType;
 import runner.RunnerAsianPredictions;
 import runner.RunnerPredictions;
 import scraper.FullOddsCollector;
+import scraper.GameStatsCollector;
 import scraper.Scraper;
 import settings.Settings;
 import utils.Stats;
@@ -42,13 +43,15 @@ public class Predictions {
 
 	public static void main(String[] args) throws Exception {
 
-		CHECKLIST.add("SCO");
-//		CHECKLIST.add("GER");
-//		CHECKLIST.add("POR");
+		CHECKLIST.add("NED");
+//		CHECKLIST.add("NED");
+//		CHECKLIST.add("SWI");
 
-		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.AUTOMATIC, 8, 2);
+		GameStatsCollector.of("NED", 2017).collectAndStore();
 		
-		predictionsFromDB(2017, UpdateType.AUTOMATIC, OnlyTodayMatches.TRUE, 8, 2);
+//		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.MANUAL, 11, 2);
+		
+		predictionsFromDB(2017, UpdateType.MANUAL, OnlyTodayMatches.TRUE, 11, 2);
 			
 		// ArrayList<Fixture> nexts = FullOddsCollector.of("IT",
 		// 2017).nextMatches(OnlyTodayMatches.TRUE);	

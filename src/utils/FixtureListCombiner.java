@@ -6,16 +6,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.xalan.xsltc.compiler.sym;
+
 import entries.FinalEntry;
 import main.Fixture;
 
 public class FixtureListCombiner {
-	ArrayList<? extends Fixture> odds;
-	ArrayList<? extends Fixture> gameStats;
+	ArrayList<Fixture> odds;
+	ArrayList<Fixture> gameStats;
 	String competition;
 
-	public FixtureListCombiner(ArrayList<? extends Fixture> odds, ArrayList<? extends Fixture> gameStats,
-			String competition) {
+	public FixtureListCombiner(ArrayList<Fixture> odds, ArrayList<Fixture> gameStats, String competition) {
 		super();
 		this.odds = odds;
 		this.gameStats = gameStats;
@@ -32,10 +33,13 @@ public class FixtureListCombiner {
 		ArrayList<String> teamsOdds = getTeamsList(odds);
 		ArrayList<String> teamsgameStats = getTeamsList(gameStats);
 
+		if (teamsgameStats.size() != teamsOdds.size())
+			System.out.println("Team list sizez differ by " + (teamsOdds.size() - teamsgameStats.size()));
+
 		ArrayList<String> matchedOdds = new ArrayList<>();
 		ArrayList<String> matchedgameStats = new ArrayList<>();
 
-		// find direct matchesss
+		// find direct matches
 		for (String i : teamsOdds) {
 			for (String j : teamsgameStats) {
 				if (i.equals(j)) {
@@ -159,7 +163,7 @@ public class FixtureListCombiner {
 		return true;
 	}
 
-	private ArrayList<String> getTeamsList(ArrayList<? extends Fixture> odds) {
+	private ArrayList<String> getTeamsList(ArrayList<Fixture> odds) {
 		ArrayList<String> result = new ArrayList<>();
 		for (Fixture i : odds) {
 			if (!result.contains(i.getHomeTeam()))

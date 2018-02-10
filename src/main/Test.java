@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -37,6 +38,7 @@ import runner.RunnerIntersect;
 import runner.RunnerOptimals;
 import settings.Settings;
 import settings.SettingsAsian;
+import utils.ParlayStats;
 import utils.Utils;
 import xls.AsianUtils;
 import xls.XlSUtils;
@@ -57,16 +59,46 @@ public class Test {
 
 		// analysis(2017, 2017, DataType.ALLEURODATA);
 
-
-		String[] all = new String[] { /* "BRA", */ "ENG", "ENG2", "GER", "FR", "SPA", "SPA2", "IT", "NED", "SWI", "POR",
+		String[] all = new String[] { "BRA", "ENG", "ENG2", "GER", "FR", "SPA", "SPA2", "IT", "NED", "SWI", "POR",
 				"TUR" };
 
-		Analysis analysis = new Analysis(2017, 2017, "GER");
+		Analysis analysis = new Analysis(2010, 2016, all);
 		analysis.makePredictions();
 		analysis.printAnalysis();
 
+		// parlayAnalysis(2016, 2016, DataType.SQLLITE);
+
 		System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
 		System.out.println("Total used by program = " + (getUsedMemory() - initialMemory) / 1024 + " MB");
+
+	}
+
+	private static void parlayAnalysis(int start, int end, DataType type) {
+		ArrayList<ParlayStats> profits = new ArrayList<>();
+		for (int i = 0; i < 9; i++)
+			profits.add(new ParlayStats(0f, 0, 0));
+
+		IntStream.rangeClosed(start, end).forEach(year -> {
+			try {
+				ArrayList<FinalEntry> all = finals(year, type);
+
+				ParlayStats[] curr = new ParlayStats[9];
+				System.out.println(year);
+				for (int i = 0; i < 9; i++)
+					curr[i] = Utils.bestNperWeek(all, i + 2);
+
+				for (int j = 0; j < 9; j++)
+					profits.get(j).add(curr[j]);
+			} catch (InterruptedException | ExecutionException | IOException e) {
+				e.printStackTrace();
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+
+		for (int i = 0; i < 9; i++)
+			System.out.println(i + 2 + "s " + profits.get(i));
 
 	}
 
@@ -172,7 +204,7 @@ public class Test {
 			HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear, DataType type)
 			throws InterruptedException, ExecutionException, IOException {
 		for (int i = start; i <= end; i++) {
-			ArrayList<FinalEntry> finals = finals(i, type);
+			ArrayList<FinalEntry> finals = new ArrayList<>() /* finals(i, type) */;
 			HashMap<String, ArrayList<FinalEntry>> byLeague = Utils.byLeague(finals);
 			for (java.util.Map.Entry<String, ArrayList<FinalEntry>> league : byLeague.entrySet()) {
 				if (!byLeagueYear.containsKey(league.getKey()))
@@ -479,38 +511,48 @@ public class Test {
 	}
 
 	public static ArrayList<FinalEntry> finals(int year, DataType type)
-			throws InterruptedException, ExecutionException, IOException {
-		String base = new File("").getAbsolutePath();
-		ArrayList<String> dont = new ArrayList<String>(Arrays.asList(Constants.DONT));
-		ArrayList<String> draw = new ArrayList<String>(Arrays.asList(Constants.DRAW));
+			throws InterruptedException, ExecutionException, IOException, ParseException {
 
-		FileInputStream file;
-		if (type.equals(DataType.ALLEURODATA))
-			file = new FileInputStream(new File(base + "\\data\\all-euro-data-" + year + "-" + (year + 1) + ".xls"));
-		else
-			file = new FileInputStream(new File(base + "\\data\\odds" + year + ".xls"));
-		HSSFWorkbook workbook = new HSSFWorkbook(file);
-		Iterator<Sheet> sheet = workbook.sheetIterator();
 		ArrayList<FinalEntry> all = new ArrayList<>();
 
 		ExecutorService pool = Executors.newFixedThreadPool(3);
 		ArrayList<Future<ArrayList<FinalEntry>>> threadArray = new ArrayList<Future<ArrayList<FinalEntry>>>();
-		while (sheet.hasNext()) {
-			HSSFSheet sh = (HSSFSheet) sheet.next();
-			// if (!Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
-			// continue;
+		if (type.equals(DataType.SQLLITE)) {
+			ArrayList<String> competitions = SQLiteJDBC.getLeagues(year);
+			System.out.println(competitions);
+			for (String comp : competitions) {
+				ArrayList<Fixture> compAll = SQLiteJDBC.selectFixtures(comp, year);
+				threadArray.add(pool.submit(new RunnerFinals(compAll, comp, year)));
+			}
+		} else {
+			String base = new File("").getAbsolutePath();
+			FileInputStream file = null;
+			if (type.equals(DataType.ALLEURODATA))
+				file = new FileInputStream(new File(base + "/data/all-euro-data-" + year + "-" + (year + 1) + ".xls"));
+			else if (type.equals(DataType.ODDSPORTAL))
+				file = new FileInputStream(new File(base + "/data/odds" + year + ".xls"));
 
-			if (!sh.getSheetName().equals("E0"))
-				continue;
-			threadArray.add(pool.submit(new RunnerFinals(sh, year)));
+			HSSFWorkbook workbook = new HSSFWorkbook(file);
+			Iterator<Sheet> sheet = workbook.sheetIterator();
+			while (sheet.hasNext()) {
+				HSSFSheet sh = (HSSFSheet) sheet.next();
+				if (type.equals(DataType.ALLEURODATA) && !Arrays.asList(Constants.SHOTS).contains(sh.getSheetName()))
+					continue;
+
+				// if (!sh.getSheetName().equals("E0"))
+				// continue;
+				ArrayList<Fixture> allSh = XlSUtils.selectAll(sh, 0);
+				threadArray.add(pool.submit(new RunnerFinals(allSh, sh.getSheetName(), year)));
+			}
+
+			workbook.close();
+			file.close();
 		}
 
 		for (Future<ArrayList<FinalEntry>> fd : threadArray) {
 			all.addAll(fd.get());
 		}
 
-		workbook.close();
-		file.close();
 		pool.shutdown();
 
 		// Utils.predictionCorrelation(all);
@@ -522,11 +564,6 @@ public class Test {
 		// Utils.hyperReal(overs, year, 1000f, 0.05f);
 		// Utils.evaluateRecord(all);
 		// LineChart.draw(Utils.createProfitMovementData(all), year);
-
-		float[] profits = new float[8];
-		// System.out.println(year);
-		// for (int i = 3; i <= 10; i++)
-		// profits[i - 3] = Utils.bestNperWeek(all, i);
 
 		return all;
 
@@ -752,7 +789,7 @@ public class Test {
 	// }
 
 	public enum DataType {
-		ALLEURODATA, ODDSPORTAL
+		ALLEURODATA, ODDSPORTAL, SQLLITE
 	}
 
 }

@@ -18,6 +18,8 @@ import utils.Pair;
 
 public class Fixture {
 
+	public static final long maxDateDiff = 3 * 60 * 60 * 1000;
+
 	public Date date;
 	public int year;
 	public String competition;
@@ -494,7 +496,8 @@ public class Fixture {
 			if (!list.isEmpty() && Arrays.asList(Constants.FAKEBOOKS).contains(list.get(0).bookmaker))
 				continue;
 			Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
-			if (closing.isPresent() && closing.get().isActive) {
+			if (closing.isPresent() && closing.get().isActive
+					&& Math.abs(date.getTime() - closing.get().getTime().getTime()) < maxDateDiff) {
 				if (closing.get().overOdds > maxHome.overOdds)
 					maxHome = closing.get();
 				if (closing.get().underOdds > maxAway.underOdds)
@@ -536,7 +539,8 @@ public class Fixture {
 
 		Optional<OverUnderOdds> closing = list.stream().max(Comparator.comparing(OverUnderOdds::getTime));
 
-		if (bookmaker.equals("Pinnacle") && closing.get().isActive)
+		if (bookmaker.equals("Pinnacle") && closing.get().isActive
+				&& Math.abs(date.getTime() - closing.get().getTime().getTime()) < maxDateDiff)
 			pinnOdds.put(line, closing.get());
 		return closing.get().isActive ? closing.get() : null;
 	}

@@ -1,13 +1,6 @@
 package utils;
 
-import java.io.BufferedReader;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DateFormat;
-import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -24,44 +17,33 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Random;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.cyberneko.html.HTMLScanner.CurrentEntity;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import charts.LineChart;
 import constants.Constants;
-import entries.AsianEntry;
 import entries.FinalEntry;
 import entries.FullEntry;
 import entries.HTEntry;
 import main.Fixture;
-import main.Fixture;
-import main.GoalLines;
-import main.Line;
 import main.Player;
 import main.PlayerFixture;
-import main.Result;
 import main.SQLiteJDBC;
 import main.Test.DataType;
 import odds.Odds;
 import odds.OverUnderOdds;
 import results.Results;
-import scraper.Names;
 import scraper.Scraper;
 import settings.Settings;
 import tables.Position;
 import tables.Table;
-import xls.AsianUtils;
 import xls.XlSUtils;
 import xls.XlSUtils.MaximizingBy;
 
@@ -596,7 +578,8 @@ public class Utils {
 		return null;
 	}
 
-	public static float bestNperWeek(ArrayList<FinalEntry> all, int n) {
+	//TODO create oop for parlays
+	public static ParlayStats bestNperWeek(ArrayList<FinalEntry> all, int n) {
 		String[] literals = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
 		ArrayList<FinalEntry> filtered = new ArrayList<>();
 		for (FinalEntry fe : all) {
@@ -608,14 +591,9 @@ public class Utils {
 			}
 
 		}
-		filtered.sort(new Comparator<FinalEntry>() {
+		
+		filtered.sort(Comparator.comparing(FinalEntry::getDate));
 
-			@Override
-			public int compare(FinalEntry o1, FinalEntry o2) {
-				return o1.fixture.date.compareTo(o2.fixture.date);
-			}
-
-		});
 
 		float profit = 0f;
 		int winBets = 0;
@@ -634,15 +612,7 @@ public class Utils {
 				if (i + 1 < filtered.size()) {
 					currDate = filtered.get(i + 1).fixture.date;
 
-					curr.sort(new Comparator<FinalEntry>() {
-
-						@Override
-						public int compare(FinalEntry o1, FinalEntry o2) {
-							Float certainty1 = o1.getCOT();
-							Float certainty2 = o2.getCOT();
-							return certainty2.compareTo(certainty1);
-						}
-					});
+					curr.sort( Comparator.comparing(FinalEntry::getCOT).reversed());
 
 					boolean flag = true;
 					float coeff = 1f;
@@ -687,7 +657,7 @@ public class Utils {
 		}
 		System.out.println("Total from " + n + "s: " + profit + " " + winBets + "W " + loseBets + "L");
 
-		return profit;
+		return new ParlayStats(profit,winBets,loseBets);
 
 	}
 
