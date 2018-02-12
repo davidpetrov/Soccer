@@ -9,10 +9,14 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
+import constants.Constants;
 import main.Fixture;
 import main.GameStats;
 import main.Result;
@@ -275,7 +279,8 @@ public class PostgreSQL {
 				Fixture f = new Fixture(new Date(ts.getTime()), competition, homeTeamName, awayTeamName,
 						new Result(homeGoals, awayGoals)).withHTResult(new Result(htHome, htAway)).withYear(year);
 
-				result.add(f);
+				if (!f.result.equals(Result.postponed()))
+					result.add(f);
 			}
 			rs.close();
 
@@ -332,7 +337,8 @@ public class PostgreSQL {
 
 			stmt.execute("SET constraint_exclusion = on;");
 			ResultSet matchRs = stmt.executeQuery("select * from  overunderoddspart" + " where competition="
-					+ addQuotes(competition) + "and  year =" + year);
+					+ addQuotes(competition) + " and  year =" + year + " and bookmaker not in ("
+					+ toJoinList(Arrays.asList(Constants.FAKEBOOKS)) + " );");
 			while (matchRs.next()) {
 				Timestamp ts = matchRs.getTimestamp("date");
 				String homeTeam = matchRs.getString("hometeamname");
@@ -364,6 +370,10 @@ public class PostgreSQL {
 		}
 
 		return result;
+	}
+
+	private static String toJoinList(List<String> list) {
+		return String.join(", ", list.stream().map(f -> addQuotes(f)).collect(Collectors.toList()));
 	}
 
 	private static ArrayList<OverUnderOdds> selectOverUnderOdds(String competition, int year) {
@@ -533,7 +543,7 @@ public class PostgreSQL {
 				i.gameStats.shots = Pair.of(i.result.goalsHomeTeam, i.result.goalsAwayTeam);
 			}
 		}
-		if (missingDataCount > 0)
+		if ((float) missingDataCount / gameStats.size() > 0.1f)
 			System.out.println(
 					"Missing data for: " + competition + " : " + missingDataCount + " filled with goals equivalents");
 	}
@@ -687,5 +697,31 @@ public class PostgreSQL {
 		}
 		String escaped = sb.toString();
 		return "'" + escaped + "'";
+	}
+
+	public static ArrayList<String> getCompetitionList(int year) {
+		ArrayList<String> leagues = new ArrayList<>();
+
+		Connection c = null;
+		Statement stmt = null;
+		try {
+			Class.forName("org.postgresql.Driver");
+			c = DriverManager.getConnection("jdbc:postgresql://localhost:5432/postgres", "postgres", "postgres");
+			c.setAutoCommit(false);
+			stmt = c.createStatement();
+
+			ResultSet rs = stmt.executeQuery("select distinct competition from fixtures where startYear=" + year);
+			while (rs.next()) {
+				leagues.add(rs.getString("competition"));
+			}
+
+			rs.close();
+			stmt.close();
+			c.close();
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+		return leagues;
 	}
 }

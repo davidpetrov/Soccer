@@ -27,6 +27,7 @@ import main.Fixture;
 import main.GameStats;
 import main.Result;
 import main.SQLiteJDBC;
+import utils.FixtureListCombiner;
 import utils.Pair;
 import utils.Utils;
 
@@ -69,18 +70,18 @@ public class GameStatsCollector {
 		driver.navigate().to(address);
 
 		getFixtures(driver, set, oldestTocheck);
-		// try to list by game week
-		Actions actions = new Actions(driver);
-		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
-				.perform();
 
-		getFixtures(driver, set, oldestTocheck);
+		// try to list by game week
+//		Actions actions = new Actions(driver);
+//		actions.moveToElement(driver.findElement(By.xpath("//*[text()[contains(.,'By game week')]]"))).click()
+//				.perform();
+
+//		getFixtures(driver, set, oldestTocheck);
 
 		driver.close();
-		System.out.println(set.size());
 
-		ArrayList<Fixture> setlist = new ArrayList<>();
-		setlist.addAll(set);
+		ArrayList<Fixture> setlist = new ArrayList<>(set);
+		System.out.println(setlist.size());
 
 		int missingData = countMissingShotsData(setlist);
 
@@ -99,7 +100,7 @@ public class GameStatsCollector {
 			for (int i = linksM.size() - 1; i >= 0; i--) {
 				if (isScore(linksM.get(i).text())) {
 					Document fixture = Jsoup.connect(BASE + linksM.get(i).attr("href")).get();
-					
+
 					Fixture ef = getGameStatsFixture(fixture, competition);
 					if (ef != null && oldestTocheck != null && ef.date.before(oldestTocheck)) {
 						breakFlag = true;
@@ -148,6 +149,8 @@ public class GameStatsCollector {
 	private Fixture getGameStatsFixture(Document fixture, String competition) throws IOException, ParseException {
 		Result ht = getHalfTimeResult(fixture);
 		Result result = getResult(fixture);
+		if (result.equals(Result.of(-1, -1)))
+			return null;
 		int matchday = getMatchday(fixture);
 		Date date = getDate(fixture);
 

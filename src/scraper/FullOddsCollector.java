@@ -17,11 +17,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,8 +35,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-
-import com.gargoylesoftware.htmlunit.javascript.host.css.CSSValue;
 
 import main.Fixture;
 import main.Result;
@@ -132,7 +130,7 @@ public class FullOddsCollector {
 					int count = 0;
 					while (true) {
 						try {
-							f = getFixture(driver, i, competition, year, booksMap, OnlyTodayMatches.FALSE);
+							f = getFixture(driver, i, competition, year, booksMap);
 							break;
 						} catch (Exception e) {
 							System.out.println(" retry " + count);
@@ -228,31 +226,32 @@ public class FullOddsCollector {
 		List<WebElement> list = driver.findElements(By.cssSelector("a[href*='" + leagueYear + "']"));
 		ArrayList<String> links = new ArrayList<>();
 		HashMap<String, String> texts = new HashMap<>();
-		// HashMap<String, String> dates = new HashMap<>();
 		for (WebElement i : list) {
 			if (i.getText().contains("-")) {
 				String href = i.getAttribute("href");
+				// skipping to update matches that are played later than today (for performance)
+				if (onlyTodaysMatches.equals(OnlyTodayMatches.TRUE) && !Utils.isToday(getDate(i)))
+					break;
+
 				links.add(href);
 				texts.put(href, i.getText());
-				// dates.put(href, getDate(i));
 			}
 		}
 
 		for (String i : links) {
 			String homeTeam = texts.get(i).split("-")[0].trim();
 			String awayTeam = texts.get(i).split("-")[1].trim();
-			if (teams.contains(homeTeam) && teams.contains(awayTeam))
+			if ((teams.contains(homeTeam) && teams.contains(awayTeam)))
 				continue;
 
 			Fixture ef = null;
 			try {
-				ef = getFixture(driver, i, competition, year, booksMap, onlyTodaysMatches);
+				ef = getFixture(driver, i, competition, year, booksMap);
 			} catch (Exception e) {
 				System.out.println("Problem getting: " + i);
 				System.out.println(e.getMessage());
 			}
-			if (ef != null && ef.result.goalsHomeTeam == -1 && !teams.contains(ef.homeTeam)
-					&& !teams.contains(ef.awayTeam)) {
+			if (ef != null && ef.result.goalsHomeTeam == -1) {
 				result.add(ef);
 				teams.add(ef.awayTeam);
 				teams.add(ef.homeTeam);
@@ -261,26 +260,19 @@ public class FullOddsCollector {
 		}
 		driver.close();
 
-		System.out.println(result);
 		return result;
 	}
 
-	// TODO try to get the date before navigating to the fixture (performance boost)
-	// for next
-	private String getDate(WebElement i) {
-
-		WebElement dateTD = i.findElement(By.xpath("(.//td)[1]"));
-		System.out.println(dateTD.getText());
-		// String millisString = dat.outerHtml().split("
-		// ")[3].split("-")[0].substring(1);
-
-		// long timeInMillis = Long.parseLong(millisString) * 1000;
-		//
-		// Calendar cal = Calendar.getInstance();
-		// cal.setTimeInMillis(timeInMillis);
-		// Date date = cal.getTime();
-		// System.out.println(date);
-		return null;
+	private Date getDate(WebElement i) {
+		String dateStr = null;
+		WebElement parent = i.findElement(By.xpath("..")).findElement(By.xpath(".."));
+		dateStr = parent.findElement(By.xpath("td[1]")).getAttribute("class");
+		
+		String millisString = dateStr.split(" ")[2].split("-")[0].substring(1);
+		long timeInMillis = Long.parseLong(millisString) * 1000;
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis(timeInMillis);
+		return cal.getTime();
 	}
 
 	private ArrayList<String> getLinkList(WebDriver driver) {
@@ -392,45 +384,35 @@ public class FullOddsCollector {
 	}
 
 	public static Fixture getFixture(WebDriver driver, String i, String competition, int year,
-			HashMap<Integer, String> booksMap, OnlyTodayMatches onlyTodaysMatches) throws Exception {
+			HashMap<Integer, String> booksMap) throws Exception {
 		long start = System.currentTimeMillis();
 		driver.navigate().to(i);
 		System.out.println("navigating  " + (System.currentTimeMillis() - start) / 1000d + "sec");
 
-		start = System.currentTimeMillis();
 		String dateString = driver.findElement(By.xpath("//*[@id='col-content']/p[1]")).getText();
 		dateString = dateString.split(",")[1] + dateString.split(",")[2];
 		Date date = FORMATFULL.parse(dateString);
-		System.out.println("finding date  " + (System.currentTimeMillis() - start) / 1000d + "sec");
-		
-		// skipping to update matches that are played later than today (for
-		// performance in nextMatches())
-		if (onlyTodaysMatches.equals(OnlyTodayMatches.TRUE) && !Utils.isToday(date))
-			return null;
 
-		start = System.currentTimeMillis();
 		String title = driver.findElement(By.xpath("//*[@id='col-content']/h1")).getText();
 		String home = title.split(" - ")[0].trim();
 		String away = title.split(" - ")[1].trim();
-		System.out.println("finding home-away  " + (System.currentTimeMillis() - start) / 1000d + "sec");
-		
-		
-		start = System.currentTimeMillis();
+
 		ArrayList<Result> results = getResults(driver, home, away);
-		System.out.println("navigating  " + (System.currentTimeMillis() - start) / 1000d + "sec");
 		Result fullResult = results.get(0);
 		Result htResult = results.get(1);
 
 		if (booksMap.isEmpty())
 			booksMap.putAll(getBooksMapIfEmpty(driver));
 
-//		HashMap<String, ArrayList<MatchOdds>> matchOdds = getMatchDataFromJS(driver, booksMap);
+		// HashMap<String, ArrayList<MatchOdds>> matchOdds = getMatchDataFromJS(driver,
+		// booksMap);
 		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> overUnderOdds = getOverUnderDataFromJS(driver,
 				booksMap);
-//		HashMap<Float, HashMap<String, ArrayList<AsianOdds>>> asianOdds = getAsianDataFromJS(driver, booksMap);
+		// HashMap<Float, HashMap<String, ArrayList<AsianOdds>>> asianOdds =
+		// getAsianDataFromJS(driver, booksMap);
 
 		Fixture f = new Fixture(date, competition, home, away, fullResult).withHTResult(htResult).withYear(year)
-				.withOUodds(overUnderOdds)/*.withAsianOdds(asianOdds).withMatchOdds(matchOdds)*/;
+				.withOUodds(overUnderOdds)/* .withAsianOdds(asianOdds).withMatchOdds(matchOdds) */;
 
 		System.out.println(f);
 		System.out.println("full odds data time " + (System.currentTimeMillis() - start) / 1000d + "sec");
@@ -1183,11 +1165,11 @@ public class FullOddsCollector {
 
 	private static HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> getOverUnderDataFromJS(WebDriver driver,
 			HashMap<Integer, String> booksMap) throws Exception {
-		long start =  System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		JSONObject json = getJsonDataFromJS(driver, "O/U");
 		System.out.println("getting json  " + (System.currentTimeMillis() - start) / 1000d + "sec");
-		
-		start =  System.currentTimeMillis();
+
+		start = System.currentTimeMillis();
 		HashMap<Float, HashMap<String, ArrayList<OverUnderOdds>>> res = getFullOddsHistoryOverUnder(json, booksMap);
 		System.out.println("ou processing  " + (System.currentTimeMillis() - start) / 1000d + "sec");
 		return res;
@@ -1248,7 +1230,7 @@ public class FullOddsCollector {
 	void testSingleFixture(String address) throws Exception {
 		WebDriver driver = createHeadLessDriver();
 
-		getFixture(driver, address, competition, year, new HashMap<>(), OnlyTodayMatches.FALSE);
+		getFixture(driver, address, competition, year, new HashMap<>());
 	}
 
 }

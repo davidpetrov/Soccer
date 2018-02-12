@@ -34,7 +34,23 @@ public class Analysis {
 		this(startYear, endYear, new String[] { league });
 	}
 
+	public Analysis(int startYear, int endYear) {
+		this.startYear = startYear;
+		this.endYear = endYear;
+		this.leagues = combinedCompetitionsList(startYear, endYear);
+		this.predictions = new ArrayList<>();
+	}
+
+	private String[] combinedCompetitionsList(int startYear2, int endYear2) {
+		HashSet<String> all = new HashSet<>();
+		for (int year = startYear; year <= endYear; year++)
+			all.addAll(PostgreSQL.getCompetitionList(year));
+
+		return all.toArray(new String[all.size()]);
+	}
+
 	public void makePredictions() throws InterruptedException, ExecutionException {
+		System.out.println(String.join(", ", leagues));
 		// HashMap<String, HashMap<Integer, ArrayList<FinalEntry>>> byLeagueYear = new
 		// HashMap<>();
 
@@ -117,20 +133,26 @@ public class Analysis {
 
 	public static void valueFinder(ArrayList<FinalEntry> predictions) {
 		ArrayList<Stats> stats = new ArrayList<>();
-		for (int i = 0; i < 5; i++)
-			stats.add(valueOverPinnacle(predictions, false, 1.0f + i * 0.01f));
+		for (int i = 0; i < 5; i++) {
+			Stats st = valueOverPinnacle(predictions, false, 1.0f + i * 0.01f);
+			System.out.println(st);
+			stats.add(st);
+		}
 
-		for (int i = 0; i < 5; i++)
-			stats.add(valueOverPinnacle(predictions, true, 1.0f + i * 0.01f));
-
-		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
-		stats.forEach(System.out::println);
+		for (int i = 0; i < 5; i++) {
+			Stats st = valueOverPinnacle(predictions, true, 1.0f + i * 0.01f);
+			System.out.println(st);
+			stats.add(st);
+		}
 
 		System.out.println("Best value:");
+
+		stats.sort(Comparator.comparing(Stats::getPvalueOdds).reversed());
 		Stats best = stats.get(0);
 		Utils.analysys(best.all, best.description, false);
+
 		byBookieContent(best.all);
-		// best.all.sort(Comparator.comparing(FinalEntry::getValueOverPinnacle).reversed());
+		best.all.sort(Comparator.comparing(FinalEntry::getValueOverPinnacle).reversed());
 
 		System.out.println(best.all.stream().filter(f -> f.getValueOverPinnacle() > 5f).collect(Collectors.toList()));
 		// predictions.sort(Comparator.comparing(FinalEntry::getDate).reversed());

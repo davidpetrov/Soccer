@@ -163,7 +163,7 @@ public class FixtureListCombiner {
 		return true;
 	}
 
-	private ArrayList<String> getTeamsList(ArrayList<Fixture> odds) {
+	public ArrayList<String> getTeamsList(ArrayList<Fixture> odds) {
 		ArrayList<String> result = new ArrayList<>();
 		for (Fixture i : odds) {
 			if (!result.contains(i.getHomeTeam()))

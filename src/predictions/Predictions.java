@@ -3,10 +3,10 @@ package predictions;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -14,18 +14,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 
-import com.gargoylesoftware.htmlunit.javascript.host.media.AnalyserNode;
-
 import entries.FinalEntry;
 import jdbc.PostgreSQL;
 import main.Analysis;
 import main.Fixture;
-import main.SQLiteJDBC;
 import main.Test.DataType;
 import runner.RunnerAsianPredictions;
 import runner.RunnerPredictions;
@@ -43,18 +41,24 @@ public class Predictions {
 
 	public static void main(String[] args) throws Exception {
 
-		CHECKLIST.add("NED");
-//		CHECKLIST.add("NED");
-//		CHECKLIST.add("SWI");
+		// CHECKLIST.add("FR");
+		// CHECKLIST.add("IT");
+		// CHECKLIST.add("GER2");
+		// CHECKLIST.add("BEL");
+		// CHECKLIST.add("IT2");
+		// CHECKLIST.add("POR");
+		// CHECKLIST.add("SPA");
+		CHECKLIST.add("BUL");
 
-		GameStatsCollector.of("NED", 2017).collectAndStore();
-		
-//		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.MANUAL, 11, 2);
-		
-		predictionsFromDB(2017, UpdateType.MANUAL, OnlyTodayMatches.TRUE, 11, 2);
-			
+		// for (String comp : CHECKLIST)
+		// GameStatsCollector.of(comp, 2017).collectAndStore();
+
+		Scraper.updateDB(CHECKLIST, 2, OnlyTodayMatches.FALSE, UpdateType.MANUAL, 11, 2);
+		// FullOddsCollector.of("ENG", 2017).nextMatches(OnlyTodayMatches.TRUE);
+		predictionsFromDB(2017, UpdateType.MANUAL, OnlyTodayMatches.FALSE, 11, 2);
+
 		// ArrayList<Fixture> nexts = FullOddsCollector.of("IT",
-		// 2017).nextMatches(OnlyTodayMatches.TRUE);	
+		// 2017).nextMatches(OnlyTodayMatches.TRUE);
 		// SQLiteJDBC.storeFixtures(nexts,2017);
 
 		// // Runtime.getRuntime().exec("taskkill /F /IM chromedriver.exe /T");
@@ -69,12 +73,14 @@ public class Predictions {
 				: CHECKLIST;
 		System.out.println(leagues);
 
+		long total = 0;
 		for (String league : leagues) {
 			long start = System.currentTimeMillis();
 			ArrayList<Fixture> fixtures = PostgreSQL.selectFixtures(league, year);
-			System.out.println((System.currentTimeMillis() - start) / 1000d + "sec");
+			total += System.currentTimeMillis() - start;
 			all.addAll(Analysis.predict(fixtures, league, year));
 		}
+		System.out.println("Total loading time " + total / 1000d + "sec");
 
 		all.sort(Comparator.comparing(FinalEntry::getPrediction));
 
@@ -147,6 +153,11 @@ public class Predictions {
 		System.out.println(result);
 
 		System.out.println(Analysis.valueOverPinnacle(result, true, 1.0f).all);
+
+		System.out.println("Upcoming: ");
+		result.sort(Comparator.comparing(FinalEntry::getDate));
+		System.out.println(result.stream().filter(f -> f.fixture.date.after(new Date())).collect(Collectors.toList()));
+
 		return all;
 	}
 
