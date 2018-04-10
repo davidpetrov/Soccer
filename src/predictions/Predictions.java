@@ -43,11 +43,11 @@ public class Predictions {
 
 		// CHECKLIST.add("FR");
 		// CHECKLIST.add("IT");
-		// CHECKLIST.add("GER2");
-		// CHECKLIST.add("BEL");
-		// CHECKLIST.add("IT2");
-		// CHECKLIST.add("POR");
-		// CHECKLIST.add("SPA");
+		 CHECKLIST.add("GER2");
+		 CHECKLIST.add("BEL");
+		 CHECKLIST.add("IT2");
+		 CHECKLIST.add("POR");
+		 CHECKLIST.add("SPA");
 		CHECKLIST.add("BUL");
 
 		// for (String comp : CHECKLIST)

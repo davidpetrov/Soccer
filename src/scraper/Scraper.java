@@ -135,8 +135,8 @@ public class Scraper {
 		// collect("FR", 2017, null);
 		// collectUpToDate("GER2", 2017, new Date(), null);
 
-		// checkAndUpdate("IT", OnlyTodayMatches.FALSE);
-		// checkAndUpdate("BEL", OnlyTodayMatches.FALSE);
+		 checkAndUpdate("IT", OnlyTodayMatches.FALSE);
+		 checkAndUpdate("BEL", OnlyTodayMatches.FALSE);
 		// checkAndUpdate("FR2", OnlyTodayMatches.TRUE);
 		// checkAndUpdate("BRA", OnlyTodayMatches.FALSE);
 		// checkAndUpdate("SWE", OnlyTodayMatches.FALSE);
